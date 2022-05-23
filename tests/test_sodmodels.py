@@ -4,9 +4,10 @@ import glob
 import unittest
 import logging
 import torch
-from agrolens.models import SOD
+from justdeepit.models import SOD
 logging.basicConfig(level=logging.WARNING)
-logging.getLogger('agrolens.models.utils.u2net').setLevel(level=logging.WARNING)
+logging.getLogger('justdeepit.models.utils.u2net').setLevel(level=logging.WARNING)
+
 
 class TestModels(unittest.TestCase):
     

@@ -10,12 +10,12 @@ Dataset
 
 .. code-block:: sh
     
-    # download tutorials/GWHD or clone AgroLens repository from https://github.com/biunit/AgroLens
-    git clone https://github.com/biunit/AgroLens
-    cd AgroLens/tutorials/GWHD
+    # download tutorials/GWHD or clone JustDeepIt repository from https://github.com/jsun/JustDeepIt
+    git clone https://github.com/jsun/JustDeepIt
+    cd JustDeepIt/tutorials/GWHD
     
     # download image data (train.zip) from http://www.global-wheat.com/ manually
-    # and put train.zip in AgroLens/tutorials/GWHD
+    # and put train.zip in JustDeepIt/tutorials/GWHD
     
     # decompress data
     unzip train.zip

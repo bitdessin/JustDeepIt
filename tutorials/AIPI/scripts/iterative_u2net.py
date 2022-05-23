@@ -9,8 +9,8 @@ import skimage
 import skimage.io
 import skimage.measure
 import skimage.morphology
-import agrolens
-import agrolens.models
+import justdeepit
+import justdeepit.models
 import datetime
 
 def write_exe_time(msg=''):
@@ -86,7 +86,7 @@ def main(ws):
             images_0_fpath_batch = images_0_fpath[batch_from:batch_to]
         
             weight = os.path.join(ws, 'weights', 'u2net.{}.pth'.format(i))
-            u2net = agrolens.models.U2Net(weight)
+            u2net = justdeepit.models.U2Net(weight)
             write_exe_time('START_DETECTION\t{}\tMINIBATCH {}'.format(i, j))
             outputs = u2net.inference(images_0_fpath_batch, batch_size=16, strategy='resize', gpu=1, cpu=32)
             write_exe_time('FINISH_DETECTION\t{}\tMINIBATCH {}'.format(i, j))
@@ -106,7 +106,7 @@ def main(ws):
         write_exe_time('FINISH_VALIDMASK\t{}'.format(i))
         
         print('>>> training model ...')
-        u2net = agrolens.models.U2Net(weight)
+        u2net = justdeepit.models.U2Net(weight)
         train_image_list = 'train_images_iterate{}'.format(i + 1)
         with open(train_image_list, 'w') as outfh:
             for image_fpath in glob.glob(os.path.join(images_0_dpath, '*')):

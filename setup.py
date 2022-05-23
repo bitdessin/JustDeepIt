@@ -14,21 +14,27 @@ package_desc = 'Deep learning has been applied to solve various problems, especi
     'have made deep learning easier and more accessible to researchers. '\
     'However, it remains difficult for many researchers without advanced programming skills '\
     'to use deep learning and environments such as the character user interface (CUI) through keyboard input. '\
-    'AgroLens aims to support researchers by facilitating the use of deep learning for object detection and segmentation '\
+    'JustDeepIt aims to support researchers by facilitating the use of deep learning for object detection and segmentation '\
     'by providing both graphical user interface (GUI) and CUI operations. '\
-    'AgroLens can be used for plant detection, pest detection, '\
+    'JustDeepIt can be used for plant detection, pest detection, '\
     'and a variety of tasks in life sciences, agriculture, and other fields.'
 
 
-with open(os.path.join(os.path.dirname(__file__), 'agrolens', '__init__.py'), encoding='utf-8') as fh:
-    for buf in fh:
-        if buf.startswith('__version__'):
-            exec(buf)
+
+with open(os.path.join(os.path.dirname(__file__), 'justdeepit', '__init__.py'), encoding='utf-8') as fh:
+    for line in fh:
+        if line.startswith('__version__'):
+            exec(line)
             break
 
 
+install_requirements = []
+with open('requirements.txt') as fh:
+    install_requirements = fh.read().splitlines()
+
+
 setup(
-    name        = 'AgroLens',
+    name        = 'JustDeepIt',
     version     = __version__,
     description = 'a GUI tool for object detection and segmentation based on deep learning',
     classifiers = [
@@ -44,22 +50,15 @@ setup(
     keywords     = 'object detection, object segmentation',
     author       = 'Jianqiang Sun',
     author_email = 'jsun@aabbdd.jp',
-    url          = 'https://github.com/biunit/AgroLens',
+    url          = 'https://github.com/biunit/JustDeepIt',
     license      = 'MIT',
     packages     = find_packages(),
-    package_dir  = {'agrolens': 'agrolens'},
     entry_points={'console_scripts': [
-                        'agrolens=agrolens.bin.app:main',
+                        'justdeepit=justdeepit.webapp.app:run_app',
                     ]},
     include_package_data = True,
     zip_safe = True,
     long_description = package_desc,
-    install_requires = [
-        'tqdm', 'joblib', 'ttkbootstrap',
-        'numpy', 'pandas',
-        'pillow', 'opencv-python>=4.5.1', 'scikit-image>=0.18.1',
-        'torch>=1.8', 'torchvision'
-    ],
-    
+    install_requires = install_requirements,
 )
 

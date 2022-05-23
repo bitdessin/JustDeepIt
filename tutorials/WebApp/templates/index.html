@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebApp</title>
+    <base href="/" >
+</head>
+<body>
+    <h1>Object Detection</h1>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="file" />
+        <input type="submit" value="Inference" />
+    </form>
+
+    {% if output_fpath is not none %}
+    <h1 style="margin-top:2em">Inference Result</h1>
+    <div>
+        <img src="{{ output_fpath }}" style="width:50%"/>
+    </div>
+    {% endif %}
+</body>
+</html>
+

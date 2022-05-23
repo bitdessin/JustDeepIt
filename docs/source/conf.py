@@ -16,8 +16,8 @@ import sys
 
 # -- Project information -----------------------------------------------------
 
-project = 'AgroLens'
-copyright = '2021, Jianqiang Sun'
+project = 'JustDeepIt'
+copyright = '2022, Jianqiang Sun'
 author = 'Jianqiang Sun'
 
 

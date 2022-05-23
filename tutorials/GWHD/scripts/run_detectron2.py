@@ -2,8 +2,8 @@ import sys
 import os
 import glob
 import numpy as np
-from agrolens.models import FasterRCNN, RetinaNet, YOLO3
-from agrolens.utils import ImageAnnotation
+from justdeepit.models import FasterRCNN, RetinaNet, YOLO3
+from justdeepit.utils import ImageAnnotation
 
 
 def train():
@@ -16,7 +16,7 @@ def train():
     net = OD(class_label, model_arch='fasterrcnn',
              workspace=ws, backend='detectron2')
     net.train(annotation, images,
-              batchsize=8, epoch=100, lr=0.0001,
+              batchsize=8, epoch=100, lr=0.001,
               gpu=1, cpu=16)
     net.save(os.path.join(ws, 'gwhd2021.fasterrcnn.d2.pth'))
 

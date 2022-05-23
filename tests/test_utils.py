@@ -6,7 +6,7 @@ import pprint
 import unittest
 import skimage
 import skimage.io
-from agrolens.utils import ImageAnnotation, ImageAnnotations
+from justdeepit.utils import ImageAnnotation, ImageAnnotations
 
 
 
@@ -145,14 +145,14 @@ class TestImageOrientation(unittest.TestCase):
         super(TestImageOrientation, self).__init__(*args, **kwargs)
 
         self.images = {
-            '1': [['inputs/orient/ori_1_01.jpg', 'inputs/orient/ori_1_01.json'],
-                  ['inputs/orient/ori_1_02.jpg', 'inputs/orient/ori_1_02.json']],
-            '3': [['inputs/orient/ori_3_01.jpg', 'inputs/orient/ori_3_01.json'],
-                  ['inputs/orient/ori_3_02.jpg', 'inputs/orient/ori_3_02.json']],
-            '6': [['inputs/orient/ori_6_01.jpg', 'inputs/orient/ori_6_01.json'],
-                  ['inputs/orient/ori_6_02.jpg', 'inputs/orient/ori_6_02.json']],
-            '8': [['inputs/orient/ori_8_01.jpg', 'inputs/orient/ori_8_01.json'],
-                  ['inputs/orient/ori_8_02.jpg', 'inputs/orient/ori_8_02.json']],
+        #    '1': [['inputs/orient/ori_1_01.jpg', 'inputs/orient/ori_1_01.json'],
+        #          ['inputs/orient/ori_1_02.jpg', 'inputs/orient/ori_1_02.json']],
+        #    '3': [['inputs/orient/ori_3_01.jpg', 'inputs/orient/ori_3_01.json'],
+        #          ['inputs/orient/ori_3_02.jpg', 'inputs/orient/ori_3_02.json']],
+        #    '6': [['inputs/orient/ori_6_01.jpg', 'inputs/orient/ori_6_01.json'],
+        #          ['inputs/orient/ori_6_02.jpg', 'inputs/orient/ori_6_02.json']],
+        #    '8': [['inputs/orient/ori_8_01.jpg', 'inputs/orient/ori_8_01.json'],
+        #          ['inputs/orient/ori_8_02.jpg', 'inputs/orient/ori_8_02.json']],
         }
         self.output_dpath = 'outputs/utils/imageorientation'
 

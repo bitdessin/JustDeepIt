@@ -6,7 +6,7 @@ The background of an image can affect the performance of object classification a
 Thus, extracting a salient object by removing the background may improve the performance of these tasks.
 However, training the model requires several annotated images.
 Usually, annotation is costly and time-consuming.
-In this tutorial, we illustrate the use of AgroLens
+In this tutorial, we illustrate the use of JustDeepIt
 to train U\ :sup:`2`-Net\ [#u2net]_ for background removal from unannotated images.
 
 
@@ -24,7 +24,7 @@ to train U\ :sup:`2`-Net for background removal, that is, extracting the leaf ar
 
 Images of cucumber leaves can be downloaded manually or using wget commands.
 There are 29,045 cucumber leaf images in the AIPI dataset.
-We store the images in folder :file:`AIPI/data/images` to then use the AgroLens API
+We store the images in folder :file:`AIPI/data/images` to then use the JustDeepIt API
 to train U2-Net for leaf extraction.
 
 
@@ -36,7 +36,7 @@ Model Training and Leaf Extraction
 
 Training is performed as follow steps:
 
-    1.	We download the weights of U\ :sup:`2`-Net (0\ :sup:`th`-trained U\ :sup:`2`-Net) pretrained on the DUTS dataset from the corresponding GitHub repository and used the 0\ :sup:`th`-trained U\ :sup:`2`-Net for leaf segmentation on the images in folder :file:`AIPI/data/images`.
+    1.	We download the weights of U\ :sup:`2`-Net (0\ :sup:`th`-trained U\ :sup:`2`-Net) pretrained on the DUTS dataset from the corresponding GitHub repository (`xuebinqin/U-2-Net u2net.pth <https://github.com/xuebinqin/U-2-Net>`_) and used the 0\ :sup:`th`-trained U\ :sup:`2`-Net for leaf segmentation on the images in folder :file:`AIPI/data/images`.
     2.	After detection, we validate the results. The images in which the entire area is detected as a salient object (e.g., image 3) or no detection occurred (e.g., image 4) are discarded.
     3.	We use the remaining images and detection results (i.e., mask images) to train U\ :sup:`2`-Net.
     4.	We use the trained U\ :sup:`2`-Net from step 3 for salient object detection on the cucumber leaf images in folder :file:`AIPI/data/images`.
@@ -45,17 +45,17 @@ Training is performed as follow steps:
 
 
 As most steps are repeated five times,
-we use the AgroLens API to efficiently repeat them automatically.
+we use the JustDeepIt API to efficiently repeat them automatically.
 The executable Python scripts are available at
-`GitHub:AgroLens/tutorials/AIPI/iterative_u2net.py <https://github.com/biunit/AgroLens>`_.
+`GitHub:JustDeepIt/tutorials/AIPI/iterative_u2net.py <https://github.com/biunit/JustDeepIt>`_.
 
 
 .. code-block:: sh
     
-    git clone https://github.com/biunit/AgroLens
-    cd AgroLens/tutorials/AIPI
+    git clone https://github.com/biunit/JustDeepIt
+    cd JustDeepIt/tutorials/AIPI
     
-    # donwload images and put them into AgroLens/tutorials/AIPI/data/images folder
+    # donwload images and put them into JustDeepIt/tutorials/AIPI/data/images folder
     
     python scripts/iterative_u2net.py
 

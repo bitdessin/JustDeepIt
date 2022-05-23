@@ -2,9 +2,10 @@ import os
 import platform
 import shutil
 import glob
+import threading
 import unittest
 import torch
-from agrolens import SOD
+import justdeepit
 
 
 
@@ -16,16 +17,17 @@ class TestSODAPPMask(unittest.TestCase):
         self.dataset = os.path.join('sample_datasets', 'sod')
         self.ws = os.path.join('outputs', 'sodappmask')
         os.makedirs(self.ws, exist_ok=True)    
+        os.makedirs(os.path.join(self.ws, 'train_dataset'), exist_ok=True)    
+        os.makedirs(os.path.join(self.ws, 'query_dataset'), exist_ok=True)    
         
         self.image_suffix = '_image.jpg'
         self.mask_suffix = '_mask.png'
         
         self.batchsize = 4
         self.epoch = 110
+        self.lr = 0.001
         self.gpu = 0
         self.cpu = 4
-        if platform.system() == 'Darwin':
-            self.cpu = 0
         if torch.cuda.is_available():
             self.gpu = 1
             self.cpu = 8
@@ -35,7 +37,8 @@ class TestSODAPPMask(unittest.TestCase):
     def __test_app(self, weight, strategy, is_series):
         inference_strategy = 'resize' if strategy == 'resize' else 'slide'
         
-        app = SOD(self.ws)
+        app = justdeepit.webapp.SOD(self.ws)
+        app.init_workspace()
         
         for fpath in glob.glob(os.path.join(self.dataset, '*.jpg')):
             shutil.copy(fpath, os.path.join(self.ws, 'train_dataset'))
@@ -44,22 +47,19 @@ class TestSODAPPMask(unittest.TestCase):
             shutil.copy(fpath, os.path.join(self.ws, 'train_dataset'))
         
         # training
-        app.sort_train_images(os.path.join(self.ws, 'train_dataset'),
-                              image_suffix=self.image_suffix, mask_suffix=self.mask_suffix)
-        app.train_model(weight, self.batchsize, self.epoch, self.cpu, self.gpu,
-                        strategy, 340)
+        app.sort_train_images(os.path.join(self.ws, 'train_dataset'), None, 'mask',
+                              self.image_suffix, self.mask_suffix)
+        app.train_model('u2net', weight, self.batchsize, self.epoch, self.lr, self.cpu, self.gpu, strategy, 340)
         
         # detection
         app.sort_query_images(os.path.join(self.ws, 'query_dataset'))
-        app.detect_objects(weight, self.batchsize, inference_strategy,
-                           0.8, 0, 0, 340,
-                           cpu=self.cpu, gpu=self.gpu)
+        app.detect_objects('u2net', weight, self.batchsize, inference_strategy,
+                           0.8, 0, 0, 340, self.cpu, self.gpu)
         
         # summarization
-        if platform.system() == 'Darwin':
-            self.cpu = 1
-        app.generate_movie(10.0, 1.0, 'mp4v', '.mp4')
+        app.summarize_objects(self.cpu, False, 0, 0)
         
+    
     
     def test_app_1(self):
         weight = os.path.join(self.ws, 'sodapp.t1.pth')

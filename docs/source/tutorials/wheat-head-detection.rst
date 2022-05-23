@@ -11,7 +11,7 @@ such as making decisions about a treatment to be applied.
 Detecting crop heads from images captured by fixed-point cameras or drones
 allows to conduct high-throughput phenotyping and efficiently run large farms.
 Deep learning technology has become more common for various detection tasks.
-For instance, in this tutorial, we used AgroLens to train Faster R-CNN\ [#fasterrcnn]_ for wheat head detection.
+For instance, in this tutorial, we use JustDeepIt to train Faster R-CNN\ [#fasterrcnn]_ for wheat head detection.
 
 
 
@@ -29,11 +29,11 @@ Folder :file:`train` contains images of wheat heads,
 and file :file:`train.csv` contains the bounding-box coordinates of wheat heads
 for each image in folder :file:`train`.
 
-As AgroLens requires annotations in the COCO format,
+As JustDeepIt requires annotations in the COCO format,
 we first convert file :file:`train.csv` into a file in the COCO format (:file:`train.json`).
 Python script :file:`gwhd2coco.py` stored in 
-`GitHub:AgroLens/tutorials/GWHD/scripts <https://github.com/biunit/AgroLens/>`_ can be used for format conversion.
-In addition, AgroLens requires a text file containing class names.
+`GitHub:JustDeepIt/tutorials/GWHD/scripts <https://github.com/biunit/JustDeepIt/>`_ can be used for format conversion.
+In addition, JustDeepIt requires a text file containing class names.
 We create file :file:`class_label.txt` containing only “spike” on the first line,
 as the GWHD dataset only has one class, namely, wheat head.
 
@@ -47,16 +47,23 @@ The above dataset preparation can be performed manually or automatically using t
 
 
 
-AgroLens Settings
-=================
+Settings
+========
 
 
-To initialize AgroLens for object detection, we open terminal and run the following command:
+
+To start JustDeepIt, we open the terminal and run the following command.
+Then, we open the web browser and accesss to \http://0.0.0.0:8000.
 
 
 .. code-block:: sh
-    
-    agrolens od
+
+    justdeepit
+    # INFO:uvicorn.error:Started server process [61]
+    # INFO:uvicorn.error:Waiting for application startup.
+    # INFO:uvicorn.error:Application startup complete.
+    # INFO:uvicorn.error:Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+
 
 
 We set the **architecture** to Faster R-CNN,
@@ -65,7 +72,7 @@ and the other parameters as shown in the screenshot below.
 Then, we press button **Load Workspace**.
 
 
-.. image:: ../_static/tutorials_GWHD_config.png
+.. image:: ../_static/tutorials_GWHD_pref.png
     :align: center
 
 
@@ -73,12 +80,12 @@ Then, we press button **Load Workspace**.
 Once the workspace is set, the functions of model training and object detection become available.
 
 
-Model Training
-==============
+Training
+========
 
 
 To train the model,
-we select tab **model training**
+we select tab **Training**
 and specify the **model weight** as the location storing the training weights,
 **image folder** as the folder containing training images (i.e., :file:`train`),
 **annotation format** as the format of the annotation file (COCO in this case),
@@ -91,28 +98,28 @@ Then, we press buttons **RUN** for image sorting and model training.
     :align: center
 
 
-Training takes 3-4 days, and it depends on the computer hardware.
+Training takes 1-2 days, and it depends on the computer hardware.
 
 
 
-Object Detection
-================
+Inference
+=========
 
-In tab **image analysis**, the model weight is specified to the training weights,
+In tab **Inference**, the model weight is specified to the training weights,
 whose file extension is pth in general.
 We specify **image folder** to the folder containing the images for detection,
 and other parameters as shown in screenshot below.
 Next, we decompress file :file:`test.zip` of the GWHD dataset
-and used the images in folder :file:`test` as test images.
+and use the images in folder :file:`test` as test images.
 Then, we press buttons **RUN** for image sorting and object detection.
 
 
-.. image:: ../_static/tutorials_GWHD_inference.png
+.. image:: ../_static/tutorials_GWHD_eval.png
     :align: center
 
 
-The detection results will be stored in folder :file:`outputs/detection_results` of the workspace
-as images with bounding boxes and a JSON file in the COCO format (:file:`inference_result.json`).
+The detection results will be stored in folder :file:`justdeepitws/outputs` of the workspace
+as images with bounding boxes and a JSON file in the COCO format (:file:`annotation.json`).
 
 
 
@@ -133,9 +140,9 @@ API
 ====
 
 
-Model training and object detection can be performed using the AgroLens API.
-Python script :file:`run_mmdet.py` stored in `GitHub:AgroLens/tutorials/GWHD/scripts <https://github.com/biunit/AgroLens>`_ can be used for this purpose.
-See `GitHub:AgroLens/tutorials/GWHD/ <https://github.com/biunit/AgroLens>`_ for detailed information.
+Model training and object detection can be performed using the JustDeepIt API.
+Python script :file:`run_mmdet.py` stored in `GitHub:JustDeepIt/tutorials/GWHD/scripts <https://github.com/biunit/JustDeepIt>`_ can be used for this purpose.
+See `GitHub:JustDeepIt/tutorials/GWHD/ <https://github.com/biunit/JustDeepIt>`_ for detailed information.
 
 
 .. include:: ../../../tutorials/GWHD/README.rst

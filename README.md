@@ -14,7 +14,7 @@ by providing both graphical user interface (GUI) and CUI operations.
 AgroLens can be used for plant detection, pest detection,
 and a variety of tasks in life sciences, agriculture, and other fields.
 
-- [Documentation](https://agrolens.readthedocs.io/en/latest/index.html)
+- [Documentation](https://justdeepit.readthedocs.io/en/latest/index.html)
 
 
 

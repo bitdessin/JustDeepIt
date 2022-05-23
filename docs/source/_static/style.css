@@ -2,13 +2,21 @@
 .wy-table-responsive table td, .wy-table-responsive table th {
     white-space: normal;
 }
+.wy-table-responsive table {
+    width: 100%;
+}
 
 h2 {
     margin-top: 2em;
 }
 
-p {
+p, img, table {
     margin-top: 1em;
+}
+
+
+table p {
+    margin: 0;
 }
 
 colgroup {

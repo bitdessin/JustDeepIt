@@ -3,7 +3,7 @@ import os
 import numpy as np
 import torch
 import glob
-from agrolens.models import OD
+from justdeepit.models import OD
 
 
 def train():

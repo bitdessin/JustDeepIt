@@ -1,7 +1,7 @@
-.. AgroLens documentation master file
+.. JustDeepIt documentation master file
 
-AgroLens
-========
+JustDeepIt
+==========
 
 
 .. toctree::
@@ -10,6 +10,7 @@ AgroLens
     
     installation
     implementation
+    quickstart
     tutorials
     api 
     
@@ -27,8 +28,8 @@ and `Detectron2 <https://detectron2.readthedocs.io/>`_
 have made deep learning easier and more accessible to researchers.
 However, it remains difficult for many researchers without advanced programming skills
 to use deep learning and environments such as the character user interface (CUI) through keyboard input.
-AgroLens aims to support researchers by facilitating the use of deep learning for object detection and segmentation
+JustDeepIt aims to support researchers by facilitating the use of deep learning for object detection and segmentation
 by providing both graphical user interface (GUI) and CUI operations.
-AgroLens can be used for plant detection, pest detection,
+JustDeepIt can be used for plant detection, pest detection,
 and a variety of tasks in life sciences, agriculture, and other fields.
 

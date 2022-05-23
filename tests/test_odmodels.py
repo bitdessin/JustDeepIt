@@ -4,7 +4,7 @@ import glob
 import logging
 import unittest
 import torch
-from agrolens.models import OD
+from justdeepit.models import OD
 logging.basicConfig(level=logging.WARNING)
 logging.getLogger('detectron2.utils.events').setLevel(level=logging.WARNING)
 logging.getLogger('fvcore.common.checkpoint').setLevel(level=logging.WARNING)
@@ -21,10 +21,10 @@ class TestDetectronModels(unittest.TestCase):
         self.ws = os.path.join('outputs', 'odmodel_detectron2')
         self.tmp = os.path.join(self.ws, 'tmp')
         
-        self.train_images = os.path.join(self.dataset, 'COCO', 'images')
-        self.query_images = os.path.join(self.dataset, 'COCO', 'images')
-        self.train_annotations = os.path.join(self.dataset, 'COCO', 'annotations', 'instances_default.json')
-        self.class_label = os.path.join(self.dataset, 'class_labels.txt')
+        self.train_images = os.path.join(self.dataset, 'images')
+        self.query_images = os.path.join(self.dataset, 'images')
+        self.train_annotations = os.path.join(self.dataset, 'annotations', 'COCO', 'instances_default.json')
+        self.class_label = os.path.join(self.dataset, 'class_label.txt')
         
         self.batchsize = 4
         self.epoch = 500
@@ -32,7 +32,7 @@ class TestDetectronModels(unittest.TestCase):
         self.gpu = 0
         self.cpu = 4
         if platform.system() == 'Darwin':
-            self.cpu = 4
+            self.cpu = 0
         if torch.cuda.is_available():
             self.gpu = 1
             self.cpu = 8
@@ -85,10 +85,10 @@ class TestMMDetModels(unittest.TestCase):
         self.ws = os.path.join('outputs', 'odmodel_mmdet')
         self.tmp = os.path.join(self.ws, 'tmp')
         
-        self.train_images = os.path.join(self.dataset, 'COCO', 'images')
-        self.query_images = os.path.join(self.dataset, 'COCO', 'images')
-        self.train_annotations = os.path.join(self.dataset, 'COCO', 'annotations', 'instances_default.json')
-        self.class_label = os.path.join(self.dataset, 'class_labels.txt')
+        self.train_images = os.path.join(self.dataset, 'images')
+        self.query_images = os.path.join(self.dataset, 'images')
+        self.train_annotations = os.path.join(self.dataset, 'annotations', 'COCO', 'instances_default.json')
+        self.class_label = os.path.join(self.dataset, 'class_label.txt')
         
         self.batchsize = 4
         self.epoch = 500

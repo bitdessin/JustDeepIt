@@ -6,7 +6,7 @@ Phenotyping is important in plant biology as well as breeding and crop managemen
 It depends on leaf detection or leaf segmentation
 because the leaf color can be used to estimate the nutritional state
 while the area index can be used to measure plant growth and estimate the final yields.
-In this tutorial, we illustrate the use of AgroLens
+In this tutorial, we illustrate the use of JustDeepIt
 to train U2-Net\ [#u2net]_ and apply the trained model to leaf segmentation.
 
 
@@ -43,20 +43,28 @@ The above dataset preparation can be performed manually or automatically using t
 
 
 
-AgroLens Settings
-=================
+Settings
+========
 
-To initialize AgroLens for object detection,
-we open terminal and run the following command:
+
+
+
+To start JustDeepIt, we open the terminal and run the following command.
+Then, we open the web browser and accesss to \http://0.0.0.0:8000.
 
 
 .. code-block:: sh
 
-    agrolens sod
+    justdeepit
+    # INFO:uvicorn.error:Started server process [61]
+    # INFO:uvicorn.error:Waiting for application startup.
+    # INFO:uvicorn.error:Application startup complete.
+    # INFO:uvicorn.error:Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 
 
 
-.. image:: ../_static/tutorials_PPD2013_config.png
+
+.. image:: ../_static/tutorials_PPD2013_pref.png
     :align: center
 
 
@@ -64,12 +72,12 @@ After loading workspace, the functions of the model training and object detectio
 
 
 
-Model Trainig
-==============
+Trainig
+=======
 
 
 To train the model, 
-we select tab **model training**
+we select tab **Training**
 and specify **model weight** as the location to store the training weight
 and **image folder** as the folder (i.e., :file:`train_images`)
 containing training images and masks (i.e., annotation labels).
@@ -79,12 +87,12 @@ As the images in the dataset have a resolution of 3108 x 2324 pixels
 and each image contains 24 plants,
 the training images are large and capture many small objects.
 Thus, *random cropping* strategy is the suitable selection for training.
-Here we set AgroLens to crop areas of 320 x 320 pixels for training.
+Here we set JustDeepIt to crop areas of 320 x 320 pixels for training.
 As *random cropping* is applied once per image and epoch and only four training images were available,
 we require many epochs (1,000 epochs in this case study) for training
 to ensure a high model performance.
 After setting the parameters as in the images below,
-we press **RUN** buttons to execute image sorting and model training.
+we press **Start Training** buttons to start model training.
 
 
 .. image:: ../_static/tutorials_PPD2013_train.png
@@ -98,7 +106,7 @@ we press **RUN** buttons to execute image sorting and model training.
 Inference
 =========
 
-In tab **image analysis**,
+In tab **Inference**,
 we specify **model weight** to the training weights, whose file usually has extension pth,
 **query images** as the folder containing images for detection (i.e., :file:`query_images`),
 and the other parameters as shown in the image below.
@@ -114,12 +122,12 @@ from the top left to the bottom right of the original image,
 performe salient object detection for all the areas,
 and finally merge the detection results into a single image. 
 
-Then, we press **RUN** buttons to execute image sorting,
-object detection, object summarization, and movie generation in this order.
-The prediction results and summarization were saved in the workspace as specified in tab preferences.
+Then, we press **Start Inference** buttons to execute
+object detection and object summarization.
+The prediction results and summarization were saved in the **workspace** as specified in tab **Preferences**.
 
 
-.. image:: ../_static/tutorials_PPD2013_inference.png
+.. image:: ../_static/tutorials_PPD2013_eval.png
     :align: center
 
 
@@ -128,15 +136,15 @@ The prediction results and summarization were saved in the workspace as specifie
 Results
 =======
 
-AgroLens generates three types of images: mask, masked, and contour during object detection,
+JustDeepIt generates three types of images: mask, masked, and contour during object detection,
 as respectively shown in the images below.
 
 .. image:: ../_static/tutorials_PPD2013_inference_output_types.jpg
     :align: center
 
 
-The time-series images can be aligned to generate videos stored in file video.mp4 in the workspace.
-
+The time-series images can be aligned to generate videos 
+using third-party software such as :command:`ffmpeg` command, free GUI software, and online service.
 
 .. raw:: html
     

@@ -7,11 +7,11 @@ API
 .. toctree::
     :maxdepth: 2
     
-    api/agrolens.utils.imageannotation
-    api/agrolens.utils.imageannotations
-    api/agrolens.models.od
-    api/agrolens.models.is
-    api/agrolens.models.sod
+    api/justdeepit.utils.imageannotation
+    api/justdeepit.utils.imageannotations
+    api/justdeepit.models.od
+    api/justdeepit.models.is
+    api/justdeepit.models.sod
 
 
 
