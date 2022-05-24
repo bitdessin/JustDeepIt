@@ -32,7 +32,7 @@ for each image in folder :file:`train`.
 As JustDeepIt requires annotations in the COCO format,
 we first convert file :file:`train.csv` into a file in the COCO format (:file:`train.json`).
 Python script :file:`gwhd2coco.py` stored in 
-`GitHub:JustDeepIt/tutorials/GWHD/scripts <https://github.com/biunit/JustDeepIt/>`_ can be used for format conversion.
+`GitHub:JustDeepIt/tutorials/GWHD/scripts <https://github.com/biunit/JustDeepIt/tree/main/tutorials/GWHD/scripts>`_ can be used for format conversion.
 In addition, JustDeepIt requires a text file containing class names.
 We create file :file:`class_label.txt` containing only “spike” on the first line,
 as the GWHD dataset only has one class, namely, wheat head.
@@ -53,7 +53,7 @@ Settings
 
 
 To start JustDeepIt, we open the terminal and run the following command.
-Then, we open the web browser and accesss to \http://0.0.0.0:8000.
+Then, we open the web browser and accesss to \http://127.0.0.1:8000.
 
 
 .. code-block:: sh
@@ -62,7 +62,7 @@ Then, we open the web browser and accesss to \http://0.0.0.0:8000.
     # INFO:uvicorn.error:Started server process [61]
     # INFO:uvicorn.error:Waiting for application startup.
     # INFO:uvicorn.error:Application startup complete.
-    # INFO:uvicorn.error:Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+    # INFO:uvicorn.error:Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 
 
 
@@ -141,8 +141,8 @@ API
 
 
 Model training and object detection can be performed using the JustDeepIt API.
-Python script :file:`run_mmdet.py` stored in `GitHub:JustDeepIt/tutorials/GWHD/scripts <https://github.com/biunit/JustDeepIt>`_ can be used for this purpose.
-See `GitHub:JustDeepIt/tutorials/GWHD/ <https://github.com/biunit/JustDeepIt>`_ for detailed information.
+Python script :file:`run_mmdet.py` stored in `GitHub:JustDeepIt/tutorials/GWHD/scripts <https://github.com/biunit/JustDeepIt/tree/main/tutorials/GWHD/scripts>`_ can be used for this purpose.
+See `GitHub:JustDeepIt/tutorials/GWHD/ <https://github.com/biunit/JustDeepIt/tree/main/tutorials/GWHD>`_ for detailed information.
 
 
 .. include:: ../../../tutorials/GWHD/README.rst

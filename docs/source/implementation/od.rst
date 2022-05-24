@@ -128,11 +128,11 @@ CUI
 
 
 JustDeepIt implements three simple methods,
-:func:`train <justdeepit.models.OD.train>`, :func:`save <justdeepit.models.OD.save>`,
-and :func:`inference <justdeepit.models.OD.inference>`.
-:func:`train <justdeepit.models.OD.train>` is used for training the models,
-while :func:`save <justdeepit.models.OD.save>` is used for saving the trained weights,
-and :func:`inference <justdeepit.models.OD.inference>` is used for detecting objects in test images.
+:meth:`train <justdeepit.models.OD.train>`, :meth:`save <justdeepit.models.OD.save>`,
+and :meth:`inference <justdeepit.models.OD.inference>`.
+:meth:`train <justdeepit.models.OD.train>` is used for training the models,
+while :meth:`save <justdeepit.models.OD.save>` is used for saving the trained weights,
+and :meth:`inference <justdeepit.models.OD.inference>` is used for detecting objects in test images.
 Detailed descriptions of these functions are provided below.
 
 
@@ -187,14 +187,14 @@ can be checked by executing the following code.
 Training
 --------
 
-Method :func:`train <justdeepit.models.OD.train>` is used for the model training
+Method :meth:`train <justdeepit.models.OD.train>` is used for the model training
 and requires at least two arguments
 to specify the annotations and folder containing the training images.
 Annotations can be specified in a single file in the COCO format
 or a folder containing multiple files in the Pascal VOC format.
 Training process requires a GPU environment if MMDetection is chosen as the backend
 because it only supports this training approach in the current version of MMDetection.
-To check the detailed usage of method :func:`train <justdeepit.models.OD.train>` and all its arguments,
+To check the detailed usage of method :meth:`train <justdeepit.models.OD.train>` and all its arguments,
 refer to the corresponding API documentation.
 
 
@@ -211,12 +211,12 @@ refer to the corresponding API documentation.
 
 
 
-The trained weights can be saved using method :func:`save <justdeepit.models.OD.save>`,
+The trained weights can be saved using method :meth:`save <justdeepit.models.OD.save>`,
 which simultaneously stores the trained weights (extension ``.pth``)
 and model configuration file (extensions ``.py`` for MMDetection backend and ``.yaml`` for Detectron2 backend).
 The user can apply the weights and configuration file as needed
 for generating a model using the MMDetection or Detectron2 library directly.
-To check the detailed usage of method :func:`save <justdeepit.models.OD.save>` and all its arguments,
+To check the detailed usage of method :meth:`save <justdeepit.models.OD.save>` and all its arguments,
 refer to the corresponding API documentation.
 
 
@@ -231,16 +231,16 @@ refer to the corresponding API documentation.
 Inference
 ---------
 
-Method :func:`inference <justdeepit.models.OD.inference>` is used to detect objects in the test images using the trained model.
+Method :meth:`inference <justdeepit.models.OD.inference>` is used to detect objects in the test images using the trained model.
 This method requires at least one argument to specify a single image,
 list of images, or folder containing multiple images.
-The detection results are returned as a class object of :class:`justdeepit.utils.ImageAnnotations`,
-which is a list of class objects of :class:`justdeepit.utils.ImageAnnotation`.
+The detection results are returned as a class object of :class:`justdeepit.utils.ImageAnnotations <justdeepit.utils.ImageAnnotations>`,
+which is a list of class objects of :class:`justdeepit.utils.ImageAnnotation <justdeepit.utils.ImageAnnotation>`.
 
 
 To save the results in the COCO format,
-we can use method :func:`format <justdeepit.utils.ImageAnnotations.format>`
-implemented in class :class:`justdeepit.utils.ImageAnnotations` to generate a JSON file in the COCO format.
+we can use method :meth:`format <justdeepit.utils.ImageAnnotations.format>`
+implemented in class :class:`justdeepit.utils.ImageAnnotations <justdeepit.utils.ImageAnnotations>` to generate a JSON file in the COCO format.
 
 
 
@@ -259,8 +259,8 @@ implemented in class :class:`justdeepit.utils.ImageAnnotations` to generate a JS
 
 
 To save the detection results as images, for example,
-showing the detected bounding boxes on the images, method :func:`draw <justdeepit.utils.ImageAnnotation.draw>`
-implemented in class :class:`justdeepit.utils.ImageAnnotation` can be used.
+showing the detected bounding boxes on the images, method :meth:`draw <justdeepit.utils.ImageAnnotation.draw>`
+implemented in class :class:`justdeepit.utils.ImageAnnotation <justdeepit.utils.ImageAnnotation>` can be used.
 
 
 
@@ -271,11 +271,12 @@ implemented in class :class:`justdeepit.utils.ImageAnnotation` can be used.
 
 
 
-To check the detailed usage of method :func:`inference <justdeepit.models.OD.inference>` and all its arguments,
+To check the detailed usage of method :meth:`inference <justdeepit.models.OD.inference>` and all its arguments,
 refer to the corresponding API documentation.
-For usage details of methods :func:`format <justdeepit.utils.ImageAnnotations.format>`
-and :func:`draw <justdeepit.utils.ImageAnnotation.draw>`,
-refer to the API documentation of methods :class:`justdeepit.utils.ImageAnnotations` and :class:`justdeepit.utils.ImageAnnotation`, respectively.
+For usage details of methods :meth:`format <justdeepit.utils.ImageAnnotations.format>`
+and :meth:`draw <justdeepit.utils.ImageAnnotation.draw>`,
+refer to the API documentation of methods :class:`justdeepit.utils.ImageAnnotations <justdeepit.utils.ImageAnnotations>`
+and :class:`justdeepit.utils.ImageAnnotation <justdeepit.utils.ImageAnnotation>`, respectively.
 
 
 

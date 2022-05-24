@@ -47,7 +47,7 @@ Training is performed as follow steps:
 As most steps are repeated five times,
 we use the JustDeepIt API to efficiently repeat them automatically.
 The executable Python scripts are available at
-`GitHub:JustDeepIt/tutorials/AIPI/iterative_u2net.py <https://github.com/biunit/JustDeepIt>`_.
+`GitHub:JustDeepIt/tutorials/AIPI/iterative_u2net.py <https://github.com/biunit/JustDeepIt/tree/main/tutorials/AIPI>`_.
 
 
 .. code-block:: sh

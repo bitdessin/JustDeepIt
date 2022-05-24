@@ -13,7 +13,6 @@
 import os
 import sys
 
-
 # -- Project information -----------------------------------------------------
 
 project = 'JustDeepIt'
@@ -28,11 +27,11 @@ author = 'Jianqiang Sun'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.todo',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
     'sphinxcontrib.napoleon',
 ]
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -71,17 +70,9 @@ napoleon_use_ivar = False
 napoleon_use_param = True
 napoleon_use_rtype = True
 napoleon_use_keyword = True
-
-
-
-
-#def skip(app, what, name, obj, skip, options):
-#    if name == "__init__":
-#        return False
-#    return skip
+add_function_parentheses = False
 
 def setup(app):
     app.add_css_file('style.css')
-#    app.connect('autodoc-skip-member', skip)
 
 

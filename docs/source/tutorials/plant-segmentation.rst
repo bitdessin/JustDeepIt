@@ -50,7 +50,7 @@ Settings
 
 
 To start JustDeepIt, we open the terminal and run the following command.
-Then, we open the web browser and accesss to \http://0.0.0.0:8000.
+Then, we open the web browser and accesss to \http://127.0.0.1:8000.
 
 
 .. code-block:: sh
@@ -59,7 +59,7 @@ Then, we open the web browser and accesss to \http://0.0.0.0:8000.
     # INFO:uvicorn.error:Started server process [61]
     # INFO:uvicorn.error:Waiting for application startup.
     # INFO:uvicorn.error:Application startup complete.
-    # INFO:uvicorn.error:Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+    # INFO:uvicorn.error:Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 
 
 

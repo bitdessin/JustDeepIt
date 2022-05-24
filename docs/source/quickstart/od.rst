@@ -13,7 +13,7 @@ Dataset
 =======
 
 The artificial dataset used for this quick start guide is stored in
-GitHub (`JustDeepIt/tutorials/OD <https://github.com/biunit/JustDeepIt/tutorials/OD>`_).
+GitHub (`JustDeepIt/tutorials/OD <https://github.com/biunit/JustDeepIt/tree/main/tutorials/OD>`_).
 The :file:`data` folder contains :file:`images` folder,
 :file:`annotations` folder, and :file:`class_labels.txt` file.
 The :file:`images` folder contains training images.
@@ -31,6 +31,13 @@ One can use :code:`git` command to download dataset from GitHub with the followi
     
     ls JustDeepIt/tutorials/OD/data
     # annotations     class_label.txt images
+    
+    ls tutorials/OD/data/images
+    # e1.png  e10.png e2.png  e3.png  e4.png  e5.png  e6.png  e7.png  e8.png  e9.png
+    
+
+.. image:: ../_static/quickstart_od_data.png
+    :align: center
 
 
 Settings
@@ -50,10 +57,10 @@ and run the following command.
     # INFO:uvicorn.error:Started server process [61]
     # INFO:uvicorn.error:Waiting for application startup.
     # INFO:uvicorn.error:Application startup complete.
-    # INFO:uvicorn.error:Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+    # INFO:uvicorn.error:Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 
 
-Then, we open the web browser and accesss to \http://0.0.0.0:8000.
+Then, we open the web browser and accesss to \http://127.0.0.1:8000.
 At the startup screen, we press "Object Detection" button to start object detection mode.
 
 
@@ -139,7 +146,7 @@ API
 
 Training and inference can be performed using the JustDeepIt API.
 Python script :file:`run_fasterrcnn.py` stored in GitHub
-(`JustDeepIt/tutorials/OD <https://github.com/biunit/JustDeepIt/tutorials/OD>`_)
+(`JustDeepIt/tutorials/OD <https://github.com/biunit/JustDeepIt/tree/main/tutorials/OD>`_)
 can be used for this purpose.
 
 

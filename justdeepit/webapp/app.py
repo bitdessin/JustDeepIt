@@ -161,6 +161,7 @@ class ModuleFrame():
             params = self.__update_checkboxes(params, mode)
             for param_id in params:
                 v = params.get(param_id)
+                v = v.strip(' ')
                 if param_id in ['lr', 'cutoff']:
                     v = float(v)
                 elif param_id in ['batchsize', 'epoch', 'cpu', 'gpu', 'openingks', 'closingks', 'windowsize']:
@@ -703,7 +704,7 @@ def get_dirtree(dirpath: str = None, include_file: int = 1):
 def run_app():
 
     parser = argparse.ArgumentParser(description='JustDeepIt')
-    parser.add_argument('--host', type=str, default='0.0.0.0', help='hostname')
+    parser.add_argument('--host', type=str, default='127.0.0.1', help='hostname')
     parser.add_argument('--port', type=int, default=8000, help='port')
     args = parser.parse_args() 
 

@@ -114,12 +114,12 @@ CUI
 
 
 JustDeepIt implements three simple methods,
-:func:`train <justdeepit.models.SOD.train>`,
-:func:`save <justdeepit.models.SOD.save>`,
-and :func:`inference <justdeepit.models.SOD.inference>`.
-:func:`train <justdeepit.models.SOD.train>` is used for training the models,
-while :func:`save <justdeepit.models.SOD.save>` is used for saving the training weights,
-and :func:`inference <justdeepit.models.SOD.inference>` is used for detecting objects in test images.
+:meth:`train <justdeepit.models.SOD.train>`,
+:meth:`save <justdeepit.models.SOD.save>`,
+and :meth:`inference <justdeepit.models.SOD.inference>`.
+:meth:`train <justdeepit.models.SOD.train>` is used for training the models,
+while :meth:`save <justdeepit.models.SOD.save>` is used for saving the training weights,
+and :meth:`inference <justdeepit.models.SOD.inference>` is used for detecting objects in test images.
 Detailed descriptions of these functions are provided below.
 
 
@@ -128,12 +128,12 @@ Model Trainig
 --------------
 
 
-Method :func:`train <justdeepit.models.SOD.train>` is used for the model training
+Method :meth:`train <justdeepit.models.SOD.train>` is used for the model training
 and requires at least one argument to specify a file which contains training images and mask images.
 The file should be a tab-separeted file which contains the two columns.
 On each line, the first column records a path to a training image,
 and the second column records a path to the corresponding mask image.
-To check the detailed usage of method :func:`train <justdeepit.models.SOD.train>` and all its arguments,
+To check the detailed usage of method :meth:`train <justdeepit.models.SOD.train>` and all its arguments,
 refer to the corresponding API documentation.
 
 
@@ -152,7 +152,7 @@ refer to the corresponding API documentation.
 
 
 
-The training weights can be saved using method :func:`save <justdeepit.models.SOD.save>`,
+The training weights can be saved using method :meth:`save <justdeepit.models.SOD.save>`,
 which stores the trained weights.
 
 
@@ -167,7 +167,7 @@ Inference
 
 
 
-Method :func:`inference <justdeepit.models.SOD.inference>`
+Method :meth:`inference <justdeepit.models.SOD.inference>`
 is used to perform salient object detect from the test images using the trained model.
 This method requires at least one argument to specify a single image,
 list of images, or folder containing multiple images.
@@ -188,8 +188,8 @@ list of images, or folder containing multiple images.
 
 To show the detection results as images, for example,
 showing the detected contours on the images,
-method :func:`draw <justdeepit.utils.ImageAnnotation.draw>`
-implemented in class :class:`justdeepit.utils.ImageAnnotation` can be used.
+method :meth:`draw <justdeepit.utils.ImageAnnotation.draw>`
+implemented in class :class:`justdeepit.utils.ImageAnnotation <justdeepit.utils.ImageAnnotation>` can be used.
 Here is an example to show the detection result of the first image.
 
 .. code-block:: python
@@ -199,7 +199,7 @@ Here is an example to show the detection result of the first image.
 
 
 To save the detection results as images,
-specify the path to the method :func:`draw <justdeepit.utils.ImageAnnotation.draw>`.
+specify the path to the method :meth:`draw <justdeepit.utils.ImageAnnotation.draw>`.
 Here is an example to save the detection results of all test images.
 
 .. code-block:: python
@@ -212,10 +212,10 @@ Here is an example to save the detection results of all test images.
     
 
 
-To check the detailed usage of method :func:`inference <justdeepit.models.SOD.inference>` and all its arguments,
+To check the detailed usage of method :meth:`inference <justdeepit.models.SOD.inference>` and all its arguments,
 refer to the corresponding documentation.
-For usage details of method :func:`draw <justdeepit.utils.ImageAnnotation.draw>`,
-refer to the documentation of class :class:`justdeepit.utils.ImageAnnotation`.
+For usage details of method :meth:`draw <justdeepit.utils.ImageAnnotation.draw>`,
+refer to the documentation of class :class:`justdeepit.utils.ImageAnnotation <justdeepit.utils.ImageAnnotation>`.
 
 
 

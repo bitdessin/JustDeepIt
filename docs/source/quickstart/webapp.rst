@@ -27,7 +27,7 @@ Source code
 -----------
 
 The source code for this tutorial is available on GitHub
-(`JustDeepIt/tutorials/WebApp <https://github.com/biunit/JustDeepIt/tutorials/WebApp>`_)
+(`JustDeepIt/tutorials/WebApp <https://github.com/biunit/JustDeepIt/tree/main/tutorials/WebApp>`_)
 and can be downloaded using the following command as necessary.
 
 .. code-block:: sh

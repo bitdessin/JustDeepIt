@@ -753,19 +753,21 @@ class ImageAnnotation:
             _[:, :, 1] = img.copy()
             _[:, :, 2] = img.copy()
             img = _
-            
+        
         img = img[:, :, :3]
         if alpha < 1.0:
-            img_original = self.image[:, :, :3]
-            img = img * alpha + img_original * (1 - alpha)
+            img = img * alpha + self.image[:, :, :3] * (1 - alpha)
         img = img.astype(np.uint8)
         
         img = self.__add_labels(img, label, score, fig_type)
         
+        if self.image.shape[2] > 3:
+            _ = np.zeros((self.image.shape[0], self.image.shape[1], self.image.shape[2] - 3))
+            _[:, :, :] = self.image[:, :, 3:]
+            img = np.concatenate([img, _], axis=2)
         if file_path is None:
             return img
         else:
-            img = img[:, :, :3]
             skimage.io.imsave(file_path, img.astype(np.uint8), check_contrast=False)
         
     

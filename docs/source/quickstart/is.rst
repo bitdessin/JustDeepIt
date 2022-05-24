@@ -13,7 +13,7 @@ Dataset
 
 
 The artificial dataset used for this quick start guide is stored in
-GitHub (`JustDeepIt/tutorials/IS <https://github.com/biunit/JustDeepIt/tutorials/IS>`_).
+GitHub (`JustDeepIt/tutorials/IS <https://github.com/biunit/JustDeepIt/tree/main/tutorials/IS>`_).
 The :file:`data` folder contains :file:`images` folder,
 :file:`annotations` folder, and :file:`class_labels.txt` file.
 The :file:`images` folder contains training images.
@@ -33,7 +33,13 @@ One can use :code:`git` command to download dataset from GitHub with the followi
     ls JustDeepIt/tutorials/IS/data
     # annotations     class_label.txt images
 
+    ls JustDeepIt/tutorials/IS/data/images
+    # e1.png  e10.png e2.png  e3.png  e4.png  e5.png  e6.png  e7.png  e8.png  e9.png
 
+
+
+.. image:: ../_static/quickstart_is_data.png
+    :align: center
 
 
 
@@ -54,11 +60,11 @@ and run the following command.
     # INFO:uvicorn.error:Started server process [61]
     # INFO:uvicorn.error:Waiting for application startup.
     # INFO:uvicorn.error:Application startup complete.
-    # INFO:uvicorn.error:Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+    # INFO:uvicorn.error:Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 
 
 
-Then, we open the web browser and accesss to \http://0.0.0.0:8000.
+Then, we open the web browser and accesss to \http://127.0.0.1:8000.
 At the startup screen, we press "Instance Segmentation" button to start segmentation mode.
 
 
@@ -143,7 +149,7 @@ API
 
 Training and inference can be performed using the JustDeepIt API.
 Python script :file:`run_maskrcnn.py` stored in GitHub
-(`JustDeepIt/tutorials/IS <https://github.com/biunit/JustDeepIt/tutorials/IS>`_)
+(`JustDeepIt/tutorials/IS <https://github.com/biunit/JustDeepIt/tree/main/tutorials/IS>`_)
 can be used for this purpose.
 
 

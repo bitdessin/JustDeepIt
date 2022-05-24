@@ -397,31 +397,20 @@ $(function(){
         
     });
     // close select-file-popup window
-    $('body').on('click', '#select-file-popup', function() {
-    //$('#select-file-popup').on('click', function(e) {  xxx
+    $('body').on('click', '#select-file-popup', function(e) {
         if (!$(e.target).closest('#select-file-manager').length) {
             $('#select-file-popup').fadeOut();
         }
     });
     $('body').on('click', '#closeSelectFilePanel', function() {
-    //$('#closeSelectFilePanel').on('click', function() { xxx
         $('#select-file-popup').fadeOut();
     });
     // set the selected path
     $('body').on('click', '#selectFile', function() {
-    //$('#selectFile').on('click', function() { xxx
         $('#' + focusedInputField).val($('#filetree-selected').val());
         focusedInputField = null;
         refreshExecuteButtons();
         $('#select-file-popup').fadeOut();
-    });
-    $('body').on('keypress', '#selectFile', function(e) {
-        if (e.keyCode === 13) {
-            $('#' + focusedInputField).val($('#filetree-selected').val());
-            focusedInputField = null;
-            refreshExecuteButtons();
-            $('#select-file-popup').fadeOut();
-        }
     });
     
     $('body').on('click', '#filetree', function() {
@@ -447,15 +436,24 @@ $(function(){
         }, 300);
     });
     // check users whether write file name or not
-    $('body').on('keyup keypress blur change', '#filetree-selected', function() {
-        if (($(this).data('val') === $(this).val()) | ($(this).val().slice(-1)) === '/') {
-            $('#selectFile').addClass('button-disable');
-            $('#selectFile').attr('disabled', true);
-        }else {
-            $('#selectFile').removeClass('button-disable');
-            $('#selectFile').attr('disabled', false);
+    $('body').on('keyup keypress blur change', '#filetree-selected', function(e) {
+        if ($('#filetree-required-filetype').val() === 'file' && $('#filetree-selected-filetype').val() === 'folder') {
+            if (($(this).data('val') === $(this).val()) | ($(this).val().slice(-1)) === '/') {
+                $('#selectFile').addClass('button-disable');
+                $('#selectFile').attr('disabled', true);
+            } else {
+                $('#selectFile').removeClass('button-disable');
+                $('#selectFile').attr('disabled', false);
+                if (e.keyCode !== undefined && e.keyCode === 13) {
+                    $('#' + focusedInputField).val($('#filetree-selected').val());
+                    focusedInputField = null;
+                    refreshExecuteButtons();
+                    $('#select-file-popup').fadeOut();
+                }
+            }
         }
     });
+
 
     $('#module-training-strategy').on('change', function() {
         if ($(this).val() === 'resizing') {

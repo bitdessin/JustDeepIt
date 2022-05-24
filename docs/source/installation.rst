@@ -80,7 +80,7 @@ and then run the following commands to download and install JustDeepIt with its 
 
 .. code-block:: bash
     
-    git clone git@github.com:biunit/JustDeepIt.git
+    git clone https://github.com/biunit/JustDeepIt.git JustDeepIt
     cd JustDeepIt
     
     pip install -r requirements.txt
@@ -92,7 +92,7 @@ Installation via Docker
 ------------------------
 
 Dockerfile for building a Docker image of JustDeepIt is available on
-GitHub (`biunit/JustDeepIt/docker <https://github.com/biunit/JustDeepIt/docker>`_)
+GitHub (`biunit/JustDeepIt/docker <https://github.com/biunit/JustDeepIt/tree/main/docker>`_)
 and can be downloaded to build the image using the following commands:
 
 .. code-block:: bash
