@@ -6,9 +6,9 @@ Quick Start
 .. toctree::
     :maxdepth: 1
     
-    quickstart/od.rst
-    quickstart/is.rst
-    quickstart/sod.rst
+    quickstart/object-detection.rst
+    quickstart/instance-segmentation.rst
+    quickstart/salient-object-detection.rst
     quickstart/webapp.rst
 
 

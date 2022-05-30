@@ -5,7 +5,7 @@ Salient Object Detection
 JustDeepIt supports users to perform object detection, instance segmentation,
 and salient object detection with GUI or CUI.
 In this tutorial, to overview of functions for salient object detection,
-we showed the usage of JustDeepIt for salient object detection with artificial dataset.
+we showed the usage of JustDeepIt for salient object detection with an artificial dataset.
 
 
 Dataset
@@ -17,7 +17,7 @@ GitHub (`JustDeepIt/tutorials/SOD <https://github.com/biunit/JustDeepIt/tree/mai
 The :file:`data` folder contains :file:`train_images` and :file:`query_images` folders.
 :file:`train_images` folder contains training images and mask images (annotation).
 :file:`query_images` folder contains test images, actually these images are same as the images in :file:`train_images`.
-One can use :code:`git` command to download dataset from GitHub with the following script.
+The user can use :code:`git` command to download dataset from GitHub with the following script.
 
 
 .. code-block:: sh
@@ -76,7 +76,8 @@ to start salient object detection mode.
 
 Next, at the **Preferences** screen,
 we set parameters as shown in the screenshot below.
-The **workspace** will be automatically set as :file:`JustDeepIt/tutorials/OD`.
+The **workspace** will be automatically set as the absolute path of the current folder
+(e.g., :file:`/home/appuser/JustDeepIt/tutorials/SOD`, depending on the user's environment).
 Then, we press button **Load Workspace**.
 
 
@@ -101,7 +102,10 @@ and **image folder** as the folder (i.e., :file:`data/train_images`)
 containing training images and masks.
 Next, we set the suffixes of the training images and mask
 to ``_image.jpg`` and ``_mask.png``, respectively.
-Then, we press buttons **Start Training** for model training.
+The other parameters are set as shown in screenshot below.
+Note that the values of **model weight** and **image folder** may be
+different from the screenshot depending on user's environment.
+Then, we press button **Start Training** for model training.
 
 
 
@@ -115,10 +119,12 @@ Training takes 3-4 hours, and it depends on the computer hardware.
 Inference
 =========
 
-In tab **Inference**, the model weight is specified to the training weights,
-whose file extension is pth in general.
+In tab **Inference**, the **model weight** is specified to the training weights,
+whose file extension is :file:`pth` in general.
 We specify **image folder** to the folder containing the images (e.g., :file:`data/query_images`) for inference.
-Then, we press buttons **Start Inference** for inference.
+Note that the values of **model weight** and **image folder** may be
+different from the screenshot depending on user's environment.
+Then, we press button **Start Inference** for inference.
 
 
 .. image:: ../_static/quickstart_sod_eval.png

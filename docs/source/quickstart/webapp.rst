@@ -8,7 +8,8 @@ can create models for object detection in GUI.
 The researcher can then work with a systems engineer
 to build a web application for object detection on the server
 which usually only supports CUI.
-This tutorial demonstrates how to build a simple web application using Flask.
+This tutorial demonstrates how to build a simple web application using
+`Flask <https://flask.palletsprojects.com/>`_.
 
 
 .. warning::
@@ -55,7 +56,7 @@ Model
 -----
 
 
-We refer to quick start for :doc:`od` to train the model,
+We refer to quick start for :doc:`object-detection` to train the model,
 then we obtain the :file:`class_label.txt` file and :file:`fasterrcnn.pth` file.
 To skip this step, we run the following command to download the trained model
 (i.e., :file:`fasterrcnn.pth`) into the tutorial folder.
@@ -74,7 +75,7 @@ Web Application
 ===============
 
 For simplicity, we create a web application with minimal functionality,
-allowing users to upload images
+allowing users to upload images,
 perform object detection, and show the results on the web page.
 We create an :file:`app.py` file in the same folder as :file:`class_label.txt`
 and write the following code.

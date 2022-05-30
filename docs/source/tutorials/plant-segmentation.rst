@@ -16,7 +16,7 @@ Dataset Preparation
 
 
 The dataset used in this case study can be downloaded from
-Computer Vision Problems in `Plant Phenotyping—CVPPP <https://www.plant-phenotyping.org/CVPPP2017-challenge>`_.
+Computer Vision Problems in `Plant Phenotyping CVPPP (CVPPP 2017 Challenges) <https://www.plant-phenotyping.org/CVPPP2017-challenge>`_.
 The dataset is intended for developing and evaluating methods for plant detection,
 localization, segmentation, and other tasks.
 The original dataset is grouped into three levels: ray, stack, and plant.
@@ -27,11 +27,11 @@ In this study, we use the images at level tray for training and plant segmentati
 
 The dataset contains 27 tray-level images with filename :file:`ara2013_tray*_rgb.png`,
 where * identifies the image from 01 to 27.
-We create folders :file:`train_images` and :file:`query_images`
-in the workspace (PPD2013) to store the training and test images, respectively.
+We create folders :file:`inputs/train_images` and :file:`inputs/query_images`
+in the workspace (:file:`PPD2013`) to store the training and test images, respectively.
 We copy four images with the corresponding masks, tray01, tray09, tray18, and tray27,
-into folder :file:`train_images`
-and all the images without masks into folder :file:`query_images`.
+into folder :file:`inputs/train_images`
+and all the images without masks into folder :file:`inputs/query_images`.
 
 The above dataset preparation can be performed manually or automatically using the following shell scripts:
 
@@ -50,7 +50,8 @@ Settings
 
 
 To start JustDeepIt, we open the terminal and run the following command.
-Then, we open the web browser and accesss to \http://127.0.0.1:8000.
+Then, we open the web browser, access to \http://127.0.0.1:8000,
+and start "Salient Object Detection" mode.
 
 
 .. code-block:: sh
@@ -62,13 +63,18 @@ Then, we open the web browser and accesss to \http://127.0.0.1:8000.
     # INFO:uvicorn.error:Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 
 
+We set the **workspace** to the location containing folders
+:file:`inputs/training_images` and :file:`inputs/query_images`,
+and press **Load Workspace** button.
+Note that the value of **workspace** may be different from
+the screenshot below depending on user's environment.
 
 
 .. image:: ../_static/tutorials_PPD2013_pref.png
     :align: center
 
 
-After loading workspace, the functions of the model training and object detection become available.
+After loading workspace, the functions of the model training and inference become available.
 
 
 
@@ -82,17 +88,21 @@ and specify **model weight** as the location to store the training weight
 and **image folder** as the folder (i.e., :file:`train_images`)
 containing training images and masks (i.e., annotation labels).
 Then, we set the suffixes of the training images and mask to ``_rgb.png`` and ``_fg.png``, respectively.
+The other parameters are set as shown in the screenshot below.
+Note that the values of **model weight** and **image folder** may be different
+from the screenshot depending on user's environment.
 
 As the images in the dataset have a resolution of 3108 x 2324 pixels
 and each image contains 24 plants,
 the training images are large and capture many small objects.
-Thus, *random cropping* strategy is the suitable selection for training.
+Thus, *random cropping* strategy is the suitable selection for training
+(see :ref:`sodtrainingstrategy` for details).
 Here we set JustDeepIt to crop areas of 320 x 320 pixels for training.
 As *random cropping* is applied once per image and epoch and only four training images were available,
 we require many epochs (1,000 epochs in this case study) for training
 to ensure a high model performance.
-After setting the parameters as in the images below,
-we press **Start Training** buttons to start model training.
+After setting the parameters as in the screenshot below,
+we press **Start Training** button to start model training.
 
 
 .. image:: ../_static/tutorials_PPD2013_train.png
@@ -107,24 +117,31 @@ Inference
 =========
 
 In tab **Inference**,
-we specify **model weight** to the training weights, whose file usually has extension pth,
-**query images** as the folder containing images for detection (i.e., :file:`query_images`),
-and the other parameters as shown in the image below.
-To summarize objects over time, option time series is activated.
+we specify **model weight** to the training weights,
+whose file usually has extension :file:`pth`,
+**image folder** as the folder containing images for detection (i.e., :file:`query_images`),
+and the other parameters as shown in the screenshot below.
+Note that the values of **model weight** and **image folder** may be different
+from the screenshot depending on user's environment.
+To summarize objects over time, we activate option **time-series**.
+In addition, to align plants in each image through time-series by location,
+we activate option **align images**.
 
 As we trained the model on areas of 320 x 320 pixels
 that were randomly cropped from the original image,
 we also need input of the same size and scale (i.e., 320 x 320 pixels)
 for the model to ensure a high performance.
 Thus, during detection,
-we use the *sliding* approach to crop areas of 320 x 320 pixels
+we use the *sliding* approach (see :ref:`soddetectionstrategy` for details)
+to crop areas of 320 x 320 pixels
 from the top left to the bottom right of the original image,
 performe salient object detection for all the areas,
 and finally merge the detection results into a single image. 
 
-Then, we press **Start Inference** buttons to execute
-object detection and object summarization.
-The prediction results and summarization were saved in the **workspace** as specified in tab **Preferences**.
+Then, we press **Start Inference** button to execute
+plant segmentation (i.e., salient object detection) and object summarization.
+The results of prediction and summarization were saved
+in the **workspace** as specified in tab **Preferences**.
 
 
 .. image:: ../_static/tutorials_PPD2013_eval.png
@@ -136,7 +153,7 @@ The prediction results and summarization were saved in the **workspace** as spec
 Results
 =======
 
-JustDeepIt generates three types of images: mask, masked, and contour during object detection,
+JustDeepIt generates three types of images: mask, masked, and contour during the inference process,
 as respectively shown in the images below.
 
 .. image:: ../_static/tutorials_PPD2013_inference_output_types.jpg
@@ -169,7 +186,7 @@ and thus the detected objects are identified from 1 to 24.
 
 Information about each object,
 such as the coordinates of center position, radius, size, and color in RGB, HSV, and L*a*b* color spaces
-will be recorded in file objects_summary.tsv in the workspace.
+will be recorded in :file:`*.objects.tsv` files in the workspace :file:`justdeepitws/outputs` folder.
 Python or R can be used to visualize summarization results,
 such as the projected area of each plant and the color of each plant over time.
 

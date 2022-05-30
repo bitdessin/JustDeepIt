@@ -698,7 +698,7 @@ class ImageAnnotation:
             label (bool):  Show class label of object on the image.
             score (bool):  Show confidence score of object on the image if the
                            score is not ``None``.
-            alpha (flaot): A decimal number between 0.0 and 1.0 to specify the transparence of mask.
+            alpha (float): A decimal number between 0.0 and 1.0 to specify the transparence of mask.
             class2rgb(dict): A dictionary with a key as a class name and value as a RGB value.
                              If ``None`` is given, the preset colors will be used.
         

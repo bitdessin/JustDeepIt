@@ -36,12 +36,15 @@ Model Training and Leaf Extraction
 
 Training is performed as follow steps:
 
-    1.	We download the weights of U\ :sup:`2`-Net (0\ :sup:`th`-trained U\ :sup:`2`-Net) pretrained on the DUTS dataset from the corresponding GitHub repository (`xuebinqin/U-2-Net u2net.pth <https://github.com/xuebinqin/U-2-Net>`_) and used the 0\ :sup:`th`-trained U\ :sup:`2`-Net for leaf segmentation on the images in folder :file:`AIPI/data/images`.
+    1.	We download the weights of U\ :sup:`2`-Net (0\ :sup:`th`-trained U\ :sup:`2`-Net) pretrained on the DUTS dataset from the corresponding GitHub repository (`xuebinqin/U-2-Net u2net.pth <https://github.com/xuebinqin/U-2-Net>`_) and use the 0\ :sup:`th`-trained U\ :sup:`2`-Net for leaf segmentation on the images in folder :file:`AIPI/data/images`.
     2.	After detection, we validate the results. The images in which the entire area is detected as a salient object (e.g., image 3) or no detection occurred (e.g., image 4) are discarded.
     3.	We use the remaining images and detection results (i.e., mask images) to train U\ :sup:`2`-Net.
     4.	We use the trained U\ :sup:`2`-Net from step 3 for salient object detection on the cucumber leaf images in folder :file:`AIPI/data/images`.
     5.	We repeat steps 2-4 to train U\ :sup:`2`-Net five times, finally obtaining the 5\ :sup:`th`-trained U\ :sup:`2`-Net.
 
+
+.. image:: ../_static/u2net-iterative-training-process.png
+    :align: center
 
 
 As most steps are repeated five times,
@@ -72,9 +75,11 @@ after running the corresponding Python script.
 Results
 =======
 
-Examples of detection results of the 0\ :sup:`th`- and 5\ :sup:`th`-trained U\ :sup:`2`-Net are shown in the figure below. 
+Examples of leaf segmentation of the 0\ :sup:`th`- and 5\ :sup:`th`-trained U\ :sup:`2`-Net
+are shown in the figure below. 
 
 .. image:: ../_static/tutorials_AIPI_output.jpg
+    :width: 80%
     :align: center
 
 

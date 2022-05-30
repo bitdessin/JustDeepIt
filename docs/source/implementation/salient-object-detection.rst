@@ -4,7 +4,14 @@ Salient Object Detection
 
 Salient object detection is typically used to identify the main object in an image,
 and it can be applied to one-class object segmentation tasks such as background removal,
-leaf segmentation, root segmentation, and tumor segmentation.
+plant segmentation, root segmentation, and tumor segmentation.
+The fowllowing image is an example of plant segmentation using the dataset of
+`CVPPP 2017 Challenges <https://www.plant-phenotyping.org/CVPPP2017-challenge>`_.
+
+
+.. image:: ../_static/salient_object_detection_image.jpg
+    :align: center
+
 
 
 GUI
@@ -79,8 +86,8 @@ Detailed descriptions of the arguments are provided in the following table.
 Inference
 ---------
 
-Tab **Inference** is used for segment objects from test images using the trained model.
-It also allows the user to set the confidence score of salient object detection results and batch size.
+Tab **Inference** is used for segmenting objects from test images using the trained model.
+It allows the user to set the confidence score of salient object detection results and batch size.
 Detailed descriptions of the arguments are provided in the following table.
 
 
@@ -119,7 +126,7 @@ JustDeepIt implements three simple methods,
 and :meth:`inference <justdeepit.models.SOD.inference>`.
 :meth:`train <justdeepit.models.SOD.train>` is used for training the models,
 while :meth:`save <justdeepit.models.SOD.save>` is used for saving the training weights,
-and :meth:`inference <justdeepit.models.SOD.inference>` is used for detecting objects in test images.
+and :meth:`inference <justdeepit.models.SOD.inference>` is used for salient objects detection against test images.
 Detailed descriptions of these functions are provided below.
 
 
@@ -133,8 +140,7 @@ and requires at least one argument to specify a file which contains training ima
 The file should be a tab-separeted file which contains the two columns.
 On each line, the first column records a path to a training image,
 and the second column records a path to the corresponding mask image.
-To check the detailed usage of method :meth:`train <justdeepit.models.SOD.train>` and all its arguments,
-refer to the corresponding API documentation.
+Refer to the API documentation of :meth:`train <justdeepit.models.SOD.train>` for the detailed usage.
 
 
 .. code-block:: python
@@ -211,13 +217,13 @@ Here is an example to save the detection results of all test images.
     
     
 
+Refer to the corresponding API documentation of
+:meth:`inference <justdeepit.models.SOD.inference>`
+and :meth:`draw <justdeepit.utils.ImageAnnotation.draw>`
+for the detailed usage.
 
-To check the detailed usage of method :meth:`inference <justdeepit.models.SOD.inference>` and all its arguments,
-refer to the corresponding documentation.
-For usage details of method :meth:`draw <justdeepit.utils.ImageAnnotation.draw>`,
-refer to the documentation of class :class:`justdeepit.utils.ImageAnnotation <justdeepit.utils.ImageAnnotation>`.
 
-
+.. _sodtrainingstrategy:
 
 Training Strategy
 =================
@@ -234,11 +240,11 @@ This approach is used to process images containing one or few large objects.
     :align: center
 
 
-*random cropping* randomly extracts small areas of p x p pixels from the original images
+*random cropping* randomly extracts small areas of *p* x *p* pixels from the original images
 and annotations with a random angle.
 The areas of *p* x *p* pixels are then resized to 288 x 288 pixels for U\ :sup:`2`-Net training.
 *p* can be specified by the user based on the complexity of the target images and tasks.
-This approach is used to treat images containing several small objects and details.
+This approach is used to treat images containing several or many small objects.
 
 
 .. image:: ../_static/sod_train_randomcrop.png
@@ -248,6 +254,7 @@ This approach is used to treat images containing several small objects and detai
 
 
 
+.. _soddetectionstrategy:
 
 Detection Strategy
 ==================
@@ -268,7 +275,7 @@ If the model is trained using *resizing*, *resizing* approach should be set for 
 *sliding* crops square areas of *p* x *p* pixels from the input image
 from the top left to the bottom right of the image and resizes the areas to 288 x 288 pixels.
 Next, salient object detection is performed on the resized square areas.
-After all the areas are processed, their results are combined into a single image.
+After all the areas are processed, their results are combined (restored) into a single image.
 This approach corresponds to random cropping during training.
 Thus, if the model is trained using *random cropping*, *sliding* should be used for detection.
 

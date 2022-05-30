@@ -18,8 +18,8 @@ The detailed CUI and GUI implementations for each task are presented in the foll
 .. toctree::
     :maxdepth: 1
 
-    implementation/od
-    implementation/is
-    implementation/sod
+    implementation/object-detection
+    implementation/instance-segmentation
+    implementation/salient-object-detection
 
 

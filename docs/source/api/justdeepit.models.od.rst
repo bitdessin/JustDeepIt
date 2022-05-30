@@ -3,6 +3,14 @@ justdeepit.models.OD
 
 .. automodule:: justdeepit.models
    :noindex:
-   :members: OD
+   :no-members:
+   :no-undoc-members:
    :member-order: bysource
+
+.. autoclass:: OD
+   :members: train, save, inference
+   :no-undoc-members:
+   :member-order: bysource
+
+
 

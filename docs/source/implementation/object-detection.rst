@@ -12,6 +12,12 @@ SSD\ [#ssd]_,
 RetinaNet\ [#retinanet]_,
 and FCOS\ [#fcos]_
 to build object detection models.
+The fowllowing image is an example of wheat head detection results
+with Faster R-CNN using GWHD datasset\ [#gwhd]_.
+
+
+.. image:: ../_static/tutorials_GWHD_inference_output.jpg
+    :align: center
 
 
 GUI
@@ -21,8 +27,10 @@ The GUI window for object detection consists of three tabs:
 **Preferences**, **Training**, and **Inference**.
 These tabs are used for setting common parameters,
 training models,
-and detecting objects from the test images using the trained model, respectively.
-Tabs **Training** and **Inference** are disabled until the settings in tab **Preferences** are defined.
+and inference (i.e., detecting objects) from the test
+images using the trained model, respectively.
+Tabs **Training** and **Inference** are disabled
+until the settings in tab **Preferences** are defined.
 
 
 
@@ -55,18 +63,22 @@ Detailed descriptions of the arguments are provided in the following table.
     If the path is not given, then use the default configuration file defined in JustDeepIt."
     "**class label**", "A path to a text file which contains class labels.
     The file should be multiple rows with one column,
-    and string in each row represents a class label."
+    and string in each row represents a class label
+    (e.g., `class_label.txt <https://github.com/biunit/JustDeepIt/blob/main/tutorials/OD/data/class_label.txt>`_)."
     "**CPU**", "Number of CPUs."
     "**GPU**", "Number of GPUs."
     "**workspace**", "Workspace to store intermediate and final results."
     
 
 Once the parameters are set and the workspace is loaded,
-the initial configuration file is stored in the workspace.
-The configuration file will be named
-:file:`justdeepitws/config/default.py` when using MMDetection as a backend
-or :file:`justdeepitws/config/default.yaml` when using Detectron2 as a backend.
-The configuration file can be modified manually before training or detection as necessary.
+the initial configuration file is stored in the workspace
+(:file:`justdeepitws/config`).
+The configuration file is named
+:file:`default.py` when using MMDetection as a backend
+or :file:`default.yaml` when using Detectron2 as a backend.
+The configuration file can be manually modified as needed
+prior to training.
+
 
 
 Training
@@ -78,7 +90,13 @@ such as the learning rate, batch size, and number of epochs.
 Detailed descriptions of the arguments are provided in the following table.
 Furthermore, to set detailed parameters, such as model architectures and loss functions,
 users can directly modify the configuration file in the workspace,
-which is generated when setting the arguments in tab **Preferences**, as necessary.
+which is generated when setting the arguments in tab **Preferences**
+(i.e., :file:`default.py` or :file:`default.yaml`),
+prior to training as necessary.
+However, actually, according to our experience,
+we recommend that users increase the number of training images
+rather than changing such complex parameters to improve the inference accuracy.
+
 
 
 .. image:: ../_static/app_od_train.png
@@ -104,7 +122,7 @@ Inference
 ---------
 
 Tab **Inference** is used for detecting objects from test images using the trained model.
-It allows the user to set the confidence score of object detection results and batch size.
+It allows users to set the confidence score of object detection results and batch size.
 
 
 .. image:: ../_static/app_od_eval.png
@@ -131,7 +149,7 @@ JustDeepIt implements three simple methods,
 :meth:`train <justdeepit.models.OD.train>`, :meth:`save <justdeepit.models.OD.save>`,
 and :meth:`inference <justdeepit.models.OD.inference>`.
 :meth:`train <justdeepit.models.OD.train>` is used for training the models,
-while :meth:`save <justdeepit.models.OD.save>` is used for saving the trained weights,
+while :meth:`save <justdeepit.models.OD.save>` is used for saving the trained weight,
 and :meth:`inference <justdeepit.models.OD.inference>` is used for detecting objects in test images.
 Detailed descriptions of these functions are provided below.
 
@@ -142,7 +160,7 @@ Architectures
 To initialize a neural network architecture for object detection,
 class :class:`justdeepit.models.OD <justdeepit.models.OD>` with
 the corresponding arguments can be used.
-For example, to initialize a Faster R-CNN architecture with random initial weights,
+For example, to initialize a Faster R-CNN architecture with random initial weight,
 MMDetection (``mmdetection``) or Detectron2 (``detectron2``) can be used as the backend for building the model architecture.
 Currently, MMDetection supports more architectures (i.e., Faster R-CNN, SSD, RetinaNet, FCOS, and YOLOv3)
 than Detectron2 (i.e., Faster R-CNN and RetinaNet),
@@ -156,10 +174,10 @@ but the latter supports training with both CPUs and GPUs.
     model = OD('./class_label.txt', model_arch='fasterrcnn')
 
 
-To initialize a Faster R-CNN architecture with the specified trained weights
-(e.g. the weights pre-trained with COCO dataset),
-we use argument ``model_weight`` during initialization.
-Note that, the pre-trained weight file (``.pth``) can be downloaded from the GitHub repositories of
+To initialize a Faster R-CNN architecture with the specified trained weight
+(e.g. the weight pre-trained with COCO dataset),
+users can use argument ``model_weight`` during initialization.
+Note that, the pre-trained weight file (:file:`.pth`) can be downloaded from the GitHub repositories of
 `MMDetection <https://github.com/open-mmlab/mmdetection/tree/master/configs>`_
 or `Detectron2 <https://github.com/facebookresearch/detectron2/tree/main/configs>`_.
 
@@ -167,7 +185,7 @@ or `Detectron2 <https://github.com/facebookresearch/detectron2/tree/main/configs
 
     from justdeepit.models import OD
 
-    weight_fpath = '/path/to/trained_weight.pth'
+    weight_fpath = '/path/to/pretrained_weight.pth'
     model = OD('./class_label.txt', model_arch='fasterrcnn', model_weight=weight_fpath)
 
 
@@ -193,9 +211,9 @@ to specify the annotations and folder containing the training images.
 Annotations can be specified in a single file in the COCO format
 or a folder containing multiple files in the Pascal VOC format.
 Training process requires a GPU environment if MMDetection is chosen as the backend
-because it only supports this training approach in the current version of MMDetection.
-To check the detailed usage of method :meth:`train <justdeepit.models.OD.train>` and all its arguments,
-refer to the corresponding API documentation.
+because it only supports GPU training.
+Refer to the API documentation of :meth:`train <justdeepit.models.OD.train>`
+for detailed usage.
 
 
 .. code-block:: py
@@ -211,13 +229,13 @@ refer to the corresponding API documentation.
 
 
 
-The trained weights can be saved using method :meth:`save <justdeepit.models.OD.save>`,
-which simultaneously stores the trained weights (extension ``.pth``)
-and model configuration file (extensions ``.py`` for MMDetection backend and ``.yaml`` for Detectron2 backend).
-The user can apply the weights and configuration file as needed
+The trained weight can be saved using method :meth:`save <justdeepit.models.OD.save>`,
+which simultaneously stores the trained weight (extension :file`.pth`)
+and model configuration file (extensions :file:`.py` for MMDetection backend and :file:`.yaml` for Detectron2 backend).
+Users can apply the weight and configuration file as needed
 for generating a model using the MMDetection or Detectron2 library directly.
-To check the detailed usage of method :meth:`save <justdeepit.models.OD.save>` and all its arguments,
-refer to the corresponding API documentation.
+Refer to the API documentation of :meth:`save <justdeepit.models.OD.save>`
+for detailed usage.
 
 
 .. code-block:: py
@@ -231,16 +249,19 @@ refer to the corresponding API documentation.
 Inference
 ---------
 
-Method :meth:`inference <justdeepit.models.OD.inference>` is used to detect objects in the test images using the trained model.
+Method :meth:`inference <justdeepit.models.OD.inference>`
+is used to detect objects in the test images using the trained model.
 This method requires at least one argument to specify a single image,
 list of images, or folder containing multiple images.
-The detection results are returned as a class object of :class:`justdeepit.utils.ImageAnnotations <justdeepit.utils.ImageAnnotations>`,
+The detection results are returned as
+a class object of :class:`justdeepit.utils.ImageAnnotations <justdeepit.utils.ImageAnnotations>`,
 which is a list of class objects of :class:`justdeepit.utils.ImageAnnotation <justdeepit.utils.ImageAnnotation>`.
 
 
 To save the results in the COCO format,
 we can use method :meth:`format <justdeepit.utils.ImageAnnotations.format>`
-implemented in class :class:`justdeepit.utils.ImageAnnotations <justdeepit.utils.ImageAnnotations>` to generate a JSON file in the COCO format.
+implemented in class :class:`justdeepit.utils.ImageAnnotations <justdeepit.utils.ImageAnnotations>`
+to generate a JSON file in the COCO format.
 
 
 
@@ -270,13 +291,11 @@ implemented in class :class:`justdeepit.utils.ImageAnnotation <justdeepit.utils.
         output.draw('bbox', os.path.join('./predicted_outputs', os.path.basename(output.image_path)))
 
 
-
-To check the detailed usage of method :meth:`inference <justdeepit.models.OD.inference>` and all its arguments,
-refer to the corresponding API documentation.
-For usage details of methods :meth:`format <justdeepit.utils.ImageAnnotations.format>`
-and :meth:`draw <justdeepit.utils.ImageAnnotation.draw>`,
-refer to the API documentation of methods :class:`justdeepit.utils.ImageAnnotations <justdeepit.utils.ImageAnnotations>`
-and :class:`justdeepit.utils.ImageAnnotation <justdeepit.utils.ImageAnnotation>`, respectively.
+Refer to the corresponding API documentation of
+:meth:`inference <justdeepit.models.OD.inference>`,
+:meth:`format <justdeepit.utils.ImageAnnotations.format>`, and
+:meth:`draw <justdeepit.utils.ImageAnnotation.draw>`,
+for the detailed usage.
 
 
 
@@ -289,7 +308,7 @@ References
 .. [#ssd] Liu W, Anguelov D, Erhan D, Szegedy C, Reed S, Fu C, Berg AC. SSD: Single Shot MultiBox Detector. https://arxiv.org/abs/1512.02325
 .. [#retinanet] Lin T, Goyal P, Girshick R, He K, Dollár P. Focal Loss for Dense Object Detection. https://arxiv.org/abs/1708.02002
 .. [#fcos] Tian Z, Shen C, Chen H, He T. FCOS: Fully Convolutional One-Stage Object Detection. https://arxiv.org/abs/1904.01355
-
+.. [#gwhd] David E, Madec S, Sadeghi-Tehran P, Aasen H, Zheng B, Liu S, Kirchgessner N, Ishikawa G, Nagasawa K, Badhon M A, Pozniak C, Solan B, Hund A, Chapman S C, Baret F, Stavness I, Guo W. Global Wheat Head Detection (GWHD) Dataset: A Large and Diverse Dataset of High-Resolution RGB-Labelled Images to Develop and Benchmark Wheat Head Detection Methods. https://doi.org/10.34133/2020/3521852
 
 
 
