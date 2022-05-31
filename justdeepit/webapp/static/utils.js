@@ -114,11 +114,15 @@ function refreshFileSelectButtons() {
             $(this).addClass('button-disable');
             $(this).attr('disabled', true);
         });
+        $('button#config-edition-open').addClass('button-disable');
+        $('button#config-edition-open').attr('disabled', true);
     } else {
         $('button.select-file').each(function(i) {
             $(this).removeClass('button-disable');
             $(this).attr('disabled', false);
         });
+        $('button#config-edition-open').removeClass('button-disable');
+        $('button#config-edition-open').attr('disabled', false);
     }
 }
 
@@ -383,9 +387,9 @@ $(function(){
             }
             $('#filetree-required-filetype').val(selectType);
             if (selectType === 'file') {
-                $('#filetree-select-warn').text(msgSelectFile);
+                $('#filetree-select-msgbox').text(msgSelectFile);
             } else {
-                $('#filetree-select-warn').text(msgSelectFolder);
+                $('#filetree-select-msgbox').text(msgSelectFolder);
             }
             $('#filetree-selected').val($('#' + focusedInputField).val());
             $('#select-file-popup').fadeIn();
@@ -394,7 +398,6 @@ $(function(){
                 console.log("textStatus     : " + textStatus);
                 console.log("errorThrown    : " + errorThrown.message);
         });
-        
     });
     // close select-file-popup window
     $('body').on('click', '#select-file-popup', function(e) {
@@ -427,10 +430,10 @@ $(function(){
                 $('#selectFile').addClass('button-disable');
                 $('#selectFile').attr('disabled', true);
                 if (($('#filetree-required-filetype').val() === 'file') && ($('#filetree-selected-filetype').val() === 'folder')) {
-                    $('#filetree-select-warn').text(msgSelectFile);
+                    $('#filetree-select-msgbox').text(msgSelectFile);
                 }
                 else if (($('#filetree-required-filetype').val() === 'folder') && ($('#filetree-selected-filetype').val() === 'file')) {
-                    $('#filetree-select-warn').text(msgSelectFolder);
+                    $('#filetree-select-msgbox').text(msgSelectFolder);
                 }
             }
         }, 300);
@@ -453,8 +456,59 @@ $(function(){
             }
         }
     });
-
-
+    
+    
+    $('button#config-edition-open').on('click', function() {
+        $.ajax({
+            type: 'GET',
+            url: '/api/modelconfig',
+            data: {config_fpath: $('#module-config-config').val()},
+            dataType: 'json',
+            cache: false,
+        }).done(function(config_content, textStatus, jqXHR) {
+            $('#config-edition-msgbox').text(config_content['status']);
+            $('#config-edition-content').val(config_content['data']);
+            $('#config-edition-popup').fadeIn();
+        }).fail(function(XMLHttpRequest, textStatus, errorThrown) {
+                console.log("XMLHttpRequest : " + XMLHttpRequest.status);
+                console.log("textStatus     : " + textStatus);
+                console.log("errorThrown    : " + errorThrown.message);
+        });
+    })
+    $('body').on('click', '#config-edition-popup', function(e) {
+        if (!$(e.target).closest('#config-edition-manager').length) {
+            $('#config-edition-popup').fadeOut();
+        }
+    });
+    $('body').on('click', '#config-edition-close', function() {
+        $('#config-edition-popup').fadeOut();
+    });
+    $('body').on('click', '#config-edition-save', function() {
+        $.ajax({
+            type: 'POST',
+            url: '/api/modelconfig',
+            data: {
+                file_path: $('#module-config-config').val(), 
+                data: $('#config-edition-content').val()
+            },
+            dataType: 'json',
+            cache: false,
+        }).done(function(config_content, textStatus, jqXHR) {
+            $('#config-edition-msgbox').fadeOut(function() {
+                $(this).text(config_content['status']).fadeIn();
+            });
+            $('#config-edition-content').fadeOut(function() {
+                $(this).val(config_content['data']).fadeIn();
+            });
+            refreshRunningLog();
+        }).fail(function(XMLHttpRequest, textStatus, errorThrown) {
+                console.log("XMLHttpRequest : " + XMLHttpRequest.status);
+                console.log("textStatus     : " + textStatus);
+                console.log("errorThrown    : " + errorThrown.message);
+        });
+    });
+    
+    
     $('#module-training-strategy').on('change', function() {
         if ($(this).val() === 'resizing') {
             $('#module-training-resizing-option').css('visibility', '').css('visibility', 'hidden');

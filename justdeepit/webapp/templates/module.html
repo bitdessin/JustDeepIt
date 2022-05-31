@@ -64,7 +64,8 @@
             {% if module == 'OD' or module == 'IS' %}
             <tr>
                 <td><label for="module-config-config">config</label></td>
-                <td colspan="3"><input type="text" id="module-config-config" class="file-path" name="config" /></td>
+                <td colspan="2"><input type="text" id="module-config-config" class="file-path" name="config" /></td>
+                <td><button id="config-edition-open" type="button" value="">Edit</button></td>
                 <td><button class="select-file" type="button" value="module-config-config+file">Select</button></td>
             </tr>
             {% endif %}
@@ -290,16 +291,30 @@
     
     <div id="select-file-popup">
         <div id="select-file-manager">
-            <div id="filetree-select-warn">&nbsp;</div>
+            <div id="filetree-select-msgbox">&nbsp;</div>
             <div id="filetree"></div>
             <div>
                 <input id="filetree-selected" value=""></input>
                 <input id="filetree-selected-filetype" value="" type="hidden"></input>
                 <input id="filetree-required-filetype" value="" type="hidden"></input>
             </div>
-            <div id="filetree-ctrl-buttons">
+            <div class="popup-ctrl-buttons">
                 <button id="selectFile" type="button" class="button-disable" disabled>OK</button>
                 <button id="closeSelectFilePanel" type="button">CANCEL</button>
+            </div>
+        </div>
+    </div>
+    
+    
+    <div id="config-edition-popup">
+        <div id='config-edition-manager'>
+            <div>
+                <textarea name="config-edition-content" id="config-edition-content"></textarea>
+            </div>
+            <div id="config-edition-msgbox">&nbsp;</div>
+            <div class="popup-ctrl-buttons">
+                <button id="config-edition-save" type="button">SAVE</button>
+                <button id="config-edition-close" type="button">CLOSSE</button>
             </div>
         </div>
     </div>

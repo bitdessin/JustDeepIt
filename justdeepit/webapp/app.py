@@ -302,7 +302,8 @@ def od_config():
             statuses.append(status_)
         
             if all(_['status'] == 'COMPLETED' for _ in statuses):
-                model_config_ext = '.py' if moduleframe.params['config']['backend'].replace(' ', '').replace('-', '').lower()[0:5] == 'mmdet' else '.yaml'
+                backend = moduleframe.params['config']['backend'].replace(' ', '').replace('-', '').lower()[0:5]
+                model_config_ext = '.py' if backend == 'mmdet' else '.yaml'
                 moduleframe.update_params({'config': os.path.join(moduleframe.params['config']['workspace'],
                                                              'justdeepitws/config/default') + model_config_ext},
                                      'config')
@@ -333,7 +334,7 @@ def od_training():
             status_ = moduleframe.module.save_initial_model(moduleframe.params['config']['class_label'],
                                                  moduleframe.params['config']['architecture'],
                                                  moduleframe.params['config']['config'],
-                                                 None,
+                                                 moduleframe.params['training']['model_weight'],
                                                  moduleframe.params['config']['backend'])
             statuses.append(status_)
             status_ = moduleframe.module.sort_train_images(moduleframe.params['config']['class_label'],
@@ -355,6 +356,12 @@ def od_training():
             statuses.append(status_)
         
             if all(_['status'] == 'COMPLETED' for _ in statuses):
+                backend = moduleframe.params['config']['backend'].replace(' ', '').replace('-', '').lower()[0:5]
+                model_config_ext = '.py' if backend == 'mmdet' else '.yaml'
+                moduleframe.update_params({'config': os.path.splitext(moduleframe.params['training']['model_weight'])[0] + model_config_ext},
+                                          'config')
+                moduleframe.update_params({'model_weight': moduleframe.params['training']['model_weight']},
+                                          'inference')
                 moduleframe.update_status('training', 'COMPLETED')
                 logger.info('[[!SUCCEEDED]] Task succeeded.')
             else:
@@ -477,6 +484,8 @@ def sod_training():
             statuses.append(status_)
         
             if all(_['status'] == 'COMPLETED' for _ in statuses):
+                moduleframe.update_params({'model_weight': moduleframe.params['training']['model_weight']},
+                                          'inference')
                 moduleframe.update_status('training', 'COMPLETED')
                 logger.info('[[!SUCCEEDED]] Task succeeded.')
             else:
@@ -692,9 +701,41 @@ def get_dirtree(dirpath: str = None, include_file: int = 1):
         filetree_dict = []
     
     return JSONResponse(content=filetree_dict)
-        
+
+
+
+
+@app.get('/api/modelconfig')
+def get_modelconfig(config_fpath: str):
+    response_data = {'data': '', 'status': ''}
+    if os.path.exists(config_fpath):
+        with open(config_fpath, 'r') as configfh:
+            for line in configfh:
+                response_data['data'] += line
+        response_data['status'] = '[{}]     SUCCESS: The config file has been loaded.'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    else:
+        response_data['status'] = '[{}]     ERROR: FileNotFound, check the file path to the config file.'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    return JSONResponse(content=response_data)
+
+
+ 
+@app.post('/api/modelconfig')
+async def update_modelconfig(request: Request):
+    form = await request.form()
+    config_fpath = form.get('file_path')
+    config_data = form.get('data')
+    response_data = {'data': config_data, 'status': ''}
+    if os.path.exists(config_fpath):
+        with open(config_fpath, 'w') as configfh:
+            configfh.write(config_data)
+        response_data['status'] = '[{}]     SUCCESS: The config file has been updated.'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        logger.info('The model config has been edited manually. The edits has been saved.')
+        logger.info('[[!NEWPAGE]]')
+    else:
+        response_data['status'] = '[{}]     ERROR: FileNotFound, check the file path to the config file.'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     
-    
+    return JSONResponse(content=response_data)
+
    
 
 
