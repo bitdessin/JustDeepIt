@@ -36,6 +36,8 @@ class OD(AppBase):
             model.save(os.path.join(config_dpath, 'default.pth'))
             
             job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.FINISHED, '')
+        except KeyboardInterrupt:
+            job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.INTERRUPT, '')
         except BaseException as e:
             traceback.print_exc()
             job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.ERROR, str(e))
@@ -85,6 +87,9 @@ class OD(AppBase):
             logger.info('There are {} images are valid for model training.'.format(len(images)))
             
             job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__SORT_IMAGES, self.code.FINISHED, '')
+        except KeyboardInterrupt:
+            job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__SORT_IMAGES, self.code.INTERRUPT, '')
+        
         except BaseException as e:
             traceback.print_exc()
             job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__SORT_IMAGES, self.code.ERROR, str(e))
@@ -114,6 +119,10 @@ class OD(AppBase):
             
             job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.FINISHED, '')
             
+        except KeyboardInterrupt:
+            job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.INTERRUPT, '')
+        
+        
         except BaseException as e:
             traceback.print_exc()
             job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.ERROR, str(e))
@@ -140,6 +149,9 @@ class OD(AppBase):
                     outfh.write('{}\n'.format(image_file))
         
             job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SORT_IMAGES, self.code.FINISHED, '')
+        except KeyboardInterrupt:
+            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SORT_IMAGES, self.code.INTERRUPT, '')
+        
         except BaseException as e:
             traceback.print_exc()
             job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SORT_IMAGES, self.code.ERROR, str(e))
@@ -190,7 +202,9 @@ class OD(AppBase):
             outputs.format('coco', os.path.join(self.workspace_, 'outputs', 'annotation.json'))
             
             job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__INFER, self.code.FINISHED, '')
-                
+        except KeyboardInterrupt:
+            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__INFER, self.code.INTERRUPT, '')
+                   
         except BaseException as e:
             traceback.print_exc()
             job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__INFER, self.code.ERROR, str(e))
@@ -254,6 +268,9 @@ class OD(AppBase):
  
 
             job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SUMMARIZE, self.code.FINISHED, '')
+        except KeyboardInterrupt:
+            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SUMMARIZE, self.code.INTERRUPT, '')
+        
         except BaseException as e:
             traceback.print_exc()
             job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SUMMARIZE, self.code.ERROR, str(e))

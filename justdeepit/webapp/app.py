@@ -4,6 +4,8 @@ import time
 import datetime
 import argparse
 import json
+import threading
+import contextlib
 import pkg_resources
 import logging
 import ctypes
@@ -20,6 +22,12 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, BaseSettings
 
 
+parser = argparse.ArgumentParser(description='JustDeepIt')
+parser.add_argument('--host', type=str, default='127.0.0.1', help='hostname')
+parser.add_argument('--port', type=int, default=8000, help='port')
+args = parser.parse_args()
+
+
 APP_LOG_FPATH = '.justdeepit.log'
 logging.basicConfig(level=logging.INFO,
                     handlers=[logging.FileHandler(filename=APP_LOG_FPATH, mode='w'),
@@ -27,6 +35,30 @@ logging.basicConfig(level=logging.INFO,
                     force=True)
 logger = logging.getLogger(__name__)
 
+
+
+
+class Server(uvicorn.Server):
+    def __init__(self, config):
+        super().__init__(config)
+        self.keep_running = True
+    
+    def install_signal_handlers(self):
+        pass
+
+    @contextlib.contextmanager
+    def run_in_thread(self):
+        thread = threading.Thread(target=self.run, name='Thread-Server')
+        thread.start()
+        try:
+            while not self.started:
+                time.sleep(1e-3)
+            yield
+            #while self.keep_running:
+            #    time.sleep(1)
+        finally:
+            self.should_exit = True
+            thread.join()
 
 
 class ModuleFrame():
@@ -42,7 +74,7 @@ class ModuleFrame():
         self.params = self.__init_params()
         
         # threading parameters
-        self.thread = None
+        self.thread_job = None
         self.stop_threads = threading.Event()
         self.status = {'module': None, 'mode': None, 'status': None, 'timestamp': None}
     
@@ -202,6 +234,7 @@ app.mount('/static',
           StaticFiles(directory=pkg_resources.resource_filename('justdeepit', 'webapp/static')),
           name='static')
 templates = Jinja2Templates(directory=pkg_resources.resource_filename('justdeepit', 'webapp/templates'))
+server = Server(config=uvicorn.Config(app, host=args.host, port=args.port, log_config=None))
 
 
 
@@ -257,23 +290,23 @@ async def module_action(request: Request, module_id, mode):
     if module_id == 'OD' or module_id == 'IS':
         if mode == 'config':
             moduleframe.update_status('config', 'STARTED')
-            thread_job = threading.Thread(target=od_config)
+            thread_job = threading.Thread(target=od_config, name='Thread-Module')
         elif mode == 'training':
             moduleframe.update_status('training', 'STARTED')
-            thread_job = threading.Thread(target=od_training)
+            thread_job = threading.Thread(target=od_training, name='Thread-Module')
         elif mode == 'inference':
             moduleframe.update_status('inference', 'STARTED')
-            thread_job = threading.Thread(target=od_inference)
+            thread_job = threading.Thread(target=od_inference, name='Thread-Module')
     elif module_id == 'SOD':
         if mode == 'config':
             moduleframe.update_status('config', 'STARTED')
-            thread_job = threading.Thread(target=sod_config)
+            thread_job = threading.Thread(target=sod_config, name='Thread-Module')
         elif mode == 'training':
             moduleframe.update_status('training', 'STARTED')
-            thread_job = threading.Thread(target=sod_training)
+            thread_job = threading.Thread(target=sod_training, name='Thread-Module')
         elif mode == 'inference':
             moduleframe.update_status('inference', 'STARTED')
-            thread_job = threading.Thread(target=sod_inference)
+            thread_job = threading.Thread(target=sod_inference, name='Thread-Module')
     
     if thread_job is not None:
         moduleframe.thread_job = thread_job
@@ -281,6 +314,25 @@ async def module_action(request: Request, module_id, mode):
     
     return JSONResponse(content={})
 
+
+
+def validate_status(statuses):
+    s = None
+    
+    if all(_['status'] == 'COMPLETED' for _ in statuses):
+        s = 'COMPLETED'
+        logger.info('[[!SUCCEEDED]] Task succeeded.')
+    elif any(_['status'] == 'ERROR' for _ in statuses):
+        s = 'ERROR'
+        logger.error('The process is failed probably due to JustDeepIt bugs.')
+    elif statuses[-1]['status'] == 'INTERRUPT':
+        s = 'INTERRUPT'
+        logger.error('The process has been interrupted by pressing the STOP button.')
+    else:
+        s= 'ERROR'
+        logger.error('Unexpected error!')
+    
+    return s
 
 
 
@@ -300,18 +352,16 @@ def od_config():
                                                  None,
                                                  moduleframe.params['config']['backend'])
             statuses.append(status_)
-        
-            if all(_['status'] == 'COMPLETED' for _ in statuses):
+            
+            status = validate_status(statuses)
+            if status == 'COMPLETED':
                 backend = moduleframe.params['config']['backend'].replace(' ', '').replace('-', '').lower()[0:5]
                 model_config_ext = '.py' if backend == 'mmdet' else '.yaml'
                 moduleframe.update_params({'config': os.path.join(moduleframe.params['config']['workspace'],
                                                              'justdeepitws/config/default') + model_config_ext},
                                      'config')
-                moduleframe.update_status('config', 'COMPLETED')
-                logger.info('[[!SUCCEEDED]] Task succeeded.')
-            else:
-                moduleframe.update_status('config', 'ERROR')
-                logger.error('Workspace loading and initialization are failed probably due to JustDeepIt bugs.')
+            moduleframe.update_status('config', status)
+        
         except BaseException as e:
             traceback.print_exc()
             moduleframe.update_status('config', 'ERROR')
@@ -354,20 +404,16 @@ def od_training():
                                           moduleframe.params['config']['gpu'],
                                           moduleframe.params['config']['backend'])
             statuses.append(status_)
-        
-            if all(_['status'] == 'COMPLETED' for _ in statuses):
+            
+            status = validate_status(statuses)
+            if status == 'COMPLETED':
                 backend = moduleframe.params['config']['backend'].replace(' ', '').replace('-', '').lower()[0:5]
                 model_config_ext = '.py' if backend == 'mmdet' else '.yaml'
                 moduleframe.update_params({'config': os.path.splitext(moduleframe.params['training']['model_weight'])[0] + model_config_ext},
                                           'config')
                 moduleframe.update_params({'model_weight': moduleframe.params['training']['model_weight']},
                                           'inference')
-                moduleframe.update_status('training', 'COMPLETED')
-                logger.info('[[!SUCCEEDED]] Task succeeded.')
-            else:
-                moduleframe.update_status('training', 'ERROR')
-                logger.error('Workspace loading and initialization are failed probably due to JustDeepIt bugs.')
-
+            moduleframe.update_status('training', status)
     
         except BaseException as e:
             traceback.print_exc()
@@ -409,14 +455,10 @@ def od_inference():
             statuses.append(status_)
             status_ = moduleframe.module.summarize_objects(moduleframe.params['config']['cpu'])
             statuses.append(status_)
+            
+            status = validate_status(statuses)
+            moduleframe.update_status('inference', status)
         
-            if all(_['status'] == 'COMPLETED' for _ in statuses):
-                moduleframe.update_status('inference', 'COMPLETED')
-                logger.info('[[!SUCCEEDED]] Task succeeded.')
-            else:
-                moduleframe.update_status('inference', 'ERROR')
-                logger.error('Workspace loading and initialization are failed probably due to JustDeepIt bugs.')
-    
         except BaseException as e:
             traceback.print_exc()
             moduleframe.update_status('inference', 'ERROR')
@@ -440,13 +482,10 @@ def sod_config():
         
             status_ = moduleframe.module.init_workspace()
             statuses.append(status_)
-        
-            if all(_['status'] == 'COMPLETED' for _ in statuses):
-                moduleframe.update_status('config', 'COMPLETED')
-                logger.info('[[!SUCCEEDED]] Task succeeded.')
-            else:
-                moduleframe.update_status('config', 'ERROR')
-                logger.error('Workspace loading and initialization are failed probably due to JustDeepIt bugs.')
+            
+            status = validate_status(statuses)
+            moduleframe.update_status('config', status)
+            
         except BaseException as e:
             traceback.print_exc()
             moduleframe.update_status('config', 'ERROR')
@@ -483,14 +522,11 @@ def sod_training():
                                                      moduleframe.params['training']['windowsize'])
             statuses.append(status_)
         
-            if all(_['status'] == 'COMPLETED' for _ in statuses):
+            status = validate_status(statuses)
+            if status == 'COMPLETED':
                 moduleframe.update_params({'model_weight': moduleframe.params['training']['model_weight']},
                                           'inference')
-                moduleframe.update_status('training', 'COMPLETED')
-                logger.info('[[!SUCCEEDED]] Task succeeded.')
-            else:
-                moduleframe.update_status('training', 'ERROR')
-                logger.error('Workspace loading and initialization are failed probably due to JustDeepIt bugs.')
+            moduleframe.update_status('training', status)
 
     
         except BaseException as e:
@@ -531,12 +567,9 @@ def sod_inference():
                                              moduleframe.params['inference']['openingks'],
                                              moduleframe.params['inference']['closingks'])
             
-            if all(_['status'] == 'COMPLETED' for _ in statuses):
-                moduleframe.update_status('inference', 'COMPLETED')
-                logger.info('[[!SUCCEEDED]] Task succeeded.')
-            else:
-                moduleframe.update_status('inference', 'ERROR')
-                logger.error('Workspace loading and initialization are failed probably due to JustDeepIt bugs.')
+            status = validate_status(statuses)
+            moduleframe.update_status('inference', status)
+
     
         except BaseException as e:
             traceback.print_exc()
@@ -547,12 +580,6 @@ def sod_inference():
             moduleframe.stop_threads.set()
             logger.info('Task Finished: [inference] ...')
             logger.info('[[!NEWPAGE]]')
-
-
-
-
-
-
 
 
 
@@ -607,33 +634,6 @@ def get_log():
                 log_records += log_record
                 
     return log_records
-
-
-
-@app.get('/api/interrupt')
-@app.post('/api/interrupt')
-def interrupt_threads():
-    
-    if not moduleframe.stop_threads.is_set():
-        moduleframe.stop_threads.set()
-
-    # force stop threading
-    tid = ctypes.c_long(moduleframe.thread_job.ident)
-    exctype = KeyboardInterrupt
-    if not inspect.isclass(exctype):
-        exctype = type(exctype)
-    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(exctype))
-    
-    moduleframe.update_status('inference', 'ERROR')
-    
-    if res == 0:
-        raise ValueError('Cannot terminate thread since the thread ID is invalid.')
-    elif res != 1:
-        ctypes.pythonapi.PyThhreadState_SetAsyncExc(tid, None)
-        raise SystemError('PyThradState_SetAsyncExc failed.')
-    
-    time.sleep(10) # wailt for the process is exactly stopped by OS
-    logger.error('The process is stopped by pressing STOP button.')
 
 
 
@@ -740,16 +740,46 @@ async def update_modelconfig(request: Request):
 
 
 
+@app.post('/app/interrupt')
+def interrupt_threads():
+    if not moduleframe.stop_threads.is_set():
+        moduleframe.stop_threads.set()
+
+    # force stop threading
+    if moduleframe.thread_job is not None:
+        tid = ctypes.c_long(moduleframe.thread_job.ident)
+        exctype = KeyboardInterrupt
+        if not inspect.isclass(exctype):
+            exctype = type(exctype)
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(exctype))
+        if res == 0:
+            raise ValueError('Cannot terminate thread since the thread ID is invalid.')
+        elif res > 1:
+            ctypes.pythonapi.PyThhreadState_SetAsyncExc(tid, None)
+            raise SystemError('PyThradState_SetAsyncExc failed.')
+
+
+
+def __shutdown_server():
+    # interrupt_threads()
+    global server
+    server.keep_running = False
+
+
+@app.post("/app/shutdown")
+async def shutdown_server(request: Request, background_tasks: BackgroundTasks):
+    background_tasks.add_task(__shutdown_server)
+    return templates.TemplateResponse('shutdown.html', {'request': request,
+        'justdeepit_version': justdeepit.__version__})
+
+
+
 
 
 def run_app():
-
-    parser = argparse.ArgumentParser(description='JustDeepIt')
-    parser.add_argument('--host', type=str, default='127.0.0.1', help='hostname')
-    parser.add_argument('--port', type=int, default=8000, help='port')
-    args = parser.parse_args() 
-
-    uvicorn.run(app, host=args.host, port=args.port, log_config=None)
+    with server.run_in_thread():
+        while server.keep_running:
+            time.sleep(1)
 
 
 if __name__ == '__main__':

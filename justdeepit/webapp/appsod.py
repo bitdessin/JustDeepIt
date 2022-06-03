@@ -72,6 +72,8 @@ class SOD(AppBase):
 
 
             job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__SORT_IMAGES, self.code.FINISHED, '')
+        except KeyboardInterrupt:
+            job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__SORT_IMAGES, self.code.INTERRUPT, '')
         except BaseException as e:
             traceback.print_exc()
             job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__SORT_IMAGES, self.code.ERROR, str(e))
@@ -99,7 +101,9 @@ class SOD(AppBase):
                         batch_size=batchsize, epoch=epoch, lr=lr, cpu=cpu, gpu=gpu, strategy=strategy, window_size=window_size)
             model.save(model_weight)
                 
-
+        except KeyboardInterrupt:
+            job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.INTERRUPT, '')
+            
         except BaseException as e:
             traceback.print_exc()
             job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.ERROR, str(e))
@@ -292,6 +296,9 @@ class SOD(AppBase):
                     outfh.write('{}\n'.format('\t'.join(image_file)))
         
             job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SORT_IMAGES, self.code.FINISHED, '')
+        except KeyboardInterrupt:
+            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SORT_IMAGES, self.code.INTERRUPT, '')
+            
         except BaseException as e:
             traceback.print_exc()
             job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SORT_IMAGES, self.code.ERROR, str(e))
@@ -327,6 +334,9 @@ class SOD(AppBase):
                 # save mask as COCO
                 #mask_obj.save('coco', os.path.join(self.workspace_, 'detection_results', image_name + '.xml'))
                 
+        except KeyboardInterrupt:
+            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__INFER, self.code.INTERRUPT, '')
+            
         except BaseException as e:
             traceback.print_exc()
             job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__INFER, self.code.ERROR, str(e))
@@ -482,6 +492,8 @@ class SOD(AppBase):
 
 
             job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SUMMARIZE, self.code.FINISHED, '')
+        except KeyboardInterrupt:
+            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SUMMARIZE, self.code.INTERRUPT, '')
         except BaseException as e:
             traceback.print_exc()
             job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SUMMARIZE, self.code.ERROR, str(e))

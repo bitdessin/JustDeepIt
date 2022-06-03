@@ -1,4 +1,4 @@
-# AgroLens
+# JustDeepIt 
 
 Deep learning has been applied to solve various problems, especially in image recognition,
 across many fields including the life sciences and agriculture.
@@ -9,9 +9,9 @@ Programming languages such as Python and its libraries including PyTorch, MMDete
 have made deep learning easier and more accessible to researchers.
 However, it remains difficult for many researchers without advanced programming skills
 to use deep learning and environments such as the character user interface (CUI) through keyboard input.
-AgroLens aims to support researchers by facilitating the use of deep learning for object detection and segmentation
+JustDeepIt aims to support researchers by facilitating the use of deep learning for object detection and segmentation
 by providing both graphical user interface (GUI) and CUI operations.
-AgroLens can be used for plant detection, pest detection,
+JustDeepIt can be used for plant detection, pest detection,
 and a variety of tasks in life sciences, agriculture, and other fields.
 
 - [Documentation](https://justdeepit.readthedocs.io/en/latest/index.html)

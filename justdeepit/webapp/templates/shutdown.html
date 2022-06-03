@@ -1,0 +1,19 @@
+<html>
+<head>
+    <title>JustDeepIt</title>
+    <link href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', path='/jquery-3.6.0.min.js') }}"></script>
+    <script src="{{ url_for('static', path='/tree.jquery.js') }}"></script>
+    <script src="{{ url_for('static', path='/utils.js') }}"></script>
+</head>
+<body>
+    <div id="app-module-panel">
+    
+    <h1>JustDeepIt</h1>
+    
+    <div id="shutdown-msg">Bye :)</div>
+        
+    <div id="version">JustDeepIt v{{justdeepit_version}}</div>
+    </div>
+</body> 
+</html>

@@ -18,6 +18,7 @@ class AppCode:
         self.RUNNING = 'RUNNING'
         self.FINISHED = 'FINISHED'
         self.ERROR = 'ERROR'
+        self.INTERRUPT = 'INTERRUPT'
         self.COMPLETED = 'COMPLETED'
         
         self.JOB__INIT_WORKSPACE = 'INIT_WORKSPACE'
@@ -59,6 +60,9 @@ class AppBase:
             job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__INIT_WORKSPACE, self.code.STARTED, '')
             job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__INIT_WORKSPACE, self.code.FINISHED, '')
             
+        except KeyboardInterrupt:
+            job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__INIT_WORKSPACE, self.code.INTERRUPT, '')
+        
         except BaseException as e:
             traceback.print_exc()
             job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__INIT_WORKSPACE, self.code.ERROR, str(e))

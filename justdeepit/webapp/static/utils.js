@@ -60,7 +60,7 @@ function refreshParams() {
         console.log("textStatus     : " + textStatus);
         console.log("errorThrown    : " + errorThrown.message);
     });
-    
+
     return deferred.promise();
 }
 
@@ -105,6 +105,19 @@ function refreshModuleTabs() {
             }
         }
     });
+}
+
+
+function refreshShutdownButton() {
+    if (moduleRunningStatus.status === 'RUNNING') {
+        $('#shutdown-panel').hide();
+        $('#shutdown').addClass('button-disable');
+        $('#shutdown').attr('disabled', true);
+    } else {
+        $('#shutdown-panel').show();
+        $('#shutdown').removeClass('button-disable');
+        $('#shutdown').attr('disabled', false);
+    }
 }
 
 
@@ -175,15 +188,15 @@ function refreshRunningLog() {
 
 function refreshExecuteButtons() {
     let forms = ['#module-config', '#module-training', '#module-inference'];
-    
+
     for (let formId of forms) {
-        
+
         let buttonId = formId + '-run';
         let isValid = true;
         $(formId + ' .file-path').each(function() {
             required_field = true;
             if ($(this).attr('id') === 'module-config-config') required_field = false;
-            
+
             if (required_field) { 
                 if ($(this).val() === '') {
                     isValid = false;
@@ -209,7 +222,7 @@ function refreshExecuteButtons() {
                 $(this).removeClass('highlight-empty-input');
             }
         });
-        
+
         if ((isValid) && ((moduleRunningStatus.status === null) || (moduleRunningStatus.status !== 'RUNNING'))) {
             $(buttonId).removeClass('button-disable');
             $(buttonId).attr('disabled', false);
@@ -226,11 +239,14 @@ function __refreshModuleDelay() {
     refreshModuleTabs();
     refreshFileSelectButtons();
     refreshExecuteButtons();
+    refreshShutdownButton();
 }
+
 
 function _refreshModuleDelay() {
     $.when(refreshRunningStatus()).done(__refreshModuleDelay);
 }
+
 
 function refreshModule(force_run=false) {
     if (moduleRunningStatus.status === 'STARTED' || moduleRunningStatus.status === 'RUNNING') {
@@ -243,8 +259,8 @@ function refreshModule(force_run=false) {
 
 
 
+
 $(function(){
-    
   
     // module action tabs
     $('.module-tab').on('click', function() {
@@ -257,14 +273,14 @@ $(function(){
                                  .addClass('module-tab-content-active');
         }
     });
-    
-    
+
+
     // refresh button status
     $('form').on('change keyup keypress blur mousemove', function() {
         refreshExecuteButtons();
     });
-    
-    
+
+
     // load workspace and enable module action tabs
     $('#module-config-run').click(function() {
         $.ajax({
@@ -274,14 +290,15 @@ $(function(){
             dataType: 'json',
             cache: false,
         }).done(function(x, textStatus, jqXHR) {
-                refreshModule(true);
+            refreshModule(true);
         }).fail(function(XMLHttpRequest, textStatus, errorThrown) {
-                console.log("XMLHttpRequest : " + XMLHttpRequest.status);
-                console.log("textStatus     : " + textStatus);
-                console.log("errorThrown    : " + errorThrown.message);
+            console.log("XMLHttpRequest : " + XMLHttpRequest.status);
+            console.log("textStatus     : " + textStatus);
+            console.log("errorThrown    : " + errorThrown.message);
         });
     });
-    
+
+
     // start model training
     $('#module-training-run').click(function() {
         $.ajax({
@@ -291,14 +308,15 @@ $(function(){
             dataType: 'json',
             cache: false,
         }).done(function(x, textStatus, jqXHR) {
-                refreshModule(true);
+            refreshModule(true);
         }).fail(function(XMLHttpRequest, textStatus, errorThrown) {
             console.log("XMLHttpRequest : " + XMLHttpRequest.status);
             console.log("textStatus     : " + textStatus);
             console.log("errorThrown    : " + errorThrown.message);
         });
     });
-    
+ 
+   
     // start inference
     $('#module-inference-run').click(function() {
         $.ajax({
@@ -315,15 +333,17 @@ $(function(){
             console.log("errorThrown    : " + errorThrown.message);
         });
     });
-    
+
+
     // force stop running job
     $('#force-stop').on('click', function() {
-        $('#force-stop').attr('disabled', true).text('STOPPING ....');
+        $('#force-stop').attr('disabled', true).text('STOPPING ...');
         $.ajax({
             type: 'POST',
-            url: '/api/interrupt',
+            url: '/app/interrupt',
             cache: false,
         }).done(function(x, textStatus, jqXHR) {
+            sleep(10000); // wait for server stop the thread jobs and output log messages
             refreshModule(true);
         }).fail(function(XMLHttpRequest, textStatus, errorThrown) {
             console.log("XMLHttpRequest : " + XMLHttpRequest.status);
@@ -331,8 +351,9 @@ $(function(){
             console.log("errorThrown    : " + errorThrown.message);
         });
     });
-    
-    
+
+
+
     // reload NN available architectures according to the backend
     $('#backend').on('change', function() {
         $.ajax({
@@ -356,8 +377,9 @@ $(function(){
             console.log("errorThrown    : " + errorThrown.message);
         });
     });
-    
-    
+
+
+
     // open sub-window to select file/folder when clicking Select buttons
     $('button.select-file').on('click', function() {
         let _ = $(this).val().split('+');
@@ -415,14 +437,15 @@ $(function(){
         refreshExecuteButtons();
         $('#select-file-popup').fadeOut();
     });
-    
+
+
     $('body').on('click', '#filetree', function() {
         // wait for JqTree to set up the selected file
         setTimeout(function() {
             $('#filetree-selected').val(node2path($('#filetree').tree('getSelectedNode')).slice(1));
             $('#filetree-selected').data('val', node2path($('#filetree').tree('getSelectedNode')).slice(1));
             $('#filetree-selected-filetype').val(node2filetype($('#filetree').tree('getSelectedNode')));
-            
+
             if ($('#filetree-required-filetype').val() === $('#filetree-selected-filetype').val()) {
                 $('#selectFile').removeClass('button-disable');
                 $('#selectFile').attr('disabled', false);
@@ -456,8 +479,8 @@ $(function(){
             }
         }
     });
-    
-    
+
+
     $('button#config-edition-open').on('click', function() {
         $.ajax({
             type: 'GET',
@@ -507,8 +530,8 @@ $(function(){
                 console.log("errorThrown    : " + errorThrown.message);
         });
     });
-    
-    
+
+
     $('#module-training-strategy').on('change', function() {
         if ($(this).val() === 'resizing') {
             $('#module-training-resizing-option').css('visibility', '').css('visibility', 'hidden');
@@ -516,6 +539,7 @@ $(function(){
             $('#module-training-resizing-option').css('visibility', '').css('visibility', 'visibile');
         }
     });
+
 
     $('#module-inference-strategy').on('change', function() {
         if ($(this).val() === 'resizing') {
@@ -525,9 +549,6 @@ $(function(){
         }
     });
 
-
-
-
 });
  
    
@@ -536,19 +557,5 @@ refreshModule(true);
 window.setInterval(function() {
     refreshModule();
 }, 5000);
-    
-
-
-/*
-window.addEventListener('beforeunload', function(e) {
-    if (['/module/OD', '/module/IS', '/module/SOD'].indexOf(location.pathname) !== -1) {
-        e.preventDefault();
-        e.returnValue = '';
-    }
-});
-*/
-
-
-
 
 

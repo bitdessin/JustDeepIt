@@ -10,7 +10,12 @@
     <div id="app-module-panel">
     
     <!-- JustDeepIt -->
-    <h1>JustDeepIt</h1>
+    <table id="app-menu">
+    <tr>
+        <td><h1>JustDeepIt</h1></td>
+        <td><form id="shutdown-panel" method='POST' action="/app/shutdown"><button type="submit" id="shutdown"><span style="font-size:1.3em;">&#8864;</span> SHUTDOWN APP</button></form></td>
+    </tr>
+    </table>
     <input type="hidden" id="module" name="module" value="{{ module }}"></input>
     
     <!-- module -->
