@@ -21,14 +21,12 @@ class TestBbox(unittest.TestCase):
         
         self.output_dpath = 'outputs/utils/od_coco'
         
-        if not os.path.exists(self.output_dpath):
-            os.makedirs(self.output_dpath, exist_ok=True)
-            shutil.copytree('sample_datasets/od/COCO',
-                            os.path.join(self.output_dpath, 'data'))
+        os.makedirs(self.output_dpath, exist_ok=True)
+        shutil.copytree('sample_datasets/od',
+                        os.path.join(self.output_dpath, 'data'), dirs_exist_ok=True)
         
         self.coco = [os.path.join(self.output_dpath, 'data', 'images'),
-                     os.path.join(self.output_dpath, 'data', 'annotations', 'instances_default.json')]
-    
+                     os.path.join(self.output_dpath, 'data', 'annotations', 'COCO', 'instances_default.json')]
     
     
     def test_coco2x(self):
@@ -70,13 +68,12 @@ class TestSegmentation(unittest.TestCase):
         
         self.output_dpath = 'outputs/utils/os_coco'
         
-        if not os.path.exists(self.output_dpath):
-            os.makedirs(self.output_dpath, exist_ok=True)
-            shutil.copytree('sample_datasets/os/COCO',
-                            os.path.join(self.output_dpath, 'data'))
+        os.makedirs(self.output_dpath, exist_ok=True)
+        shutil.copytree('sample_datasets/os',
+                        os.path.join(self.output_dpath, 'data'), dirs_exist_ok=True)
         
         self.coco = [os.path.join(self.output_dpath, 'data', 'images'),
-                     os.path.join(self.output_dpath, 'data', 'annotations', 'instances_default.json')]
+                     os.path.join(self.output_dpath, 'data', 'annotations', 'COCO', 'instances_default.json')]
     
     
     
@@ -107,7 +104,30 @@ class TestSegmentation(unittest.TestCase):
         imgann.draw('masked',  pref + 'masked.v2.png', label=True, score=True)
         imgann.draw('bbox',    pref + 'bbox.v2.png', label=True, score=True)
         imgann.draw('contour', pref + 'contour.v2.png', label=True, score=True)
+    
+    
+    
+    def test_rgbmask2coco(self):
+        pref = os.path.join(self.output_dpath, 'test_rgbmask2coco_')
+        imganns = []
+        for mask_i in ['e1.png', 'e2.png']:
+            
+            img_fpath = os.path.join('sample_datasets', 'mask', 'images', mask_i)
+            ann_fpath = os.path.join('sample_datasets', 'mask', 'annotations', mask_i)
+            
+            if mask_i == 'e1.png':
+                imgann = ImageAnnotation(img_fpath, ann_fpath)
+            else:
+                rgb2class = {'255,0,0': 'flower', '0,0,255': 'leaf', '0,255,0': 'tree'}
+                imgann = ImageAnnotation(img_fpath, ann_fpath, rgb2class=rgb2class)
+            imgann.draw('mask',    pref + mask_i + '_mask.png', label=True, score=True)
+            imgann.draw('mask',    pref + mask_i + '_maskalpha05.png', label=True, score=True, alpha=0.5)
+            imgann.draw('masked',  pref + mask_i + '_masked.png', label=True, score=True)
+            imgann.draw('bbox',    pref + mask_i + '_bbox.png', label=True, score=True)
+            imgann.draw('contour', pref + mask_i + '_contour.png', label=True, score=True)
         
+        anns = ImageAnnotations(imganns)
+        anns.format('coco', pref + 'coco.json')
 
 
 
@@ -118,13 +138,12 @@ class TestImageAnnotations(unittest.TestCase):
         
         self.output_dpath = 'outputs/utils/imanns'
         
-        if not os.path.exists(self.output_dpath):
-            os.makedirs(self.output_dpath, exist_ok=True)
-            shutil.copytree('sample_datasets/os/COCO',
-                            os.path.join(self.output_dpath, 'data'))
+        os.makedirs(self.output_dpath, exist_ok=True)
+        shutil.copytree('sample_datasets/os',
+                        os.path.join(self.output_dpath, 'data'), dirs_exist_ok=True)
         
         self.coco = [os.path.join(self.output_dpath, 'data', 'images'),
-                     os.path.join(self.output_dpath, 'data', 'annotations', 'instances_default.json')]
+                     os.path.join(self.output_dpath, 'data', 'annotations', 'COCO', 'instances_default.json')]
     
     
     def test_coco(self):

@@ -54,11 +54,12 @@ class ImageAnnotation:
 
     Args:
         image_path (str): A path to an image.
-        annotation (dict): A path to an annotation file that corresponds
-                           to the image ``image_path``.
+        annotation (str): A path to an annotation file that corresponds
+                          to the image ``image_path``.
         annotation_format (str): A string to specify an annotation format.
                                  If ``auto`` is specified, then automatically
                                  estimate the annotation format.
+        rgb2class (dict): A dictionary mapping RGB values to class name.
     
     
     The image annotations are stored with the following attributes: 
@@ -85,8 +86,9 @@ class ImageAnnotation:
                         the holes are also annotated as an object,
                         but the ``class`` is set to *__background__* in this case.
         mask (numpy.ndarray): A mask of image stored in :py:class:`numpy.ndarray`.
-        class2rgb: A list of RGB colors to plot mask image.
-        
+        class2rgb (dict): A dictionary mapping class name to RGB values.
+        rgb2class (dict): A dictionary mapping RGB values to class name.
+    
     
     Class :class:`ImageAnnotation <justdeepit.utils.ImageAnnotation>` mainly implements methods
     :func:`format <justdeepit.utils.ImageAnnotation.format>`
@@ -110,11 +112,11 @@ class ImageAnnotation:
     """
     
     
-    def __init__(self, image_path, annotation, annotation_format='auto'):
-       
+    def __init__(self, image_path, annotation, annotation_format='auto', class2rgb=None, rgb2class=None):
         
         self.image_path = image_path
         self.image, self.exif_orientation = self.__imread(image_path)
+        self.class2rgb, self.rgb2class = self.__set_colormapping_dict(class2rgb, rgb2class)
         self.regions = self.__set_regions(annotation, annotation_format)
         self.mask = None
         self.__rgb = [(0, 48, 73), (251, 143, 103), (33, 131, 128), (106, 76, 147),
@@ -125,7 +127,6 @@ class ImageAnnotation:
                     (255, 194, 180), (124, 181, 24), (115, 210, 222), (0, 187, 259),
                     (25, 133, 161), (254, 228, 64), (120, 0, 0), (102, 155, 188),
                     (21, 96, 100), (248, 225, 108)]
-        self.class2rgb = {}
     
     
     
@@ -147,18 +148,21 @@ class ImageAnnotation:
         then estimate the format by checking defiend keys
         """
         if isinstance(ann, str):
-            fdat = ann
-            if (os.path.exists(ann)):
-                fdat = ''
-                with open(ann, 'r') as infh:
-                    for _ in infh:
-                        fdat += _
-            if '<annotation>' in fdat and '<object>' in fdat and '<source>' in fdat and '<size>' in fdat:
-                return 'voc'
-            elif 'categories' in fdat and 'images' in fdat and 'annotations' in fdat and 'image_id':
-                return 'coco'
-            elif 'asset' in fdat and 'regions' in fdat:
-                return  'vott'
+            if ann.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')):
+                return 'rgbmask'
+            else:
+                fdat = ann
+                if (os.path.exists(ann)):
+                    fdat = ''
+                    with open(ann, 'r') as infh:
+                        for _ in infh:
+                            fdat += _
+                if '<annotation>' in fdat and '<object>' in fdat and '<source>' in fdat and '<size>' in fdat:
+                    return 'voc'
+                elif 'categories' in fdat and 'images' in fdat and 'annotations' in fdat and 'image_id':
+                    return 'coco'
+                elif 'asset' in fdat and 'regions' in fdat:
+                    return  'vott'
         elif isinstance(ann, dict):
             if 'categories' in ann and 'images' in ann and 'annotations' in ann:
                 return 'coco'
@@ -188,6 +192,8 @@ class ImageAnnotation:
             return annotation
         elif annotation_format == 'array':
             return self.__set_regions_from_array(annotation)
+        elif annotation_format == 'rgbmask':
+            return self.__set_regions_from_rgbmask(annotation)
         elif annotation_format == 'vott':
             return self.__set_regions_from_vott(annotation)
         elif annotation_format == 'voc':
@@ -234,21 +240,22 @@ class ImageAnnotation:
         
         return regions
         
-    
+ 
     def __set_regions_from_array(self, mask):
         regions = []
         mask = mask.copy()
         if len(mask.shape) > 3:
             mask =  skimage.color.rgb2gray(mask)
         mask_h, mask_w = mask.shape
-        padded_mask = np.zeros((mask_h + 20, mask_w + 20))
-        padded_mask[10:(10 + mask_h), 10:(10 + mask_w)] = mask
+        mask_padding = 10
+        padded_mask = np.zeros((mask_h + 2 * mask_padding, mask_w + 2 * mask_padding))
+        padded_mask[mask_padding:(mask_padding + mask_h), mask_padding:(mask_padding + mask_w)] = mask
         
         mask_contours = skimage.measure.find_contours(padded_mask, 0.5)
         for n, contour in enumerate(mask_contours):
             rr, cc  = skimage.draw.polygon(contour[:, 0], contour[:, 1], padded_mask.shape[0:2])
             
-            contour = contour.astype(np.int32) - 10
+            contour = contour.astype(np.int32) - mask_padding
             contour[contour < 0] = 0
             contour[contour[:, 0] > mask_h -1, 0] = mask_h - 1
             contour[contour[:, 1] > mask_w-1, 1] = mask_w - 1
@@ -262,6 +269,53 @@ class ImageAnnotation:
             })
         return regions
     
+ 
+   
+    def __set_regions_from_rgbmask(self, mask):
+        regions = []
+
+        mask, _ = self.__imread(mask)
+        mask = mask[:, :, 0:3]  # RGB mask
+        mask_h, mask_w = mask.shape[0:2]
+        mask_padding = 10
+        padded_mask = np.zeros((mask_h + 2 * mask_padding, mask_w + 2 * mask_padding, mask.shape[2]))
+        padded_mask[mask_padding:(mask_padding + mask_h), mask_padding:(mask_padding + mask_w)] = mask
+        
+        # make masks for each objects and save them into a dictionary
+        # the key is object color (RGB) and value is the binary array of objects
+        padded_mask_dict = {}
+        for h in range(padded_mask.shape[0]):
+            for w in range(padded_mask.shape[1]):
+                if (np.sum(padded_mask[h, w, :]) > 0): # skip the black color (no object)
+                    px_rgb = ','.join([str(int(_)) for _ in padded_mask[h, w, :]])
+                    if px_rgb not in padded_mask_dict:
+                        padded_mask_dict[px_rgb] = np.zeros(padded_mask.shape[0:2])
+                    padded_mask_dict[px_rgb][h, w] = 1
+        
+        # detect objects from each mask
+        object_id = 0
+        for object_class_i, padded_mask_i in padded_mask_dict.items():
+            mask_contours = skimage.measure.find_contours(padded_mask_i, 0.5)
+            for n, contour in enumerate(mask_contours):
+                rr, cc  = skimage.draw.polygon(contour[:, 0], contour[:, 1], padded_mask.shape[0:2])
+                contour = contour.astype(np.int32) - mask_padding
+                contour[contour < 0] = 0
+                contour[contour[:, 0] > mask_h - 1, 0] = mask_h - 1
+                contour[contour[:, 1] > mask_w - 1, 1] = mask_w - 1
+                if self.rgb2class is not None and object_class_i in self.rgb2class:
+                    object_class_i = self.rgb2class[object_class_i]
+                regions.append({
+                    'id'     : object_id,
+                    'class'  : '__background__' if np.mean(padded_mask_i[rr, cc] / (np.max(padded_mask_i[rr, cc]) + 0.01)) < 0.5 else object_class_i,
+                    'bbox'   : [np.min(contour[:, 1]), np.min(contour[:, 0]),
+                                np.max(contour[:, 1]), np.max(contour[:, 0])],
+                    'contour': contour[:, [1, 0]],
+                    'score'  : np.nan,
+                })
+                
+                object_id += 1
+        
+        return regions
     
     
     
@@ -652,7 +706,6 @@ class ImageAnnotation:
             
             self.mask = mask
         
-        
         if output_fpath is None:
             return self.mask.copy()
         else:
@@ -931,8 +984,29 @@ class ImageAnnotation:
     def __generate_random_string(self, n):
         return ''.join(random.choices(string.ascii_letters + string.digits, k=n))
     
-
-
+    
+    
+    def __set_colormapping_dict(self, class2rgb, rgb2class):
+        if (isinstance(class2rgb, (type(None), dict))) and (isinstance(rgb2class, (type(None), dict))):
+            if (class2rgb is None) and (rgb2class is None):
+                class2rgb = {}
+                rgb2class = {}
+            elif (class2rgb is not None) and (rgb2class is None):
+                rgb2class = {}
+                for cl, rgb in class2rgb.items():
+                    rgb_str = ','.join([str(_) for _ in rgb])
+                    rgb2class[rgb_str] = cl
+            elif (class2rgb is None) and (rgb2class is not None):
+                class2rgb = {}
+                for rgb, cl in rgb2class.items():
+                    class2rgb[cl] = [int(_) for _ in rgb.split(',')]
+            elif (class2rgb is not None) and (rgb2class is not None):
+                pass
+            else:
+                raise ValueError('Unexpected Error during setting color mapping dictionary.')
+        else:
+            raise ValueError('`class2rgb` and `rgb2class` arguments should be NoneType or given by a dictionary.')
+        return class2rgb, rgb2class
 
 
 class ImageAnnotations:
