@@ -59,7 +59,9 @@ class OD:
         
         self.module = None
         self.available_architectures = {
-            'mmdetection': ['Faster R-CNN', 'RetinaNet', 'YOLOv3', 'YOLO-F',
+            'mmdetection': ['Faster R-CNN', 'Cascade R-CNN', 'Dynamic R-CNN',
+                            'Faster R-CNN (DCNv2)',
+                            'RetinaNet', 'YOLOv3', 'YOLO-F',
                             'SSD', 'FCOS', 'User Defined'],
             'detectron2': ['Faster R-CNN', 'RetinaNet', 'User Defined']
         } 
@@ -89,6 +91,12 @@ class OD:
         if backend == 'mmdet':
             if  model_arch == 'fasterrcnn':
                 model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/faster_rcnn_r101_fpn_mstrain_3x_coco.py')
+            elif  model_arch == 'cascadercnn':
+                model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/cascade_rcnn_x101_64x4d_fpn_20e_coco.py')
+            elif model_arch == 'dynamicrcnn':
+                model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/dynamic_rcnn_r50_fpn_1x_coco.py')
+            elif 'dcnv2' in model_arch and 'fasterrcnn' in model_arch:
+                model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/faster_rcnn_r50_fpn_mdconv_c3-c5_1x_coco.py')
             elif model_arch == 'retinanet':
                 model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/retinanet_r101_fpn_mstrain_640-800_3x_coco.py')
             elif model_arch == 'ssd':

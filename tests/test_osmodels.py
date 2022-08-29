@@ -87,7 +87,7 @@ class TestMMDetModels(unittest.TestCase):
         self.train_annotations = os.path.join(self.dataset, 'annotations', 'COCO', 'instances_default.json')
         self.class_label = os.path.join(self.dataset, 'class_label.txt')
         
-        self.batchsize = 8
+        self.batchsize = 4
         self.epoch = 500
         self.lr = 0.001
         self.cutoff = 0.7
@@ -135,7 +135,16 @@ class TestMMDetModels(unittest.TestCase):
         self.__test_model('maskrcnn')
 
 
+    def test_cascademaskrcnn(self):
+        self.__test_model('cascademaskrcnn')
+
+
+    def test_dcnv2(self):
+        self.__test_model('maskrcnn_dcnv2')
     
+    
+
+
 
 
 

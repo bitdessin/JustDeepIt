@@ -140,6 +140,21 @@ class TestMMDetModels(unittest.TestCase):
 
 
     
+    def test_cascadercnn(self):
+        self.__test_model('cascadercnn', self.gpu)
+
+
+    
+    def test_dynamicrcnn(self):
+        self.__test_model('dynamicrcnn', self.gpu)
+
+
+    
+    def test_dcnv2(self):
+        self.__test_model('fasterrcnn_dcnv2', self.gpu)
+
+
+    
     def test_retinanet(self):
         self.__test_model('retinanet', self.gpu)
 

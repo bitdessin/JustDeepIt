@@ -37,7 +37,6 @@ def _upsample_like(src,tar):
     return src
 
 
-### RSU-7 ###
 class RSU7(torch.nn.Module):
     def __init__(self, in_ch=3, mid_ch=12, out_ch=3):
         super(RSU7,self).__init__()
@@ -93,7 +92,6 @@ class RSU7(torch.nn.Module):
         return hx1d + hxin
 
 
-### RSU-6 ###
 class RSU6(torch.nn.Module):
     def __init__(self, in_ch=3, mid_ch=12, out_ch=3):
         super(RSU6,self).__init__()
@@ -144,7 +142,6 @@ class RSU6(torch.nn.Module):
         return hx1d + hxin
 
 
-### RSU-5 ###
 class RSU5(torch.nn.Module):
     def __init__(self, in_ch=3, mid_ch=12, out_ch=3):
         super(RSU5,self).__init__()
@@ -187,7 +184,6 @@ class RSU5(torch.nn.Module):
         return hx1d + hxin
 
 
-### RSU-4 ###
 class RSU4(torch.nn.Module):
     def __init__(self, in_ch=3, mid_ch=12, out_ch=3):
         super(RSU4,self).__init__()
@@ -223,7 +219,6 @@ class RSU4(torch.nn.Module):
         return hx1d + hxin
 
 
-### RSU-4F ###
 class RSU4F(torch.nn.Module):
     def __init__(self, in_ch=3, mid_ch=12, out_ch=3):
         super(RSU4F,self).__init__()
@@ -254,11 +249,10 @@ class RSU4F(torch.nn.Module):
         return hx1d + hxin
 
 
-##### U^2-Net ####
-class U2NET(torch.nn.Module):
+class U2NetArch(torch.nn.Module):
 
-    def __init__(self,in_ch=3,out_ch=1):
-        super(U2NET, self).__init__()
+    def __init__(self,in_ch=3, out_ch=1):
+        super(self).__init__()
         
         self.stage1 = RSU7(in_ch, 32, 64)
         self.pool12 = torch.nn.MaxPool2d(2, stride=2, ceil_mode=True)
@@ -559,7 +553,7 @@ class U2Net(ModuleTemplate):
 
     def __init__(self, model_weight=None, workspace=None):
         # load model
-        self.model = U2NET(3, 1)
+        self.model = U2NetArch(3, 1)
         if model_weight is not None:
             self.model.load_state_dict(torch.load(model_weight, map_location='cpu'))
         

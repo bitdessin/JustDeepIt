@@ -586,6 +586,8 @@ class ImageAnnotation:
         cate2id = {}
         max_cate_id = 1
         for region in self.regions:
+            if region['class'] == '__background__':
+                continue
             if region['class'] not in cate2id:
                 cate2id[region['class']] = max_cate_id
                 tmpl['categories'].append({
@@ -597,6 +599,8 @@ class ImageAnnotation:
         
         # annotations
         for i, region in enumerate(self.regions):
+            if region['class'] == '__background__':
+                continue
             ann = {
                 'id': i + 1,
                 'image_id': image_id,
@@ -683,7 +687,7 @@ class ImageAnnotation:
             for region_i, region in enumerate(self.regions):
                 # mask for current region
                 tmpl = np.zeros(self.image.shape[0:2])
-                if 'contour' in region:
+                if 'contour' in region and region['contour'] is not None:
                     rr, cc = skimage.draw.polygon(region['contour'][:, 1], region['contour'][:, 0],
                                                   shape=(self.image.shape[0:2]))
                 else:
@@ -914,7 +918,8 @@ class ImageAnnotation:
         
         bimask = self.__draw_mask()
         mask_rgb = np.zeros((mask.shape[0], mask.shape[1], 3))
-        for i in range(mask.shape[2]):
+        
+        for i in range(len(self.regions)):
             if self.regions[i]['class'] != '__background__':
                 for ch in range(mask_rgb.shape[2]):
                     mask_rgb[:, :, ch][mask[:, :, i] > 0] = self.class2rgb[self.regions[i]['class']][ch]

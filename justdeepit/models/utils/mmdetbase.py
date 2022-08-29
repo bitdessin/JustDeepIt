@@ -109,15 +109,21 @@ class MMDetBase(ModuleTemplate):
                     #if cfg_key == 'init_cfg' and 'type' in cfg[cfg_key]:
                     #    cfg[cfg_key]['type'] = None
                     __set_cl(cfg[cfg_key], class_labels)
+                elif isinstance(cfg[cfg_key], (list, tuple)):
+                    if isinstance(cfg[cfg_key][0], dict):
+                        for elem in cfg[cfg_key]: 
+                            __set_cl(elem, class_labels)
                 else:
                     if cfg_key == 'classes':
                         cfg[cfg_key] = class_labels
-                    elif cfg_key == 'num_classes':
+                    elif cfg_key == 'num_classes' or cfg_key == 'num_things_classes':
                         cfg[cfg_key] = len(class_labels)
                     #elif cfg_key == 'pretrained':
                     #    cfg[cfg_key] = None
             return cfg
-        cfg.merge_from_dict(dict(classes=class_labels))
+        cfg.merge_from_dict(dict(classes=class_labels,
+                                 num_classes=len(class_labels),
+                                 num_things_classes=len(class_labels)))
         cfg.data = __set_cl(cfg.data, class_labels)
         cfg.model = __set_cl(cfg.model, class_labels)
         return cfg
@@ -168,8 +174,17 @@ class MMDetBase(ModuleTemplate):
                                              world_size=world_size, rank=local_rank)
 
 
+    
+    def __generate_config(self, input_fpath, output_fpath=None):
+        # generate full config file (*.py) from mmdet configs directory
+        cfg = Config.fromfile(input_fpath)
+        if output_fpath is None:
+            return cfg
+        else:
+            cfg.dump(output_fpath)
 
-
+    
+    
     def train(self, annotation, image_dpath,
               batchsize=36, epoch=1000, lr=0.0001, score_cutoff=0.7, cpu=8, gpu=1):
         
@@ -250,11 +265,13 @@ class MMDetBase(ModuleTemplate):
                         img_prefix = image_dpath,
                         ann_file = annotation,
                         pipeline = self.cfg.train_pipeline))),
-            runner = dict(type='EpochBasedRunner', max_epochs=epoch),
+            # runner = dict(type='EpochBasedRunner', max_epochs=epoch),
             checkpoint_config = dict(interval = 100))
         
         
         self.cfg.merge_from_dict(train_cfg)
+        self.cfg.runner = dict(type='EpochBasedRunner', max_epochs=epoch)
+        
         datasets = [mmdet.datasets.build_dataset(self.cfg.data.train)]
         model = mmdet.models.build_detector(self.cfg.model)
         
@@ -264,7 +281,6 @@ class MMDetBase(ModuleTemplate):
             model.init_weights()
         model.CLASSES = self.class_labels
         model.train()
-        
         mmdet.apis.train_detector(model, datasets, self.cfg, distributed=distributed, validate=False,
                                   timestamp=self.timestamp, meta=self.meta)
 
@@ -383,14 +399,20 @@ class MMDetBase(ModuleTemplate):
             for bbox, segm in zip(bboxes, segms):
                 if bbox[4] > score_cutoff:
                     bb = bbox[0:4].astype(np.int32)
-                    sg = skimage.measure.find_contours(segm.astype(np.uint8), 0.5) if segm is not None else None
-                    regions.append({
+
+                    sg = None
+                    if (segm is not None) and (np.sum(segm) > 0):
+                        sg = skimage.measure.find_contours(segm.astype(np.uint8), 0.5)
+                    
+                    region = {
                         'id': len(regions) + 1,
                         'class': cl,
                         'score': bbox[4],
                         'bbox': bb,
-                        'contour': sg[0][:, [1, 0]] if sg is not None else None
-                    })
+                    }
+                    if sg is not None:
+                        region['contour'] = sg[0][:, [1, 0]]
+                    regions.append(region)
         
         return regions
         

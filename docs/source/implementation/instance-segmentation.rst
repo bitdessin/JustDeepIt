@@ -6,7 +6,7 @@ Instance Segmentation
 Instance segmentation determines the pixelwise mask for each object in an image.
 JustDeepIt internally calls the MMDetection or Detectron2 library
 to build instance segmentation models and perform model training and image segmentation.
-The latest version of JustDeepIt supports Mask R-CNN\ [#maskrcnn]_.
+The latest version of JustDeepIt supports Mask R-CNN\ [#maskrcnn].
 
 
 
@@ -154,7 +154,6 @@ the corresponding arguments can be used.
 For example, to initialize a Mask R-CNN\ [#maskrcnn]_ architecture with random initial weight,
 MMDetection (``mmdetection``) or Detectron2 (``detectron2``)
 can be used as the backend for building the model architecture.
-Currently, only Mask R-CNN is supported.
 
 
 .. code-block:: py
@@ -296,6 +295,4 @@ References
 ===========
 
 .. [#maskrcnn] He K, Gkioxari G, Dollár P, Girshick R. Mask R-CNN. https://arxiv.org/abs/1703.06870
-
-
 

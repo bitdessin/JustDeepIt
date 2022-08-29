@@ -257,7 +257,7 @@ class DetectronBase(ModuleTemplate):
                     pred_masks = [None] * len(pred_boxes)
                 
                 output_fmt = self.__format_annotation(
-                    pred_classes, scores, pred_boxes, pred_masks, score_cutoff
+                    pred_classes, scores, pred_boxes, pred_masks, score_cutoff, image_fpath
                 )
                 outputs.append(ImageAnnotation(image_fpath, output_fmt))
         
@@ -267,20 +267,26 @@ class DetectronBase(ModuleTemplate):
             return ImageAnnotations(outputs)
     
     
-    def __format_annotation(self, pred_classes, scores, pred_boxes, pred_masks, score_cutoff):
+    def __format_annotation(self, pred_classes, scores, pred_boxes, pred_masks, score_cutoff, tmp):
         regions = []
         for cl, score, bbox, segm  in zip(pred_classes, scores, pred_boxes, pred_masks):
             if score > score_cutoff:
                 cl = self.class_labels[cl]
                 bb = bbox.tolist()
-                sg = skimage.measure.find_contours(segm.astype(np.uint8), 0.5) if segm is not None else None
-                regions.append({
+                sg = None
+                if (segm is not None) and (np.sum(segm) > 0):
+                    sg = skimage.measure.find_contours(segm.astype(np.uint8), 0.5)
+                
+                region = {
                     'id'     : len(regions) + 1,
                     'class'  : cl,
                     'score'  : score,
                     'bbox'   : bb,
-                    'contour': sg[0][:, [1, 0]] if sg is not None else None
-                })
+                }
+                if sg is not None:
+                    region['contour'] = sg[0][:, [1, 0]]
+                regions.append(region)
+
         return regions
         
     

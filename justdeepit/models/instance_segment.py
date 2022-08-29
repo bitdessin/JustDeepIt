@@ -87,7 +87,19 @@ class IS:
         
         if backend == 'mmdet':
             if  model_arch == 'maskrcnn':
-                model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/mask_rcnn_r101_fpn_syncbn-backbone_r16_gcb_c3-c5_1x_coco.py')
+                model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/mask_rcnn_x101_64x4d_fpn_mstrain-poly_3x_coco.py')
+            #elif model_arch == 'cascademaskrcnn':
+            #    model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/cascade_mask_rcnn_x101_64x4d_fpn_20e_coco.py')
+            #elif 'convnext' in model_arch:
+            #    model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/mask_rcnn_convnext-t_p4_w7_fpn_fp16_ms-crop_3x_coco.py')
+            #elif 'dcnv2' in model_arch and  'maskrcnn' in model_arch:
+            #    model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/mask_rcnn_r50_fpn_mdconv_c3-c5_1x_coco.py')
+            #elif model_arch == 'scnet':
+            #    model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/scnet_x101_64x4d_fpn_20e_coco.py')
+            #elif model_arch == 'mask2former':
+            #    model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/mask2former_r101_lsj_8x2_50e_coco.py')
+            #elif model_arch == 'solov2':
+            #    model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/solov2_x101_dcn_fpn_3x_coco.py')
             else:
                 NotImplementedError('JustDeepIt does not support {} archtecture when MMDetection is specified as a backend.'.format(backend))
             
