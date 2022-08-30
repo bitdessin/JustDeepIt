@@ -1,0 +1,36 @@
+name: upload pypi package
+
+on:
+  push:
+    tags:
+        - v*
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+        - name: checkout
+          uses: actions/checkout@v3
+    
+        - name: set python
+          uses: actions/setup-python@v2
+          with:
+            python-version: '3.x'
+        
+        - name: install pip
+          run: |
+              python -m pip install --upgrade pip
+              pip install setuptools wheel twine
+              pip install -r requirements.txt
+        
+        - name: build package dist
+          run: |
+              python setup.py sdist
+     
+        - name: upload package
+          uses: pypa/gh-action-pypi-publish@release/v1
+          with:
+            password: ${{ secrets.PYPI_API_TOKEN }}
+
+
