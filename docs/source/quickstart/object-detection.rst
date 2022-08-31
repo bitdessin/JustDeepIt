@@ -1,5 +1,5 @@
 ================
-Object Detection
+Object detection
 ================
 
 JustDeepIt supports object detection, instance segmentation,
@@ -12,14 +12,14 @@ we demonstrate how to use JustDeepIt for object detection, using an artificial d
 Dataset
 =======
 
-The artificial dataset used for this quick start guide is stored in
+The artificial dataset used for this quick start is stored in
 GitHub (`JustDeepIt/tutorials/OD <https://github.com/biunit/JustDeepIt/tree/main/tutorials/OD>`_).
 The :file:`data` folder contains :file:`images` folder,
 :file:`annotations` folder, and :file:`class_labels.txt` file.
 The :file:`images` folder contains training images.
 The :file:`annotations` folder contains annotation of training images.
 :file:`class_labels.txt` is an text file containing the class labels of training images.
-One can use :code:`git` command to download the dataset from GitHub with the following script.
+Users can use :code:`git` command to download the dataset from GitHub with the following script.
 
 
 .. code-block:: sh
@@ -45,8 +45,9 @@ Settings
 
 
 To start JustDeepIt, we open the terminal,
+as the following commands,
 change the current directory to :file:`JustDeepIt/tutorials/OD`,
-and run the following command.
+and run :code:`justdeepit` command.
 
 
 .. code-block:: sh
@@ -72,8 +73,8 @@ At the startup screen, we press "Object Detection" button to start object detect
 Next, at the **Preferences** screen,
 we set the **architecture** to Faster R-CNN,
 and the other parameters as shown in the screenshot below.
-The **workspace** will be automatically set as the absolute path of the current folder
-(e.g., :file:`/home/appuser/JustDeepIt/tutorials/OD`, depending on the user's environment).
+The **workspace** will be automatically set as the path of the current folder
+(e.g., :file:`JustDeepIt/tutorials/OD`, depending on the user's environment).
 Then, we press button **Load Workspace**.
 The **config** will be automatically set after loading workspace.
 
@@ -83,8 +84,8 @@ The **config** will be automatically set after loading workspace.
 
 
 
-Once the workspace is set,
-the functions of training and inference become available.
+Once the **Preferences** is set,
+the functions of **Training** and **Inference** become available.
 
 
 Training
@@ -116,10 +117,10 @@ Inference
 =========
 
 
-In tab **Inference**, the **model weight** is specified to the training weights,
+In tab **Inference**, the **model weight** is specified to the trained weights,
 whose file extension is :file:`.pth` in general.
-We specify **image folder** to the folder containing the images
-(to simplify, here we use training images) for inference,
+We specify **image folder** to the folder containing the images for inference
+(to simplify, here we use the training images)
 and other parameters as shown in screenshot below.
 Note that the values of **model weight** and **image folder** may be
 different from the screenshot depending on user's environment.
@@ -132,12 +133,6 @@ We then press the button **Start Inference** for inference.
 
 The inference results will be stored in folder :file:`justdeepitws/outputs` of the workspace
 as images with bounding boxes and a JSON file in COCO format (:file:`annotation.json`).
-
-
-
-Results
-=======   
-
 Examples of inference results are shown in the figure below.
 
 .. image:: ../_static/quickstart_od_inference_output.png
@@ -151,10 +146,16 @@ API
 
 
 Training and inference can be performed using the JustDeepIt API.
-Python script :file:`run_fasterrcnn.py` stored in GitHub
+Python script :file:`run_justdeepit.py` stored in GitHub
 (`JustDeepIt/tutorials/OD <https://github.com/biunit/JustDeepIt/tree/main/tutorials/OD>`_)
 can be used for this purpose.
 
+
+.. code-block:: sh
+    
+    cd JustDeepIt/tutorials/OD
+    
+    python run_justdeepit.py
 
 
 

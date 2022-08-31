@@ -19,6 +19,11 @@ table p {
     margin: 0;
 }
 
+section p {
+    text-align: justify;
+    text-justify: inter-ideograph;
+}
+
 colgroup {
     display: none;
 }

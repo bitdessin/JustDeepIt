@@ -6,7 +6,7 @@ Instance Segmentation
 Instance segmentation determines the pixelwise mask for each object in an image.
 JustDeepIt internally calls the MMDetection or Detectron2 library
 to build instance segmentation models and perform model training and image segmentation.
-The latest version of JustDeepIt supports Mask R-CNN\ [#maskrcnn].
+The latest version of JustDeepIt supports Mask R-CNN\ [#maskrcnn]_.
 
 
 
@@ -34,6 +34,7 @@ such as the architecture of the segmentation model,
 number of CPUs and GPUs to be used,
 and the location (i.e., directory path) to the workspace
 which is used to save intermediate and final results.
+The required fields are highlighted with orange borders.
 Detailed descriptions of the arguments are provided in the following table.
 
 
@@ -141,19 +142,16 @@ JustDeepIt implements three simple methods,
 and :meth:`inference <justdeepit.models.IS.inference>`.
 :meth:`train <justdeepit.models.IS.train>` is used for training the models,
 while :meth:`save <justdeepit.models.IS.save>` is used for saving the trained weight,
-and :meth:`inference <justdeepit.models.IS.inference>` is used for instance segmentation in test images.
+and :meth:`inference <justdeepit.models.IS.inference>` is used for segmenting instances in test images.
 Detailed descriptions of these functions are provided below.
 
 
 Architectures
 -------------
 
-To initialize a neural network architecture for instance segmentation,
-class :class:`justdeepit.models.IS <justdeepit.models.IS>` with
-the corresponding arguments can be used.
-For example, to initialize a Mask R-CNN\ [#maskrcnn]_ architecture with random initial weight,
-MMDetection (``mmdetection``) or Detectron2 (``detectron2``)
-can be used as the backend for building the model architecture.
+A neural network architecture for instance segmentation
+can be initialized with class :class:`justdeepit.models.IS <justdeepit.models.IS>`.
+For example, Mask R-CNN can be initialized by executing the following code.
 
 
 .. code-block:: py
@@ -163,13 +161,15 @@ can be used as the backend for building the model architecture.
     model = IS('./class_label.txt', model_arch='maskrcnn')
 
 
-To initialize a Mask R-CNN architecture with the specified trained weight
-(e.g., the weight pre-trained by COCO dataset),
-users can use argument ``model_weight`` during initialization.
-Note that, the pre-trained weight file (:file:`.pth`)
+
+To initialize Mask R-CNN with the pre-trained weight
+(e.g. the weight pre-trained with COCO dataset),
+the argument ``model_weight`` can be used.
+Note that, the weight file (:file:`.pth`) pre-trained with COCO dataset
 can be downloaded from the GitHub repositories of
 `MMDetection <https://github.com/open-mmlab/mmdetection/tree/master/configs>`_
 or `Detectron2 <https://github.com/facebookresearch/detectron2/tree/main/configs>`_.
+
 
 
 .. code-block:: py
@@ -178,6 +178,19 @@ or `Detectron2 <https://github.com/facebookresearch/detectron2/tree/main/configs
 
     weight_fpath = '/path/to/pretrained_weight.pth'
     model = IS('./class_label.txt', model_arch='maskrcnn', model_weight=weight_fpath)
+
+
+To specify a backend for initializing an architecture,
+the argument ``backend`` can be used.
+MMDetection (``mmdetection``) or Detectron2 (``detectron2``)
+can be used as the backend.
+
+
+.. code-block:: py
+
+    from justdeepit.models import IS
+
+    model = IS('./class_label.txt', model_arch='maskrcnn', backend='detectron2')
 
 
 The available architectures for instance segmentation
@@ -198,7 +211,7 @@ Training
 
 Method :meth:`train <justdeepit.models.IS.train>` is used for the model training
 and requires at least two arguments
-to specify the annotations and folder containing the training images.
+to specify the annotations and a folder containing the training images.
 Annotations can be specified in a single file in the COCO format.
 Training process requires a GPU environment if MMDetection is chosen as the backend
 because it only supports GPU training.
@@ -244,7 +257,7 @@ Inference
 Method :meth:`inference <justdeepit.models.IS.inference>`
 is used to perform instance segmentation against the test images using the trained model.
 This method requires at least one argument to specify a single image,
-list of images, or folder containing multiple images.
+list of images, or a folder containing multiple images.
 The segmentation results are returned as class object
 :class:`justdeepit.utils.ImageAnnotations <justdeepit.utils.ImageAnnotations>`,
 which is a list of class objects :class:`justdeepit.utils.ImageAnnotation <justdeepit.utils.ImageAnnotation>`.
@@ -252,7 +265,8 @@ which is a list of class objects :class:`justdeepit.utils.ImageAnnotation <justd
 
 To save the results in the COCO format,
 we can use method :meth:`format <justdeepit.utils.ImageAnnotations.format>`
-implemented in class :class:`justdeepit.utils.ImageAnnotations <justdeepit.utils.ImageAnnotations>` to represent a JSON file in the COCO format.
+implemented in class :class:`justdeepit.utils.ImageAnnotations <justdeepit.utils.ImageAnnotations>`
+to generate a JSON file in the COCO format.
 
 
 

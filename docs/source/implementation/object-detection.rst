@@ -5,16 +5,17 @@ Object Detection
 
 Object detection combines classification and localization
 to identify objects in an image and specify their locations through bounding boxes.
-The latest version of JustDeepIt supports
-Faster R-CNN\ [#fasterrcnn]_,
+JustDeepIt supports multiple well-known deep neural network architectures,
+such as Faster R-CNN\ [#fasterrcnn]_,
 YOLOv3\ [#yolov3]_,
 SSD\ [#ssd]_,
 RetinaNet\ [#retinanet]_,
-and FCOS\ [#fcos]_
-to build object detection models.
-The fowllowing image is an example of wheat head detection results
+and FCOS\ [#fcos]_,
+to build object detection models for training and inference.
+The inference results can be stored as
+images with bounding boxes or a JSON file in the COCO format.
+The following image is an example of wheat head detection results
 with Faster R-CNN using GWHD datasset\ [#gwhd]_.
-
 
 .. image:: ../_static/tutorials_GWHD_inference_output.jpg
     :align: center
@@ -146,7 +147,8 @@ CUI
 
 
 JustDeepIt implements three simple methods,
-:meth:`train <justdeepit.models.OD.train>`, :meth:`save <justdeepit.models.OD.save>`,
+:meth:`train <justdeepit.models.OD.train>`,
+:meth:`save <justdeepit.models.OD.save>`,
 and :meth:`inference <justdeepit.models.OD.inference>`.
 :meth:`train <justdeepit.models.OD.train>` is used for training the models,
 while :meth:`save <justdeepit.models.OD.save>` is used for saving the trained weight,
@@ -157,14 +159,9 @@ Detailed descriptions of these functions are provided below.
 Architectures
 -------------
 
-To initialize a neural network architecture for object detection,
-class :class:`justdeepit.models.OD <justdeepit.models.OD>` with
-the corresponding arguments can be used.
-For example, to initialize a Faster R-CNN architecture with random initial weight,
-MMDetection (``mmdetection``) or Detectron2 (``detectron2``) can be used as the backend for building the model architecture.
-Currently, MMDetection supports more architectures (i.e., Faster R-CNN, SSD, RetinaNet, FCOS, and YOLOv3)
-than Detectron2 (i.e., Faster R-CNN and RetinaNet),
-but the latter supports training with both CPUs and GPUs.
+A neural network architecture for object detection
+can be initialized with class :class:`justdeepit.models.OD <justdeepit.models.OD>`.
+For example, Faster R-CNN can be initialized by executing the following code.
 
 
 .. code-block:: py
@@ -174,12 +171,14 @@ but the latter supports training with both CPUs and GPUs.
     model = OD('./class_label.txt', model_arch='fasterrcnn')
 
 
-To initialize a Faster R-CNN architecture with the specified trained weight
+To initialize Faster R-CNN with the pre-trained weight
 (e.g. the weight pre-trained with COCO dataset),
-users can use argument ``model_weight`` during initialization.
-Note that, the pre-trained weight file (:file:`.pth`) can be downloaded from the GitHub repositories of
+the argument ``model_weight`` can be used.
+Note that, the weight file (:file:`.pth`) pre-trained with COCO dataset
+can be downloaded from the GitHub repositories of
 `MMDetection <https://github.com/open-mmlab/mmdetection/tree/master/configs>`_
 or `Detectron2 <https://github.com/facebookresearch/detectron2/tree/main/configs>`_.
+
 
 .. code-block:: py
 
@@ -189,6 +188,26 @@ or `Detectron2 <https://github.com/facebookresearch/detectron2/tree/main/configs
     model = OD('./class_label.txt', model_arch='fasterrcnn', model_weight=weight_fpath)
 
 
+
+To specify a backend for initializing an architecture,
+the argument ``backend`` can be used.
+MMDetection (``mmdetection``) or Detectron2 (``detectron2``)
+can be used as the backend.
+
+
+.. code-block:: py
+
+    from justdeepit.models import OD
+
+    model = OD('./class_label.txt', model_arch='fasterrcnn', backend='detectron2')
+
+
+
+Currently, MMDetection requires GPU computational environment for model training
+and supports more architectures
+(e.g, Faster R-CNN, SSD, RetinaNet, FCOS, and YOLOv3)
+than Detectron2 (e.g., Faster R-CNN and RetinaNet),
+but the latter supports both CPUs and GPUs for model training.
 The available architectures for object detection
 can be checked by executing the following code.
 
@@ -230,7 +249,7 @@ for detailed usage.
 
 
 The trained weight can be saved using method :meth:`save <justdeepit.models.OD.save>`,
-which simultaneously stores the trained weight (extension :file`.pth`)
+which simultaneously stores the trained weight (extension :file:`.pth`)
 and model configuration file (extensions :file:`.py` for MMDetection backend and :file:`.yaml` for Detectron2 backend).
 Users can apply the weight and configuration file as needed
 for generating a model using the MMDetection or Detectron2 library directly.
@@ -252,7 +271,7 @@ Inference
 Method :meth:`inference <justdeepit.models.OD.inference>`
 is used to detect objects in the test images using the trained model.
 This method requires at least one argument to specify a single image,
-list of images, or folder containing multiple images.
+list of images, or a folder containing multiple images.
 The detection results are returned as
 a class object of :class:`justdeepit.utils.ImageAnnotations <justdeepit.utils.ImageAnnotations>`,
 which is a list of class objects of :class:`justdeepit.utils.ImageAnnotation <justdeepit.utils.ImageAnnotation>`.

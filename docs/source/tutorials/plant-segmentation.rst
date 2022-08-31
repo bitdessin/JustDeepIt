@@ -1,17 +1,18 @@
-====================================
-Plant Segmentation (U\ :sup:`2`-Net)
-====================================
+==================
+Plant segmentation
+==================
 
-Phenotyping is important in plant biology as well as breeding and crop management.
-It depends on leaf detection or leaf segmentation
-because the leaf color can be used to estimate the nutritional state
-while the area index can be used to measure plant growth and estimate the final yields.
+Phenotyping is important to plant science
+because of its applications in breeding and crop management. 
+It relies on leaf detection and leaf segmentation.
+This is because leaf color is used to estimate nutritional status,
+while area index is used to measure plant growth and estimate final yield.
 In this tutorial, we illustrate the use of JustDeepIt
 to train U2-Net\ [#u2net]_ and apply the trained model to leaf segmentation.
 
 
 
-Dataset Preparation
+Dataset preparation
 ===================
 
 
@@ -25,13 +26,13 @@ while levels stack and plant contain images of a single plant,
 with the former containing stacks and the latter containing only plants.
 In this study, we use the images at level tray for training and plant segmentation.
 
-The dataset contains 27 tray-level images with filename :file:`ara2013_tray*_rgb.png`,
-where * identifies the image from 01 to 27.
-We create folders :file:`inputs/train_images` and :file:`inputs/query_images`
+The dataset contains 27 tray-level images with filenames :file:`ara2013_tray*_rgb.png`
+where * represents digits from 01 to 27.
+We create folders :file:`train` and :file:`test`
 in the workspace (:file:`PPD2013`) to store the training and test images, respectively.
 We copy four images with the corresponding masks, tray01, tray09, tray18, and tray27,
-into folder :file:`inputs/train_images`
-and all the images without masks into folder :file:`inputs/query_images`.
+into folder :file:`train`
+and all the images without masks into folder :file:`test`.
 
 The above dataset preparation can be performed manually or automatically using the following shell scripts:
 
@@ -64,7 +65,7 @@ and start "Salient Object Detection" mode.
 
 
 We set the **workspace** to the location containing folders
-:file:`inputs/training_images` and :file:`inputs/query_images`,
+:file:`train` and :file:`test`,
 and press **Load Workspace** button.
 Note that the value of **workspace** may be different from
 the screenshot below depending on user's environment.
@@ -74,7 +75,8 @@ the screenshot below depending on user's environment.
     :align: center
 
 
-After loading workspace, the functions of the model training and inference become available.
+After loading workspace,
+the functions of the **Training** and **Inference** become available.
 
 
 
@@ -85,14 +87,19 @@ Trainig
 To train the model, 
 we select tab **Training**
 and specify **model weight** as the location to store the training weight
-and **image folder** as the folder (i.e., :file:`train_images`)
+and **image folder** as the folder (i.e., :file:`train`)
 containing training images and masks (i.e., annotation labels).
 Then, we set the suffixes of the training images and mask to ``_rgb.png`` and ``_fg.png``, respectively.
 The other parameters are set as shown in the screenshot below.
 Note that the values of **model weight** and **image folder** may be different
 from the screenshot depending on user's environment.
 
-As the images in the dataset have a resolution of 3108 x 2324 pixels
+
+.. image:: ../_static/tutorials_PPD2013_train.png
+    :align: center
+
+
+As the images in this dataset have a resolution of 3108 x 2324 pixels
 and each image contains 24 plants,
 the training images are large and capture many small objects.
 Thus, *random cropping* strategy is the suitable selection for training
@@ -100,13 +107,11 @@ Thus, *random cropping* strategy is the suitable selection for training
 Here we set JustDeepIt to crop areas of 320 x 320 pixels for training.
 As *random cropping* is applied once per image and epoch and only four training images were available,
 we require many epochs (1,000 epochs in this case study) for training
-to ensure a high model performance.
+to ensure a high detection performance.
 After setting the parameters as in the screenshot below,
 we press **Start Training** button to start model training.
 
 
-.. image:: ../_static/tutorials_PPD2013_train.png
-    :align: center
 
 
 
@@ -118,19 +123,24 @@ Inference
 
 In tab **Inference**,
 we specify **model weight** to the training weights,
-whose file usually has extension :file:`pth`,
-**image folder** as the folder containing images for detection (i.e., :file:`query_images`),
+whose file usually has extension :file:`.pth`,
+**image folder** as the folder containing images for detection (i.e., :file:`test`),
 and the other parameters as shown in the screenshot below.
-Note that the values of **model weight** and **image folder** may be different
+The values of **model weight** and **image folder** may be different
 from the screenshot depending on user's environment.
-To summarize objects over time, we activate option **time-series**.
+
+
+.. image:: ../_static/tutorials_PPD2013_eval.png
+    :align: center
+
+
+Note that, to summarize objects over time, we activate option **time-series**.
 In addition, to align plants in each image through time-series by location,
 we activate option **align images**.
-
-As we trained the model on areas of 320 x 320 pixels
+In addition, as we trained the model on areas of 320 x 320 pixels
 that were randomly cropped from the original image,
-we also need input of the same size and scale (i.e., 320 x 320 pixels)
-for the model to ensure a high performance.
+we also need input of the same size and scale
+for the model to ensure the high detection performance.
 Thus, during detection,
 we use the *sliding* approach (see :ref:`soddetectionstrategy` for details)
 to crop areas of 320 x 320 pixels
@@ -138,30 +148,28 @@ from the top left to the bottom right of the original image,
 performe salient object detection for all the areas,
 and finally merge the detection results into a single image. 
 
-Then, we press **Start Inference** button to execute
-plant segmentation (i.e., salient object detection) and object summarization.
+Then, we press **Start Inference** button to perform
+salient object detection (i.e., plant segmentation).
 The results of prediction and summarization were saved
 in the **workspace** as specified in tab **Preferences**.
 
 
-.. image:: ../_static/tutorials_PPD2013_eval.png
-    :align: center
-
-
-
-    
-Results
-=======
-
-JustDeepIt generates three types of images: mask, masked, and contour during the inference process,
+JustDeepIt generates three types of images:
+mask, masked, and contour during the inference process,
 as respectively shown in the images below.
+
 
 .. image:: ../_static/tutorials_PPD2013_inference_output_types.jpg
     :align: center
 
 
+
+Downstream analyses
+===================
+
 The time-series images can be aligned to generate videos 
-using third-party software such as :command:`ffmpeg` command, free GUI software, and online service.
+using third-party software such as :command:`ffmpeg` command,
+free GUI software, and online service.
 
 .. raw:: html
     
@@ -171,8 +179,8 @@ using third-party software such as :command:`ffmpeg` command, free GUI software,
     </video>
 
 
-Further, the identification of each object (each plant in this case) is automatically assigned over time,
-as shown in the image below.
+Further, the identification of each object (each plant in this case)
+is automatically assigned over time, as shown in the image below.
 Hence, the same identifier is assigned to objects
 that are almost at the same position across the images.
 This is because we turned on **time-series** and **align images** option during detection processes.

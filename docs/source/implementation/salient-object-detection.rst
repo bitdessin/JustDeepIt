@@ -2,8 +2,8 @@
 Salient Object Detection
 ========================
 
-Salient object detection is typically used to identify the main object in an image,
-and it can be applied to one-class object segmentation tasks such as background removal,
+Salient object detection is typically used to identify the major object in an image.
+It can be applied to one-class object segmentation tasks such as background removal,
 plant segmentation, root segmentation, and tumor segmentation.
 The fowllowing image is an example of plant segmentation using the dataset of
 `CVPPP 2017 Challenges <https://www.plant-phenotyping.org/CVPPP2017-challenge>`_.
@@ -176,7 +176,7 @@ Inference
 Method :meth:`inference <justdeepit.models.SOD.inference>`
 is used to perform salient object detect from the test images using the trained model.
 This method requires at least one argument to specify a single image,
-list of images, or folder containing multiple images.
+list of images, or a folder containing multiple images.
 
 
 .. code-block:: python
@@ -276,7 +276,7 @@ If the model is trained using *resizing*, *resizing* approach should be set for 
 from the top left to the bottom right of the image and resizes the areas to 288 x 288 pixels.
 Next, salient object detection is performed on the resized square areas.
 After all the areas are processed, their results are combined (restored) into a single image.
-This approach corresponds to random cropping during training.
+This approach corresponds to *random cropping* during training.
 Thus, if the model is trained using *random cropping*, *sliding* should be used for detection.
 
 

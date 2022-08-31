@@ -1,9 +1,10 @@
-=================================
-Leaf Extraction (U\ :sup:`2`-Net)
-=================================
+===============
+Leaf extraction
+===============
 
-The background of an image can affect the performance of object classification and detection.
-Thus, extracting a salient object by removing the background may improve the performance of these tasks.
+The background may affect the performance of object classification and detection.
+Thus, extracting a salient object by removing the background
+may improve the performance of these tasks.
 However, training the model requires several annotated images.
 Usually, annotation is costly and time-consuming.
 In this tutorial, we illustrate the use of JustDeepIt
@@ -11,7 +12,7 @@ to train U\ :sup:`2`-Net\ [#u2net]_ for background removal from unannotated imag
 
 
 
-Dataset Preparation
+Dataset preparation
 ===================
 
 
@@ -20,7 +21,7 @@ contains images of over 400 thousands
 cucumbers, eggplants, strawberries, and tomatoes labeled according to crop tissue and disease.
 However, no annotations are available at the leaf level.
 To simplify the tutorial, we only use the leaf tissue of cucumber
-to train U\ :sup:`2`-Net for background removal, that is, extracting the leaf area.
+to train U\ :sup:`2`-Net for leaf extraction.
 
 Images of cucumber leaves can be downloaded manually or using wget commands.
 There are 29,045 cucumber leaf images in the AIPI dataset.
@@ -31,7 +32,7 @@ to train U2-Net for leaf extraction.
 
 
 
-Model Training and Leaf Extraction
+Model training and leaf extraction
 ==================================
 
 Training is performed as follow steps:
@@ -44,13 +45,15 @@ Training is performed as follow steps:
 
 
 .. image:: ../_static/u2net-iterative-training-process.png
+    :width: 80%
     :align: center
 
 
 As most steps are repeated five times,
 we use the JustDeepIt API to efficiently repeat them automatically.
-The executable Python scripts are available at
-`GitHub:JustDeepIt/tutorials/AIPI/iterative_u2net.py <https://github.com/biunit/JustDeepIt/tree/main/tutorials/AIPI>`_.
+The executable Python scripts :file:`iterative_u2net.py` can be obtained from GitHub
+(`JustDeepIt/tutorials/AIPI/scripts <https://github.com/biunit/JustDeepIt/tree/main/tutorials/AIPI/scripts>`_.
+Training in this case study takes 4-5 days, and it depends on the computer hardware.
 
 
 .. code-block:: sh
@@ -64,17 +67,11 @@ The executable Python scripts are available at
 
 
 
-Training in this case study takes 4.5 days, and it depends on the computer hardware.
 
 
-The results of leaf segmentation will be stored in folder :file:`AIPI/data/images_5`
-after running the corresponding Python script.   
- 
-
-   
-Results
-=======
-
+The results of leaf segmentation by the 5\ :sup:`th`-trained U\ :sup:`2`-Net
+are stored in folder :file:`AIPI/data/images_5`
+after running the :file:`iterative_u2net.py`.   
 Examples of leaf segmentation of the 0\ :sup:`th`- and 5\ :sup:`th`-trained U\ :sup:`2`-Net
 are shown in the figure below. 
 

@@ -16,7 +16,7 @@ In this tutorial, we only download images from the following two pages.
 Put all images into :file:`data/images`.
 Note that, :file:`data/images` has already contained some images that were downloaded from the AIPI database.
 
-Then download the pre-trained U2-Net weight (`Google Drive <https://drive.google.com/file/d/1ao1ovG1Qtx4b7EoskHXmi2E9rp5CHLcZ/view?usp=sharing>`_) shown on `GitHub <https://github.com/xuebinqin/U-2-Net>`_ into :file:`weights` named :file`u2net.0.pth`.
+Then download the pre-trained U2-Net weight (`Google Drive <https://drive.google.com/file/d/1ao1ovG1Qtx4b7EoskHXmi2E9rp5CHLcZ/view?usp=sharing>`_) shown on `GitHub <https://github.com/xuebinqin/U-2-Net>`_ into :file:`weights` named :file:`u2net.0.pth`.
 
 
 

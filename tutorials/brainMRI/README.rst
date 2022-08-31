@@ -17,12 +17,11 @@ Dataset
     # and put archive.zip in JustDeepIt/tutorials/brainMRI
     unzip archive.zip
     
-    mkdir -p inputs/train_images
-    mkdir -p inputs/query_images
+    mkdir -p train
+    mkdir -p test
     
     # randomly select 90% patients for training and 10% for validation
-    python scripts/split_train_and_valid.py kaggle_3m inputs
-    
+    python scripts/split_train_and_valid.py kaggle_3m .
 
 
 .. </dataset>

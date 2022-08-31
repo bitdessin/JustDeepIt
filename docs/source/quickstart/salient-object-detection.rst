@@ -1,5 +1,5 @@
 ========================
-Salient Object Detection
+Salient object detection
 ========================
 
 JustDeepIt supports users to perform object detection, instance segmentation,
@@ -12,12 +12,12 @@ Dataset
 =======
 
 
-The artificial dataset used for this quick start guide is stored in
+The artificial dataset used for this quick start is stored in
 GitHub (`JustDeepIt/tutorials/SOD <https://github.com/biunit/JustDeepIt/tree/main/tutorials/SOD>`_).
 The :file:`data` folder contains :file:`train_images` and :file:`query_images` folders.
 :file:`train_images` folder contains training images and mask images (annotation).
 :file:`query_images` folder contains test images, actually these images are same as the images in :file:`train_images`.
-The user can use :code:`git` command to download dataset from GitHub with the following script.
+The user can use :code:`git` command to download the dataset from GitHub with the following script.
 
 
 .. code-block:: sh
@@ -48,8 +48,10 @@ Settings
 
 
 To start JustDeepIt, we open the terminal,
+as the following commands,
 change the current directory to :file:`JustDeepIt/tutorials/SOD`,
-and run the following command.
+and run :code:`justdeepit` command.
+
 
 
 .. code-block:: sh
@@ -76,18 +78,16 @@ to start salient object detection mode.
 
 Next, at the **Preferences** screen,
 we set parameters as shown in the screenshot below.
-The **workspace** will be automatically set as the absolute path of the current folder
-(e.g., :file:`/home/appuser/JustDeepIt/tutorials/SOD`, depending on the user's environment).
+The **workspace** will be automatically set as the path of the current folder
+(e.g., :file:`JustDeepIt/tutorials/SOD`, depending on the user's environment).
 Then, we press button **Load Workspace**.
 
 
 .. image:: ../_static/quickstart_sod_pref.png
     :align: center
 
-
-
-Once the workspace is set,
-the functions of training and inference become available.
+Once the **Preferences** is set,
+the functions of **Training** and **Inference** become available.
 
 
 
@@ -113,15 +113,16 @@ Then, we press button **Start Training** for model training.
     :align: center
 
 
-Training takes 3-4 hours, and it depends on the computer hardware.
+Training takes 1-2 hours, and it depends on the computer hardware.
 
 
 Inference
 =========
 
 In tab **Inference**, the **model weight** is specified to the training weights,
-whose file extension is :file:`pth` in general.
-We specify **image folder** to the folder containing the images (e.g., :file:`data/query_images`) for inference.
+whose file extension is :file:`.pth` in general.
+We specify **image folder** to the folder
+containing the images (e.g., :file:`data/query_images`) for inference.
 Note that the values of **model weight** and **image folder** may be
 different from the screenshot depending on user's environment.
 Then, we press button **Start Inference** for inference.
@@ -131,13 +132,7 @@ Then, we press button **Start Inference** for inference.
     :align: center
 
 
-The inference results will be stored in folder :file:`justdeepitws/outputs` of the workspace.
-
-
-
-Results
-=======   
-
+The inference results will be stored in the folder :file:`justdeepitws/outputs` of the workspace.
 Examples of inference results are shown in the figure below.
 Black background indicates that there is no objects.
 
@@ -154,10 +149,16 @@ API
 
 
 Training and inference can be performed using the JustDeepIt API.
-Python script :file:`run_u2net.py` stored in GitHub
+Python script :file:`run_justdeepit.py` stored in GitHub
 (`JustDeepIt/tutorials/SOD <https://github.com/biunit/JustDeepIt/tree/main/tutorials/SOD>`_)
 can be used for this purpose.
 
+
+.. code-block:: sh
+
+    cd JustDeepIt/tutorials/SOD
+
+    python run_justdeepit.py
 
 
 

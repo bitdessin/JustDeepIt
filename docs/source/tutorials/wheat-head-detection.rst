@@ -1,6 +1,6 @@
-===================================
-Wheat Head Detection (Faster R-CNN)
-===================================
+====================
+Wheat head detection
+====================
 
 
 Heading is a key phenological stage during growth of most crops
@@ -12,11 +12,11 @@ such as making decisions about a treatment to be applied.
 Detecting crop heads from images captured by fixed-point cameras or drones
 allows to conduct high-throughput phenotyping and efficiently run large farms.
 Deep learning technology has become more common for various detection tasks.
-For instance, in this tutorial, we use JustDeepIt to train Faster R-CNN\ [#fasterrcnn]_ for wheat head detection.
+In this tutorial, we use JustDeepIt to train Faster R-CNN\ [#fasterrcnn]_ for wheat head detection.
 
 
 
-Dataset Preparation
+Dataset preparation
 ===================
 
 
@@ -42,7 +42,7 @@ we first convert file :file:`train.csv` into a file in the COCO format (:file:`t
 Python script :file:`gwhd2coco.py` stored in GitHub
 (`JustDeepIt/tutorials/GWHD/scripts <https://github.com/biunit/JustDeepIt/tree/main/tutorials/GWHD/scripts>`_) can be used for format conversion.
 In addition, JustDeepIt requires a text file containing class names.
-We create file :file:`class_label.txt` containing only "spike" on the first line,
+We create a file :file:`class_label.txt` containing only "spike" on the first line,
 as the GWHD dataset only has one class, namely, wheat head.
 
 The above dataset preparation can be performed manually or automatically using the following shell scripts:
@@ -88,7 +88,8 @@ Then, we press button **Load Workspace**.
 
 
 
-Once the workspace is set, the functions of model training and inference become available.
+Once the **Preferences** is set,
+the functions of **Training** and **Inference** become available.
 
 
 Training
@@ -120,7 +121,7 @@ Inference
 =========
 
 In tab **Inference**, the **model weight** is specified to the training weights,
-whose file extension is :file:`pth` in general.
+whose file extension is :file:`.pth` in general.
 Then, we specify **image folder** to the folder containing the images for detection
 (i.e., :file:`test`),
 and other parameters as shown in screenshot below.
@@ -135,12 +136,6 @@ Next, we press button **Start Inference** for object detection.
 
 The detection results will be stored in folder :file:`justdeepitws/outputs` of the workspace
 as images with bounding boxes and a JSON file in the COCO format (:file:`annotation.json`).
-
-
-
-Results
-=======   
-
 Examples of wheat head detection results are shown in the figure below.
 
 .. image:: ../_static/tutorials_GWHD_inference_output.jpg
@@ -156,15 +151,19 @@ API
 
 
 Model training and object detection can be performed using the JustDeepIt API.
-Python script :file:`run_mmdet.py` stored in GitHub
+Python script :file:`run_justdeepit.py` stored in GitHub
 (`JustDeepIt/tutorials/GWHD/scripts <https://github.com/biunit/JustDeepIt/tree/main/tutorials/GWHD/scripts>`_) can be used for this purpose.
 See GitHub (`JustDeepIt/tutorials/GWHD/ <https://github.com/biunit/JustDeepIt/tree/main/tutorials/GWHD>`_) for detailed information.
 
 
-.. include:: ../../../tutorials/GWHD/README.rst
-    :start-after: .. <script>
-    :end-before: .. </script>
     
+.. code-block:: sh
+    
+    cd JustDeepIt/tutorials/GWHD
+    
+    python run_justdeepit.py train
+    python run_justdeepit.py test
+
 
 
 

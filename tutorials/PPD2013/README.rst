@@ -20,17 +20,17 @@ Dataset
     unzip Plant_Phenotyping_Datasets.zip
     
     # create folders to store images for training and inference
-    mkdir -p inputs/train_images
-    mkdir -p inputs/query_images
+    mkdir -p train
+    mkdir -p test
 
     # select 4 images and the corresponding mask images for training
-    cp Plant_Phenotyping_Datasets/Tray/Ara2013-Canon/ara2013_tray01_*.png inputs/train_images/
-    cp Plant_Phenotyping_Datasets/Tray/Ara2013-Canon/ara2013_tray09_*.png inputs/train_images/
-    cp Plant_Phenotyping_Datasets/Tray/Ara2013-Canon/ara2013_tray18_*.png inputs/train_images/
-    cp Plant_Phenotyping_Datasets/Tray/Ara2013-Canon/ara2013_tray27_*.png inputs/train_images/
+    cp Plant_Phenotyping_Datasets/Tray/Ara2013-Canon/ara2013_tray01_*.png train/
+    cp Plant_Phenotyping_Datasets/Tray/Ara2013-Canon/ara2013_tray09_*.png train/
+    cp Plant_Phenotyping_Datasets/Tray/Ara2013-Canon/ara2013_tray18_*.png train/
+    cp Plant_Phenotyping_Datasets/Tray/Ara2013-Canon/ara2013_tray27_*.png train/
 
     # use all images for inference
-    cp Plant_Phenotyping_Datasets/Tray/Ara2013-Canon/*_rgb.png inputs/query_images
+    cp Plant_Phenotyping_Datasets/Tray/Ara2013-Canon/*_rgb.png test/
 
 
 

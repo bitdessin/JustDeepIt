@@ -1,5 +1,5 @@
 =====================
-Instance Segmentation
+Instance segmentation
 =====================
 
 JustDeepIt supports users to perform object detection, instance segmentation,
@@ -12,14 +12,14 @@ Dataset
 =======
 
 
-The artificial dataset used for this quick start guide is stored in
+The artificial dataset used for this quick start is stored in
 GitHub (`JustDeepIt/tutorials/IS <https://github.com/biunit/JustDeepIt/tree/main/tutorials/IS>`_).
 The :file:`data` folder contains :file:`images` folder,
 :file:`annotations` folder, and :file:`class_labels.txt` file.
 The :file:`images` folder contains training images.
 The :file:`annotations` folder contains annotation of training images.
 :file:`class_labels.txt` is an text file containing the class labels of training images.
-One can use :code:`git` command to download dataset from GitHub with the following script.
+Users can use :code:`git` command to download the dataset from GitHub with the following script.
 
 
 
@@ -48,8 +48,10 @@ Settings
 
 
 To start JustDeepIt, we open the terminal,
+as the following commands,
 change the current directory to :file:`JustDeepIt/tutorials/IS`,
-and run the following command.
+and run :code:`justdeepit` command.
+
 
 
 .. code-block:: sh
@@ -77,8 +79,8 @@ At the startup screen, we press "Instance Segmentation" button to start segmenta
 Next, at the **Preferences** screen,
 we set the **architecture** to Mask R-CNN,
 and the other parameters as shown in the screenshot below.
-The **workspace** will be automatically set as the absolute path of the current folder
-(e.g., :file:`/home/appuser/JustDeepIt/tutorials/IS`, depending on the user's environment).
+The **workspace** will be automatically set as the path of the current folder
+(e.g., :file:`JustDeepIt/tutorials/IS`, depending on the user's environment).
 Then, we press button **Load Workspace**.
 The **config** will be automatically set after loading workspace.
 
@@ -87,9 +89,9 @@ The **config** will be automatically set after loading workspace.
     :align: center
 
 
+Once the **Preferences** is set,
+the functions of **Training** and **Inference** become available.
 
-Once the workspace is set,
-the functions of training and inference become available.
 
 
 Training
@@ -135,12 +137,6 @@ We then press the button **Start Inference** for instance segmentation.
 The inference results will be stored in folder
 :file:`justdeepitws/outputs` of the workspace
 as images with bounding boxes and a JSON file in the COCO format (:file:`annotation.json`).
-
-
-
-Results
-=======   
-
 Examples of inference results are shown in the figure below.
 
 .. image:: ../_static/quickstart_is_inference_output.png
@@ -154,9 +150,16 @@ API
 
 
 Training and inference can be performed using the JustDeepIt API.
-Python script :file:`run_maskrcnn.py` stored in GitHub
+Python script :file:`run_justdeepit.py` stored in GitHub
 (`JustDeepIt/tutorials/IS <https://github.com/biunit/JustDeepIt/tree/main/tutorials/IS>`_)
 can be used for this purpose.
+
+
+.. code-block:: sh
+
+    cd JustDeepIt/tutorials/ID
+
+    python run_justdeepit.py
 
 
 

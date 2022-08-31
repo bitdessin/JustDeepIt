@@ -14,8 +14,8 @@ Dataset
     git clone https://github.com/jsun/JustDeepIt
     cd JustDeepIt/tutorials/GWHD
     
-    # download image data (train.zip) from http://www.global-wheat.com/ manually
-    # and put train.zip in JustDeepIt/tutorials/GWHD
+    # download image data (train.zip and test.zip) from http://www.global-wheat.com/ manually
+    # and put train.zip and test.zip in JustDeepIt/tutorials/GWHD
     
     # decompress data
     unzip train.zip
@@ -38,27 +38,29 @@ Model training and validation
 Detectron2
 ----------
 
+
 .. code-block:: sh
     
-    python scripts/run_detectron2.py train
+    python scripts/run_justdeepit.py train 
     
-    python scripts/run_detectron2.py valid
+    python scripts/run_justdeepit.py test
+
+
+
 
 
 
 MMDetection
 -----------
 
-.. <script>
 
 .. code-block:: sh
     
-    python scripts/run_mmdet.py train
+    python scripts/run_justdeepit.py train mmdetection
     
-    python scripts/run_mmdet.py test
+    python scripts/run_justdeepit.py test mmdetection
     
 
-.. </script>
 
 
 

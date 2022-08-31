@@ -1,7 +1,5 @@
-ARG cuda="11.4.3"
-ARG cudnn="8"
-ARG platform="ubuntu20.04"
-FROM nvidia/cuda:${cuda}-cudnn${cudnn}-devel-${platform}
+ARG base="11.6.2-cudnn8-devel-ubuntu20.04"
+FROM nvidia/cuda:${base}
 
 # cuda env
 ENV FORCE_CUDA="1"

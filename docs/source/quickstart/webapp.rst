@@ -1,5 +1,5 @@
 ===============
-Web Application
+Web application
 ===============
 
 One of JustDeepIt’s unique features is its support for both GUI and CUI.
