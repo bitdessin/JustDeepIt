@@ -5,10 +5,9 @@ on:
         tags:
             - v*
 
-
 jobs:
     build-cuda-image:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-20.04
 
         steps:
           - name: checkout
@@ -39,8 +38,6 @@ jobs:
               push: true
               tags: ${{ secrets.DOCKER_USERNAME }}/justdeepit:${{ env.RELEASE_VERSION }}
               build-args: |
-                cuda=11.4.3
-                cudnn=8
-                platform=ubuntu20.04
+                base="11.6.2-cudnn8-devel-ubuntu20.04"
 
 

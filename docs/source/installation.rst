@@ -42,7 +42,7 @@ PyTorch, MMDetection, and Detectron2 under a CUDA 11.3 environment.
     pip install torch==1.11.0 torchvision --extra-index-url https://download.pytorch.org/whl/cu113
     
     # MMDetection
-    pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu113/torch1.11.0/index.html
+    pip install mmcv-full
     git clone https://github.com/open-mmlab/mmdetection.git mmdetection
     pip install -r ./mmdetection/requirements/build.txt
     pip install ./mmdetection

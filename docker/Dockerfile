@@ -1,4 +1,4 @@
-ARG base="11.6.2-cudnn8-devel-ubuntu20.04"
+ ARG base="11.6.2-cudnn8-devel-ubuntu20.04"
 FROM nvidia/cuda:${base}
 
 # cuda env
@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y \
     && pip install --no-cache-dir --upgrade pip wheel setuptools \
     && pip install --no-cache-dir tensorboard cmake \
     && pip install --no-cache-dir torch==1.11.0 torchvision --extra-index-url https://download.pytorch.org/whl/cu113 \
-    && pip install --no-cache-dir mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu113/torch1.11.0/index.html \
+    && pip install mmcv-full \
     && git clone https://github.com/open-mmlab/mmdetection.git mmdetection \
     && pip install --no-cache-dir -r ./mmdetection/requirements/build.txt \
     && pip install --no-cache-dir ./mmdetection \
