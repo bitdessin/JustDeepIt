@@ -26,11 +26,10 @@ try:
     import detectron2.modeling
     import detectron2.checkpoint
     import detectron2.data.transforms
-
-
 except ImportError:
-    logger.error('JustDeepIt requires detectron2 library to build models. Make sure detectron2 has been installed already.')
-    raise ImportError('JustDeepIt requires detectron2 library to build models. Make sure detectron2 has been installed already.')
+    msg = 'JustDeepIt requires detectron2 library to build models. Make sure detectron2 has been installed already.'
+    logger.error(msg)
+    raise ImportError(msg)
 
 
 
@@ -38,16 +37,15 @@ except ImportError:
 class DetectronBase(ModuleTemplate):
 
     def __init__(self, class_labels, model_arch=None, model_config=None, model_weight=None, workspace=None):
-        
-        # class labels
+        # model
         self.model_arch = model_arch
-        self.class_labels = self.__parse_class_labels(class_labels)
         self.model = None
-
-        # configs
-        self.cfg = detectron2.config.get_cfg()
-
-
+        self.detector = None
+        
+        # config and weight
+        self.cfg = self.__get_config(model_config, model_weight)
+        
+        # workspace
         if workspace is None:
             self.tempd = tempfile.TemporaryDirectory()
             self.workspace = self.tempd.name
@@ -55,39 +53,45 @@ class DetectronBase(ModuleTemplate):
             self.tempd = None
             self.workspace = workspace
         self.cfg.OUTPUT_DIR = os.path.abspath(self.workspace)
-        
         logger.info('Workspace for Detectron2-based model is set at `{}`.'.format(self.workspace))
         
-        model_config_ = model_config
-        if model_config is None:
-            raise ValueError('Configuration file for Detectron2 cannot be empty.')
-        else:
-            if not os.path.exists(model_config):
-                model_config = detectron2.model_zoo.get_config_file(model_config)
-            self.cfg.merge_from_file(model_config)
         
-        if model_weight is None:
-            model_weight = detectron2.model_zoo.get_checkpoint_url(model_config_)
-        else:
-            if not os.path.exists(model_weight):
-                model_weight = detectron2.model_zoo.get_checkpoint_url(model_config_)
-        self.cfg.MODEL.WEIGHTS = model_weight
-        
+        # class labels
+        self.class_labels = self.__parse_class_labels(class_labels)
         self.cfg.MODEL.ROI_HEADS.NUM_CLASSES = len(self.class_labels)
         self.cfg.MODEL.RETINANET.NUM_CLASSES = len(self.class_labels)
         
+        # default params
         self.cfg.MODEL.DEVICE = 'cpu'
-        self.detector = None
-
-
+    
+    
     def __del__(self):
         try:
             if self.tempd is not None:
                 self.tempd.cleanup()
         except:
             pass
-
-
+    
+    
+    def __get_config(self, model_config, model_weight):
+        model_config_fpath = model_config
+        if model_config_fpath is None or model_config_fpath == '':
+            ValueError('Configuration file for Detectron2 cannot be empty.')
+        if not os.path.exists(model_config_fpath):
+            # if the given path does not exist, set the chkpoint from github as a initial params
+            model_config_fpath = detectron2.model_zoo.get_config_file(model_config_fpath)
+        cfg = detectron2.config.get_cfg()
+        cfg.merge_from_file(model_config_fpath)
+        
+        if (model_weight is None) or (not os.path.exists(model_weight)):
+            model_weight = detectron2.model_zoo.get_checkpoint_url(model_config)
+        cfg.MODEL.WEIGHTS = model_weight
+        
+        return cfg
+    
+    
+    
+    
     def __parse_class_labels(self, class_labels):
         cl = None
         if class_labels is None:
@@ -103,9 +107,8 @@ class DetectronBase(ModuleTemplate):
             else:
                 raise ValueError('Unsupported data type of `class_labels`. Set a path to a file which contains class labels or set a list of class labels.')
         return cl
-
-
-
+    
+    
     def __get_device(self, gpu=1):
         device = 'cpu'
         if gpu > 0:
@@ -114,8 +117,7 @@ class DetectronBase(ModuleTemplate):
         # device = torch.device(device)
         return device
    
-
-
+    
     def train_customdata(self, train_data_fpath, batchsize=36, epoch=100, lr=0.0001, score_cutoff=0.7, gpu=1, cpu=8):
 
         # train settings

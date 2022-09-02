@@ -21,6 +21,7 @@ from justdeepit.utils import ImageAnnotation, ImageAnnotations
 logger = logging.getLogger(__name__)
 
 try:
+    import mim
     import mmcv
     #import mmcv.parallel
     import mmdet
@@ -32,9 +33,9 @@ try:
     import mmdet.datasets
     import mmdet.datasets.pipelines
 except ImportError:
-    logger.error('JustDeepIt requires mmdetection library to build models. Make sure mmdetection has been installed already.')
-    raise ImportError('JustDeepIt requires mmdetection library to build models. Make sure mmdetection has been installed already.')
-
+    msg = 'JustDeepIt requires mmdetection library to build models. Make sure MMDetection and the related packages (mmcv-full, mmdetection, openmim, mmengine) have been installed already.'
+    logger.error(msg)
+    raise ImportError(msg)
 
 
 
@@ -43,15 +44,13 @@ class MMDetBase(ModuleTemplate):
 
     def __init__(self, class_labels=None, model_arch=None, model_config=None, model_weight=None, workspace=None, seed=None):
         
-        # configs
+        # model
         self.model_arch = model_arch
-        self.cfg = mmcv.utils.Config.fromfile(model_config)
         self.trainer  = None
         self.detector = None
         
-        # classes
-        self.class_labels = self.__parse_class_labels(class_labels)
-        self.cfg = self.__set_class_labels(self.cfg, self.class_labels)
+        # config
+        self.cfg = self.__get_config(model_config, model_weight)
         
         # workspace
         self.tempd = None
@@ -63,10 +62,9 @@ class MMDetBase(ModuleTemplate):
         self.cfg.work_dir = os.path.abspath(self.workspace)
         logger.info('Workspace for MMDetection-based model is set at `{}`.'.format(self.workspace))
         
-        
-        if model_weight is not None:
-            self.cfg.load_from = model_weight
-
+        # class labels
+        self.class_labels = self.__parse_class_labels(class_labels)
+        self.cfg = self.__set_class_labels(self.cfg, self.class_labels)
 
         # setup time stmp
         self.timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
@@ -77,11 +75,6 @@ class MMDetBase(ModuleTemplate):
         if seed is None:
             seed = int(datetime.datetime.utcnow().timestamp())
         self.cfg.seed = seed
-        
-        # set meta data
-        #if self.cfg.checkpoint_config is not None:
-        #    self.cfg.checkpoint_config.meta = dict(mmdet_version=mmdet.__version__ + mmcv.utils.get_git_hash()[:7],
-        #                                           CLASSES=self.class_labels)
         
         # create metadata
         meta = dict()
@@ -100,6 +93,27 @@ class MMDetBase(ModuleTemplate):
         except:
             pass
 
+    
+    def __get_config(self, model_config, model_weight):
+        if model_config is None or model_config == '':
+            ValueError('Configuration file for MMDetection cannot be empty.')
+        if not os.path.exists(model_config):
+            # if the given path does not exist, set the chkpoint from mmdet Lab as a initial params
+            if os.path.splitext(model_config)[1] in ['.py', '.yaml']:
+                model_config = os.path.splitext(model_config)[0]
+            model_chkpoint = mim.commands.download(package='mmdet', configs=[model_config])[0]
+            model_config = os.path.join(os.path.expanduser('~'), '.cache', 'mim', model_config + '.py')
+            model_chkpoint =  os.path.join(os.path.expanduser('~'), '.cache', 'mim', model_chkpoint)
+        cfg = mmcv.utils.Config.fromfile(model_config)
+        
+        if (model_weight is None) or (not os.path.exists(model_weight)):
+            model_weight = model_chkpoint
+        cfg.load_from = model_weight
+        
+        return  cfg
+        
+    
+    
     
     
     def __set_class_labels(self, cfg, class_labels):
@@ -176,8 +190,7 @@ class MMDetBase(ModuleTemplate):
 
     
     def __generate_config(self, input_fpath, output_fpath=None):
-        # generate full config file (*.py) from mmdet configs directory
-        cfg = Config.fromfile(input_fpath)
+        cfg = mmcv.Config.fromfile(input_fpath)
         if output_fpath is None:
             return cfg
         else:

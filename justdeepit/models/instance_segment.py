@@ -58,10 +58,8 @@ class IS:
     def __init__(self, class_label=None, model_arch=None, model_config=None, model_weight=None, workspace=None, backend='mmdetection'):
         
         self.module = None
-        self.available_architectures = {
-            'mmdetection': ['Mask R-CNN'],
-            'detectron2': ['Mask R-CNN']
-        } 
+        self.__architectures = self.__available_architectures()
+
         self.backend = backend
         self.model_arch = model_arch
         if workspace is None:
@@ -70,52 +68,75 @@ class IS:
         self.module = self.__init_module(class_label, model_arch, model_config, model_weight, workspace, backend)
     
     
+    def __available_architectures(self):
+        return {
+            'mmdetection': [
+                ['Mask R-CNN', 'mask_rcnn_x101_64x4d_fpn_mstrain-poly_3x_coco'],
+                ['custome',    None]
+            ],
+            'detectron2': [
+                ['Mask R-CNN', 'COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml'],
+                ['custome',    None]
+            ]
+        }
+
     
     
     def __init_module(self, class_label, model_arch, model_config, model_weight, workspace, backend):
-        if model_arch is None and model_config is None:
+        if model_arch is None:
             return None
         
+        backend_ = self.__norm_backend(backend)
+        
+        if model_config is None:
+            # check model arch
+            model_arch_ = self.__norm_arch(model_arch)
+            if model_arch_ not in [self.__norm_arch(_[0]) for _ in self.__architectures[backend_]]:
+                NotImplementedError('JustDeepIt does not support {} archtecture when {} is specified as a backend.'.format(model_arch, backend))
+
+            # set model_config according to model_arch
+            for available_arch, available_config in self.__architectures[backend_]:
+                if model_arch_ == self.__norm_arch(available_arch):
+                    if model_arch_ == 'custome':
+                        if model_config is None or  model_config == '':
+                            ValueError('The argument `model_config` cannot be none or empty when the user customized architecture is set.')
+                    else:
+                        model_config = available_config
+                    break
+
+        # init module
         module = None
-        model_arch = model_arch.replace('-', '').replace(' ', '').lower()
-        backend = backend.lower()
-        
-        if backend in ['mm', 'mmdet', 'mmdetection']:
-            backend = 'mmdet'
-        elif backend in ['d2', 'detectron', 'detectron2']:
-            backend = 'd2'
-        
-        if backend == 'mmdet':
-            if  model_arch == 'maskrcnn':
-                model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/mask_rcnn_x101_64x4d_fpn_mstrain-poly_3x_coco.py')
-            #elif model_arch == 'cascademaskrcnn':
-            #    model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/cascade_mask_rcnn_x101_64x4d_fpn_20e_coco.py')
-            #elif 'convnext' in model_arch:
-            #    model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/mask_rcnn_convnext-t_p4_w7_fpn_fp16_ms-crop_3x_coco.py')
-            #elif 'dcnv2' in model_arch and  'maskrcnn' in model_arch:
-            #    model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/mask_rcnn_r50_fpn_mdconv_c3-c5_1x_coco.py')
-            #elif model_arch == 'scnet':
-            #    model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/scnet_x101_64x4d_fpn_20e_coco.py')
-            #elif model_arch == 'mask2former':
-            #    model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/mask2former_r101_lsj_8x2_50e_coco.py')
-            #elif model_arch == 'solov2':
-            #    model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/solov2_x101_dcn_fpn_3x_coco.py')
-            else:
-                NotImplementedError('JustDeepIt does not support {} archtecture when MMDetection is specified as a backend.'.format(backend))
-            
+        if backend_ == 'mmdetection':
             from justdeepit.models.utils.mmdetbase import MMDetBase
             module = MMDetBase(class_label, model_arch, model_config, model_weight, workspace)
-        
-        elif backend == 'd2':
-            if  model_arch == 'maskrcnn':
-                model_config = 'COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml'
-            else:
-                NotImplementedError('JustDeepIt does not support {} archtecture when Detectron2 is specified as a backend.'.format(backend))
-                
+        elif backend_ == 'detectron2':
             from justdeepit.models.utils.detectron2base import DetectronBase
             module = DetectronBase(class_label, model_arch, model_config, model_weight, workspace)
-        
+
         return module
+
+
+
+    def __norm_arch(self, arch):
+        return arch.replace('-', '').replace(' ', '').lower()
+
+
+    def __norm_backend(self, backend):
+        backend_ = backend.lower()
+        if backend in ['mm', 'mmdet', 'mmdetection']:
+            backend_ = 'mmdetection'
+        elif backend_ in ['d2', 'detectron', 'detectron2']:
+            backend_ = 'detectron2'
+        else:
+            NotImplementedError('JustDeepIt does not support `{}` as a backend.'.format(backend))
+        return backend_
+
+
+
+    def available_architectures(self, backend):
+        return [_[0] for _ in self.__architectures[self.__norm_backend(backend)]]
+
+
     
     
     def train(self, annotation, image_dpath,

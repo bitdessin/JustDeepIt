@@ -121,6 +121,21 @@ function refreshShutdownButton() {
 }
 
 
+function setSelectedFile(selectFieldId = 'filetree-selected') {
+    selectedFilePath = $('#' + selectFieldId).val();
+    if (focusedInputField == 'module-training-model_weight') {
+        if (selectedFilePath.slice((selectedFilePath.lastIndexOf(".") - 1 >>> 0) + 2) !== 'pth') {
+            selectedFilePath = selectedFilePath + '.pth';
+        }
+    }
+    console.log(selectedFilePath);
+    $('#' + focusedInputField).val(selectedFilePath);
+    focusedInputField = null;
+    refreshExecuteButtons();
+    $('#select-file-popup').fadeOut();
+}
+
+
 function refreshFileSelectButtons() {
     if (moduleRunningStatus.status === 'RUNNING') {
         $('button.select-file').each(function(i) {
@@ -230,6 +245,9 @@ function refreshExecuteButtons() {
             $(buttonId).addClass('button-disable');
             $(buttonId).attr('disabled', true);
         }
+        if (formId == '#module-config') {
+            refreshConfigField();
+        }
     }
 }
 
@@ -256,6 +274,25 @@ function refreshModule(force_run=false) {
         $.when(refreshParams()).done(_refreshModuleDelay);
     }
 }
+
+
+function refreshConfigField() {
+    if ($('#module-config-architecture').val() != 'custome') {
+        $('#module-config-config').val(null);
+        $('#module-config-config').attr('readonly', true);
+        $('#config-edition-open').attr('disabled', true);
+        $('#config-select-open').attr('disabled', true);
+        $('#config-edition-open').addClass('button-disable');
+        $('#config-select-open').addClass('button-disable');
+    } else {
+        $('#module-config-config').attr('readonly', false);
+        $('#config-edition-open').attr('disabled', false);
+        $('#config-select-open').attr('disabled', false);
+        $('#config-edition-open').removeClass('button-disable');
+        $('#config-select-open').removeClass('button-disable');
+    }
+}
+ 
 
 
 
@@ -355,13 +392,13 @@ $(function(){
 
 
     // reload NN available architectures according to the backend
-    $('#backend').on('change', function() {
+    $('#module-config-backend').on('change', function() {
         $.ajax({
             type: 'GET',
             url: '/api/architecture',
             data: {
                 module: module,
-                backend: $('#backend').val(),
+                backend: $('#module-config-backend').val(),
             },
             dataType: 'json',
             cache: false,
@@ -370,16 +407,22 @@ $(function(){
             for (let i = 0; i < arch.length; i++) {
                 archListHTML = archListHTML + '<option value="' + arch[i] + '">' + arch[i] + '</option>';
             }
-            $('#architecture').html(archListHTML);
+            $('#module-config-architecture').html(archListHTML);
+            refreshConfigField();
         }).fail(function(XMLHttpRequest, textStatus, errorThrown) {
             console.log("XMLHttpRequest : " + XMLHttpRequest.status);
             console.log("textStatus     : " + textStatus);
             console.log("errorThrown    : " + errorThrown.message);
         });
     });
-
-
-
+    
+    
+    // disable config field if customized-architecture is selected
+    $('#module-config-architecture').on('change', function() {
+        refreshConfigField();
+    });
+    
+    
     // open sub-window to select file/folder when clicking Select buttons
     $('button.select-file').on('click', function() {
         let _ = $(this).val().split('+');
@@ -432,10 +475,7 @@ $(function(){
     });
     // set the selected path
     $('body').on('click', '#selectFile', function() {
-        $('#' + focusedInputField).val($('#filetree-selected').val());
-        focusedInputField = null;
-        refreshExecuteButtons();
-        $('#select-file-popup').fadeOut();
+        setSelectedFile();
     });
 
 
@@ -471,10 +511,7 @@ $(function(){
                 $('#selectFile').removeClass('button-disable');
                 $('#selectFile').attr('disabled', false);
                 if (e.keyCode !== undefined && e.keyCode === 13) {
-                    $('#' + focusedInputField).val($('#filetree-selected').val());
-                    focusedInputField = null;
-                    refreshExecuteButtons();
-                    $('#select-file-popup').fadeOut();
+                    setSelectedFile();
                 }
             }
         }
@@ -548,7 +585,7 @@ $(function(){
             $('#module-inference-resizing-option').css('visibility', '').css('visibility', 'visibile');
         }
     });
-
+    
 });
  
    

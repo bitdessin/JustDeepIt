@@ -58,13 +58,8 @@ class OD:
     def __init__(self, class_label=None, model_arch=None, model_config=None, model_weight=None, workspace=None, backend='mmdetection'):
         
         self.module = None
-        self.available_architectures = {
-            'mmdetection': ['Faster R-CNN', 'Cascade R-CNN', 'Dynamic R-CNN',
-                            'Faster R-CNN (DCNv2)',
-                            'RetinaNet', 'YOLOv3', 'YOLO-F',
-                            'SSD', 'FCOS', 'User Defined'],
-            'detectron2': ['Faster R-CNN', 'RetinaNet', 'User Defined']
-        } 
+        self.__architectures = self.__available_architectures()
+        
         self.backend = backend
         self.model_arch = model_arch
         if workspace is None:
@@ -73,57 +68,82 @@ class OD:
         self.module = self.__init_module(class_label, model_arch, model_config, model_weight, workspace, backend)
     
     
-    
-    
+    def __available_architectures(self):
+        return {
+            'mmdetection': [
+                ['Faster R-CNN',  'faster_rcnn_r101_fpn_mstrain_3x_coco'],
+                ['Cascade R-CNN', 'cascade_rcnn_x101_64x4d_fpn_20e_coco'],
+                ['Dynamic R-CNN', 'dynamic_rcnn_r50_fpn_1x_coco'],
+                ['RetinaNet',     'retinanet_r101_fpn_mstrain_640-800_3x_coco'],
+                ['YOLOv3',        'yolov3_d53_mstrain-608_273e_coco'],
+                ['YOLO-F',        'yolof_r50_c5_8x8_1x_coco'],
+                ['SSD',           'ssd512_coco'],
+                ['FCOS',          'fcos_r101_caffe_fpn_gn-head_mstrain_640-800_2x_coco'],
+                ['custome',       None],
+            ],
+            'detectron2': [
+                ['Faster R-CNN', 'COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml'],
+                ['RetinaNet',    'COCO-Detection/retinanet_R_101_FPN_3x.yaml'],
+                ['custome',      None]
+            ]
+        }
+        
+        
     def __init_module(self, class_label, model_arch, model_config, model_weight, workspace, backend):
-        if model_arch is None and model_config is None:
+        if model_arch is None:
             return None
         
+        backend_ = self.__norm_backend(backend)
+        
+        if model_config is None:
+            # check model arch
+            model_arch_ = self.__norm_arch(model_arch)
+            if model_arch_ not in [self.__norm_arch(_[0]) for _ in self.__architectures[backend_]]:
+                NotImplementedError('JustDeepIt does not support {} archtecture when {} is specified as a backend.'.format(model_arch, backend))
+        
+            # set model_config according to model_arch
+            for available_arch, available_config in self.__architectures[backend_]:
+                if model_arch_ == self.__norm_arch(available_arch):
+                    if model_arch_ == 'custome':
+                        if model_config is None or  model_config == '':
+                            ValueError('The argument `model_config` cannot be none or empty when the user customized architecture is set.')
+                    else:
+                        model_config = available_config
+                    break
+        
+        # init module
         module = None
-        model_arch = model_arch.replace('-', '').replace(' ', '').lower()
-        backend = backend.lower()
-        
-        if backend in ['mm', 'mmdet', 'mmdetection']:
-            backend = 'mmdet'
-        elif backend in ['d2', 'detectron', 'detectron2']:
-            backend = 'd2'
-        
-        if backend == 'mmdet':
-            if  model_arch == 'fasterrcnn':
-                model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/faster_rcnn_r101_fpn_mstrain_3x_coco.py')
-            elif  model_arch == 'cascadercnn':
-                model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/cascade_rcnn_x101_64x4d_fpn_20e_coco.py')
-            elif model_arch == 'dynamicrcnn':
-                model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/dynamic_rcnn_r50_fpn_1x_coco.py')
-            elif 'dcnv2' in model_arch and 'fasterrcnn' in model_arch:
-                model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/faster_rcnn_r50_fpn_mdconv_c3-c5_1x_coco.py')
-            elif model_arch == 'retinanet':
-                model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/retinanet_r101_fpn_mstrain_640-800_3x_coco.py')
-            elif model_arch == 'ssd':
-                model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/ssd512_coco.py')
-            elif model_arch == 'yolo3':
-                model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/yolov3_d53_mstrain-608_273e_coco.py')
-            elif model_arch == 'yolof':
-                model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/yolof_r50_c5_8x8_1x_coco.py')
-            elif model_arch == 'fcos':
-                model_config = pkg_resources.resource_filename('justdeepit', 'models/configs/mmdet/fcos_r101_caffe_fpn_gn-head_mstrain_640-800_2x_coco.py')
-            else:
-                NotImplementedError('JustDeepIt does not support {} archtecture when MMDetection is specified as a backend.'.format(backend))
+        if backend_ == 'mmdetection':
             from justdeepit.models.utils.mmdetbase import MMDetBase
             module = MMDetBase(class_label, model_arch, model_config, model_weight, workspace)
-        
-        elif backend == 'd2':
-            if  model_arch == 'fasterrcnn':
-                model_config = 'COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml'
-            elif model_arch == 'retinanet':
-                model_config = 'COCO-Detection/retinanet_R_101_FPN_3x.yaml'
-            else:
-                NotImplementedError('JustDeepIt does not support {} archtecture when Detectron2 is specified as a backend. Try to set backend as MMDetection.'.format(backend))
-                
+        elif backend_ == 'detectron2':
             from justdeepit.models.utils.detectron2base import DetectronBase
             module = DetectronBase(class_label, model_arch, model_config, model_weight, workspace)
         
         return module
+    
+    
+    
+    def __norm_arch(self, arch):
+        return arch.replace('-', '').replace(' ', '').lower()
+    
+    
+    def __norm_backend(self, backend):
+        backend_ = backend.lower()
+        if backend in ['mm', 'mmdet', 'mmdetection']:
+            backend_ = 'mmdetection'
+        elif backend_ in ['d2', 'detectron', 'detectron2']:
+            backend_ = 'detectron2'
+        else:
+            NotImplementedError('JustDeepIt does not support `{}` as a backend.'.format(backend))
+        return backend_
+    
+    
+    
+    def available_architectures(self, backend):
+        return [_[0] for _ in self.__architectures[self.__norm_backend(backend)]]
+        
+        
     
     
     def train(self, annotation, image_dpath,

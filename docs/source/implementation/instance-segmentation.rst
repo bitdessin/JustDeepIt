@@ -61,15 +61,6 @@ Detailed descriptions of the arguments are provided in the following table.
     "**workspace**", "Workspace to store intermediate and final results."
  
 
-Once the parameters are set and the workspace is loaded,
-the initial configuration file is stored in the workspace
-(:file:`justdeepitws/config`).
-The configuration file is named
-:file:`default.py` when using MMDetection as a backend
-or :file:`default.yaml` when using Detectron2 as a backend.
-The configuration file can be manually modified as needed
-prior to training.
-
 
 Training
 --------
@@ -78,14 +69,6 @@ Tab **Training** is used to train the model for instance segmentation.
 It allows users to set general parameters of training,
 such as the learning rate, batch size, and number of epochs.
 Detailed descriptions of the arguments are provided in the following table.
-Furthermore, to set detailed parameters, such as model architectures and loss functions,
-users can directly modify the configuration file in the workspace,
-which is generated when setting the arguments in tab **Preferences**
-(i.e., :file:`default.py` or :file:`default.yaml`),
-prior to training as necessary.
-However, actually, according to our experience,
-we recommend that users increase the number of training images
-rather than changing such complex parameters to improve the inference accuracy.
 
 
 .. image:: ../_static/app_is_train.png

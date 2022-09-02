@@ -265,7 +265,7 @@ def od(request: Request, module_id):
     if module_id == 'OD' or module_id == 'IS':
         req_dict.update({
             'backends': ['MMDetection', 'Detectron2'],
-            'architectures': get_architectures(module_id, 'MMDetection', 'list'),
+            'architectures': get_architectures(module_id,  moduleframe.params['config']['backend'], 'list'),
         })
     elif module_id == 'SOD':
         req_dict.update({
@@ -273,7 +273,6 @@ def od(request: Request, module_id):
         })
     
     return templates.TemplateResponse('module.html', req_dict)
-
 
 
 
@@ -319,6 +318,9 @@ async def module_action(request: Request, module_id, mode):
 def validate_status(statuses):
     s = None
     
+    if not isinstance(statuses, (list, tuple)):
+        statuses = [statuses]
+    
     if all(_['status'] == 'COMPLETED' for _ in statuses):
         s = 'COMPLETED'
         logger.info('[[!SUCCEEDED]] Task succeeded.')
@@ -338,28 +340,12 @@ def validate_status(statuses):
 
 def od_config():
     logger.info('Task Started: [Load Workspace] ...')
-    statuses = []
     while not moduleframe.stop_threads.is_set():
-    
         try:
             moduleframe.update_status('config', 'RUNNING')
-        
-            status_ = moduleframe.module.init_workspace()
-            statuses.append(status_)
-            status_ = moduleframe.module.save_initial_model(moduleframe.params['config']['class_label'],
-                                                 moduleframe.params['config']['architecture'],
-                                                 moduleframe.params['config']['config'],
-                                                 None,
-                                                 moduleframe.params['config']['backend'])
-            statuses.append(status_)
+            status = moduleframe.module.init_workspace()
             
-            status = validate_status(statuses)
-            if status == 'COMPLETED':
-                backend = moduleframe.params['config']['backend'].replace(' ', '').replace('-', '').lower()[0:5]
-                model_config_ext = '.py' if backend == 'mmdet' else '.yaml'
-                moduleframe.update_params({'config': os.path.join(moduleframe.params['config']['workspace'],
-                                                             'justdeepitws/config/default') + model_config_ext},
-                                     'config')
+            status = validate_status(status)
             moduleframe.update_status('config', status)
         
         except BaseException as e:
@@ -376,22 +362,20 @@ def od_config():
 
 def od_training():
     logger.info('Task Started: [Train Model] ...')
-    statuses = []
     while not moduleframe.stop_threads.is_set():
         try:
+            statuses = []
             moduleframe.update_status('training', 'RUNNING')
+            if os.path.splitext(moduleframe.params['training']['model_weight'])[1] != '.pth':
+                moduleframe.update_params({'model_weight': moduleframe.params['training']['model_weight'] + '.pth'},
+                                          'training')
             
-            status_ = moduleframe.module.save_initial_model(moduleframe.params['config']['class_label'],
-                                                 moduleframe.params['config']['architecture'],
-                                                 moduleframe.params['config']['config'],
-                                                 moduleframe.params['training']['model_weight'],
-                                                 moduleframe.params['config']['backend'])
-            statuses.append(status_)
             status_ = moduleframe.module.sort_train_images(moduleframe.params['config']['class_label'],
                                                 moduleframe.params['training']['image_folder'],
                                                 moduleframe.params['training']['annotation_path'],
                                                 moduleframe.params['training']['annotation_format'])
             statuses.append(status_)
+            
             status_ = moduleframe.module.train_model(moduleframe.params['config']['class_label'],
                                           moduleframe.params['config']['architecture'],
                                           moduleframe.params['config']['config'],
@@ -407,8 +391,7 @@ def od_training():
             
             status = validate_status(statuses)
             if status == 'COMPLETED':
-                backend = moduleframe.params['config']['backend'].replace(' ', '').replace('-', '').lower()[0:5]
-                model_config_ext = '.py' if backend == 'mmdet' else '.yaml'
+                model_config_ext = '.py' if moduleframe.params['config']['backend'][0].lower() == 'm' else '.yaml'
                 moduleframe.update_params({'config': os.path.splitext(moduleframe.params['training']['model_weight'])[0] + model_config_ext},
                                           'config')
                 moduleframe.update_params({'model_weight': moduleframe.params['training']['model_weight']},
@@ -429,20 +412,14 @@ def od_training():
 
 def od_inference():
     logger.info('Task Started: [Inference] ...')
-    statuses = []
     while not moduleframe.stop_threads.is_set():
         try:
+            statuses = []
             moduleframe.update_status('inference', 'RUNNING')
  
-
-            status_ = moduleframe.module.save_initial_model(moduleframe.params['config']['class_label'],
-                                                 moduleframe.params['config']['architecture'],
-                                                 moduleframe.params['config']['config'],
-                                                 None,
-                                                 moduleframe.params['config']['backend'])
-            statuses.append(status_)
             status_ = moduleframe.module.sort_query_images(moduleframe.params['inference']['image_folder'])
             statuses.append(status_)
+            
             status_ = moduleframe.module.detect_objects(moduleframe.params['config']['class_label'],
                                              moduleframe.params['config']['architecture'],
                                              moduleframe.params['config']['config'],
@@ -453,6 +430,7 @@ def od_inference():
                                              moduleframe.params['config']['gpu'],
                                              moduleframe.params['config']['backend'])
             statuses.append(status_)
+            
             status_ = moduleframe.module.summarize_objects(moduleframe.params['config']['cpu'])
             statuses.append(status_)
             
@@ -500,11 +478,15 @@ def sod_config():
 
 def sod_training():
     logger.info('Task Started: [Train Model] ...')
-    statuses = []
     while not moduleframe.stop_threads.is_set():
         try:
+            statuses = []
             moduleframe.update_status('training', 'RUNNING')
             
+            if os.path.splitext(moduleframe.params['training']['model_weight']) != '.pth':
+                moduleframe.update_params({'model_weight': moduleframe.params['training']['model_weight'] + '.pth'},
+                                          'training')
+
             status_ = moduleframe.module.sort_train_images(moduleframe.params['training']['image_folder'],
                                                            None,
                                                            'mask',
@@ -543,9 +525,9 @@ def sod_training():
 
 def sod_inference():
     logger.info('Task Started: [Inference] ...')
-    statuses = []
     while not moduleframe.stop_threads.is_set():
         try:
+            statuses = []
             moduleframe.update_status('inference', 'RUNNING')
             
             status_ = moduleframe.module.sort_query_images(moduleframe.params['inference']['image_folder'],
@@ -603,7 +585,7 @@ def get_architectures(module: str = '', backend: str = 'mmdetection', output_for
         m = justdeepit.models.SOD()
     
     if m is not None:
-        archs = m.available_architectures[backend.lower()]
+        archs = m.available_architectures(backend)
     
     if output_format == 'json':
         return JSONResponse(content=archs)

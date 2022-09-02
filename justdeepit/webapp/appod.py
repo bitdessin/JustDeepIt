@@ -26,25 +26,25 @@ class OD(AppBase):
         self.images = []
     
     
-    def save_initial_model(self, class_label, model_arch, model_config, model_weight, backend):
-        
-        job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.STARTED, '')
-        try:
-            config_dpath = os.path.join(self.workspace_, 'config')
-        
-            model = self.__build_model(class_label, model_arch, model_config, model_weight, backend)
-            model.save(os.path.join(config_dpath, 'default.pth'))
-            
-            job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.FINISHED, '')
-        except KeyboardInterrupt:
-            job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.INTERRUPT, '')
-        except BaseException as e:
-            traceback.print_exc()
-            job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.ERROR, str(e))
-        else:
-            job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.COMPLETED, '')
-
-        return job_status
+#    def save_initial_model(self, class_label, model_arch, model_config, model_weight, backend):
+#        
+#        job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.STARTED, '')
+#        try:
+#            config_dpath = os.path.join(self.workspace_, 'config')
+#        
+#            model = self.__build_model(class_label, model_arch, model_config, model_weight, backend)
+#            model.save(os.path.join(config_dpath, 'default.pth'))
+#            
+#            job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.FINISHED, '')
+#        except KeyboardInterrupt:
+#            job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.INTERRUPT, '')
+#        except BaseException as e:
+#            traceback.print_exc()
+#            job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.ERROR, str(e))
+#        else:
+#            job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.COMPLETED, '')
+#
+#        return job_status
     
      
     def __build_model(self, class_label, model_arch, model_config, model_weight, backend):
