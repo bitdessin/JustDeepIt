@@ -74,19 +74,25 @@ class DetectronBase(ModuleTemplate):
     
     
     def __get_config(self, model_config, model_weight):
-        model_config_fpath = model_config
-        if model_config_fpath is None or model_config_fpath == '':
-            ValueError('Configuration file for Detectron2 cannot be empty.')
-        if not os.path.exists(model_config_fpath):
-            # if the given path does not exist, set the chkpoint from github as a initial params
-            model_config_fpath = detectron2.model_zoo.get_config_file(model_config_fpath)
-        cfg = detectron2.config.get_cfg()
-        cfg.merge_from_file(model_config_fpath)
+        if model_config is None or model_config == '':
+            raise ValueError('Configuration file for Detectron2 cannot be empty.')
         
-        if (model_weight is None) or (not os.path.exists(model_weight)):
-            model_weight = detectron2.model_zoo.get_checkpoint_url(model_config)
-        cfg.MODEL.WEIGHTS = model_weight
+        cfg = None
+        try:
+            model_config_fpath = model_config
+            if not os.path.exists(model_config_fpath):
+                # if the given path does not exist, set the chkpoint from github as a initial params
+                model_config_fpath = detectron2.model_zoo.get_config_file(model_config_fpath)
+            cfg = detectron2.config.get_cfg()
+            cfg.merge_from_file(model_config_fpath)
         
+            if (model_weight is None) or (not os.path.exists(model_weight)):
+                model_weight = detectron2.model_zoo.get_checkpoint_url(model_config)
+            cfg.MODEL.WEIGHTS = model_weight
+        
+        except:
+            raise FileNotFoundError('The path or name of the configuration file `{}` is incorrect. JustDeepIt cannot find or download.'.format(model_config))
+           
         return cfg
     
     
@@ -249,24 +255,23 @@ class DetectronBase(ModuleTemplate):
                 batch_outputs = model(inputs)
         
             for image_fpath, output in zip(batch_images_fpath, batch_outputs):
-                output['instances'] =  output['instances'].to('cpu')
-                pred_classes = output['instances'].pred_classes.numpy()
-                scores = output['instances'].scores.numpy()
-                pred_boxes = np.array([k.numpy() for k in output['instances'].pred_boxes]).astype(np.int32)
-                if hasattr(output['instances'], 'pred_masks'):
-                    pred_masks = np.array([k.numpy() for k in output['instances'].pred_masks]).astype(np.uint8)
-                else:
-                    pred_masks = [None] * len(pred_boxes)
+                output_fmt = None
+                if 'instances' in output:
+                    output['instances'] =  output['instances'].to('cpu')
+                    pred_classes = output['instances'].pred_classes.numpy()
+                    scores = output['instances'].scores.numpy()
+                    pred_boxes = np.array([k.numpy() for k in output['instances'].pred_boxes]).astype(np.int32)
+                    if hasattr(output['instances'], 'pred_masks'):
+                        pred_masks = np.array([k.numpy() for k in output['instances'].pred_masks]).astype(np.uint8)
+                    else:
+                        pred_masks = [None] * len(pred_boxes)
                 
-                output_fmt = self.__format_annotation(
-                    pred_classes, scores, pred_boxes, pred_masks, score_cutoff, image_fpath
-                )
+                    output_fmt = self.__format_annotation(
+                        pred_classes, scores, pred_boxes, pred_masks, score_cutoff, image_fpath
+                    )
                 outputs.append(ImageAnnotation(image_fpath, output_fmt))
         
-        if len(outputs) == 1:
-            return outputs[0]
-        else:
-            return ImageAnnotations(outputs)
+        return ImageAnnotations(outputs)
     
     
     def __format_annotation(self, pred_classes, scores, pred_boxes, pred_masks, score_cutoff, tmp):

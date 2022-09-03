@@ -181,8 +181,10 @@ class ImageAnnotation:
         
         
     
-    def __set_regions(self, annotation, annotation_format):
-        # if auto, estimate format first
+    def __set_regions(self, annotation, annotation_format='auto'):
+        if annotation is None:
+            return []
+        
         if annotation_format == 'auto':
             annotation_format = self.__estimate_annotation_format(annotation)
         
@@ -519,7 +521,6 @@ class ImageAnnotation:
         else:
             with open(output_fpath, 'w', encoding='utf-8') as fh:
                 json.dump(self.regions, fh, cls=JsonEncoder, ensure_ascii=False)
-                #json.dump(self.regions, fh, cls=JsonEncoder, ensure_ascii=False, indent=4)
 
     
     def __format2voc(self, output_fpath=None):

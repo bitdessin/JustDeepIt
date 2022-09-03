@@ -96,20 +96,26 @@ class MMDetBase(ModuleTemplate):
     
     def __get_config(self, model_config, model_weight):
         if model_config is None or model_config == '':
-            ValueError('Configuration file for MMDetection cannot be empty.')
-        if not os.path.exists(model_config):
-            # if the given path does not exist, set the chkpoint from mmdet Lab as a initial params
-            if os.path.splitext(model_config)[1] in ['.py', '.yaml']:
-                model_config = os.path.splitext(model_config)[0]
-            model_chkpoint = mim.commands.download(package='mmdet', configs=[model_config])[0]
-            model_config = os.path.join(os.path.expanduser('~'), '.cache', 'mim', model_config + '.py')
-            model_chkpoint =  os.path.join(os.path.expanduser('~'), '.cache', 'mim', model_chkpoint)
-        cfg = mmcv.utils.Config.fromfile(model_config)
+            raise ValueError('Configuration file for MMDetection cannot be empty.')
         
-        if (model_weight is None) or (not os.path.exists(model_weight)):
-            model_weight = model_chkpoint
-        cfg.load_from = model_weight
+        cfg = None
+        try:
+            if not os.path.exists(model_config):
+                # if the given path does not exist, set the chkpoint from mmdet Lab as a initial params
+                if os.path.splitext(model_config)[1] in ['.py', '.yaml']:
+                    model_config = os.path.splitext(model_config)[0]
+                model_chkpoint = mim.commands.download(package='mmdet', configs=[model_config])[0]
+                model_config = os.path.join(os.path.expanduser('~'), '.cache', 'mim', model_config + '.py')
+                model_chkpoint =  os.path.join(os.path.expanduser('~'), '.cache', 'mim', model_chkpoint)
+            cfg = mmcv.utils.Config.fromfile(model_config)
         
+            if (model_weight is None) or (not os.path.exists(model_weight)):
+                model_weight = model_chkpoint
+            cfg.load_from = model_weight
+            
+        except:
+            raise FileNotFoundError('The path or name of the configuration file `{}` is incorrect. JustDeepIt cannot find or download.'.format(model_config))
+            
         return  cfg
         
     
@@ -384,10 +390,7 @@ class MMDetBase(ModuleTemplate):
                 output_fmt = self.__format_annotation(output, score_cutoff)
                 outputs.append(ImageAnnotation(image_fpath, output_fmt))
         
-        if len(outputs) == 1:
-            return outputs[0]
-        else:
-            return ImageAnnotations(outputs)
+        return ImageAnnotations(outputs)
     
     
     

@@ -26,45 +26,15 @@ class OD(AppBase):
         self.images = []
     
     
-#    def save_initial_model(self, class_label, model_arch, model_config, model_weight, backend):
-#        
-#        job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.STARTED, '')
-#        try:
-#            config_dpath = os.path.join(self.workspace_, 'config')
-#        
-#            model = self.__build_model(class_label, model_arch, model_config, model_weight, backend)
-#            model.save(os.path.join(config_dpath, 'default.pth'))
-#            
-#            job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.FINISHED, '')
-#        except KeyboardInterrupt:
-#            job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.INTERRUPT, '')
-#        except BaseException as e:
-#            traceback.print_exc()
-#            job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.ERROR, str(e))
-#        else:
-#            job_status = self.set_jobstatus(self.code.CONFIG, self.code.JOB__SAVE_INIT_MODEL, self.code.COMPLETED, '')
-#
-#        return job_status
-    
      
     def __build_model(self, class_label, model_arch, model_config, model_weight, backend):
-        model_arch = model_arch.replace('-', '').replace(' ', '').lower()
-        if model_config is None or model_config == '':
-            logger.info('Config file is not specified, use the preset config to build model.')
-            model_config = None
-        else:
-            if not os.path.exists(model_config):
-                FileNotFoundError('The specified config file [{}] is not found.'.format(model_config))
-        if model_weight is not None:
-            if not os.path.exists(model_weight):
-                FileNotFoundError('The specified weight [{}] is not found.'.format(model_weight))
-        
         if self.app == 'OD':
             return justdeepit.models.OD(class_label, model_arch, model_config, model_weight,
                                     os.path.join(self.workspace_, 'tmp'), backend)
         elif self.app == 'IS':
             return justdeepit.models.IS(class_label, model_arch, model_config, model_weight,
                                     os.path.join(self.workspace_, 'tmp'), backend)
+    
     
     
     def sort_train_images(self, class_label=None, image_dpath=None, annotation_fpath=None, annotation_format='coco'):
@@ -194,11 +164,6 @@ class OD(AppBase):
                 
             joblib.Parallel(n_jobs=cpu)(
                 joblib.delayed(__save_outputs)(self.workspace_, self.images[i], outputs[i], self.app) for i in range(len(self.images)))
-            #for image_fpath, output in zip(self.images, outputs):
-            #    image_name = os.path.splitext(os.path.basename(image_fpath))[0]
-            #    output.draw('bbox', os.path.join(self.workspace, 'detection_results', image_name + '.outline.png'), label=True, score=True)
-            
-            outputs = justdeepit.utils.ImageAnnotations(outputs)
             outputs.format('coco', os.path.join(self.workspace_, 'outputs', 'annotation.json'))
             
             job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__INFER, self.code.FINISHED, '')

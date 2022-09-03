@@ -822,12 +822,8 @@ class U2Net(ModuleTemplate):
                     images_fpath[i], pred_masks[i], u_cutoff, image_opening_kernel, image_closing_kernel
                 ) for i in tqdm.tqdm(range(len(pred_masks)), desc='Post-processed images: '))
         
-        imganns = justdeepit.utils.ImageAnnotations(imganns)
+        return justdeepit.utils.ImageAnnotations(imganns)
         
-        if len(imganns) == 1:
-            return imganns[0]
-        else:
-            return imganns
         
  
     def _inference_post_process(self, image_fpath, pred_mask, u_cutoff, image_opening_kernel, image_closing_kernel):
