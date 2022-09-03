@@ -37,7 +37,5 @@ jobs:
               builder: ${{ steps.buildx.outputs.name }}
               push: true
               tags: ${{ secrets.DOCKER_USERNAME }}/justdeepit:${{ env.RELEASE_VERSION }}
-              build-args: |
-                base="11.6.2-cudnn8-devel-ubuntu20.04"
 
 

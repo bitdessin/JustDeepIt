@@ -11,7 +11,7 @@ Tutorials
     tutorials/plant-segmentation.rst
     tutorials/leaf-extraction.rst
     tutorials/tumor-detection.rst
-    tutorials/object-detection-customnn.rst
+    tutorials/object-detection-customized.rst
 
 
 
