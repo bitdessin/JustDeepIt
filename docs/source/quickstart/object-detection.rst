@@ -1,3 +1,5 @@
+.. _quickstart-OD:
+
 ================
 Object detection
 ================
@@ -76,7 +78,6 @@ and the other parameters as shown in the screenshot below.
 The **workspace** will be automatically set as the path of the current folder
 (e.g., :file:`JustDeepIt/tutorials/OD`, depending on the user's environment).
 Then, we press button **Load Workspace**.
-The **config** will be automatically set after loading workspace.
 
 
 .. image:: ../_static/quickstart_od_pref.png
@@ -87,6 +88,9 @@ The **config** will be automatically set after loading workspace.
 Once the **Preferences** is set,
 the functions of **Training** and **Inference** become available.
 
+
+
+.. _quickstart-OD-training:
 
 Training
 ========
@@ -112,6 +116,8 @@ We then press the button **Start Training** for model training.
 Training takes 3-4 hours, depending on the computer hardware.
 
 
+
+.. _quickstart-OD-inference:
 
 Inference
 =========

@@ -82,7 +82,6 @@ and the other parameters as shown in the screenshot below.
 The **workspace** will be automatically set as the path of the current folder
 (e.g., :file:`JustDeepIt/tutorials/IS`, depending on the user's environment).
 Then, we press button **Load Workspace**.
-The **config** will be automatically set after loading workspace.
 
 
 .. image:: ../_static/quickstart_is_pref.png
