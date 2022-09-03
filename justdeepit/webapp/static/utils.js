@@ -142,15 +142,15 @@ function refreshFileSelectButtons() {
             $(this).addClass('button-disable');
             $(this).attr('disabled', true);
         });
-        $('button#config-edition-open').addClass('button-disable');
-        $('button#config-edition-open').attr('disabled', true);
+        //$('button#config-edition-open').addClass('button-disable');
+        //$('button#config-edition-open').attr('disabled', true);
     } else {
         $('button.select-file').each(function(i) {
             $(this).removeClass('button-disable');
             $(this).attr('disabled', false);
         });
-        $('button#config-edition-open').removeClass('button-disable');
-        $('button#config-edition-open').attr('disabled', false);
+        //$('button#config-edition-open').removeClass('button-disable');
+        //$('button#config-edition-open').attr('disabled', false);
     }
 }
 
@@ -280,15 +280,15 @@ function refreshConfigField() {
     if ($('#module-config-architecture').val() != 'custome') {
         $('#module-config-config').val(null);
         $('#module-config-config').attr('readonly', true);
-        $('#config-edition-open').attr('disabled', true);
+        //$('#config-edition-open').attr('disabled', true);
         $('#config-select-open').attr('disabled', true);
-        $('#config-edition-open').addClass('button-disable');
+        //$('#config-edition-open').addClass('button-disable');
         $('#config-select-open').addClass('button-disable');
     } else {
         $('#module-config-config').attr('readonly', false);
-        $('#config-edition-open').attr('disabled', false);
+        //$('#config-edition-open').attr('disabled', false);
         $('#config-select-open').attr('disabled', false);
-        $('#config-edition-open').removeClass('button-disable');
+        //$('#config-edition-open').removeClass('button-disable');
         $('#config-select-open').removeClass('button-disable');
     }
 }
@@ -517,7 +517,8 @@ $(function(){
         }
     });
 
-
+    
+    /*
     $('button#config-edition-open').on('click', function() {
         $.ajax({
             type: 'GET',
@@ -534,7 +535,9 @@ $(function(){
                 console.log("textStatus     : " + textStatus);
                 console.log("errorThrown    : " + errorThrown.message);
         });
-    })
+    });
+    */
+
     $('body').on('click', '#config-edition-popup', function(e) {
         if (!$(e.target).closest('#config-edition-manager').length) {
             $('#config-edition-popup').fadeOut();
