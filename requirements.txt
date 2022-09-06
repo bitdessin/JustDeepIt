@@ -11,3 +11,4 @@ jinja2
 python-multipart
 torch >= 1.8
 torchvision
+openmim
