@@ -404,11 +404,11 @@ class SOD(AppBase):
             for _img in self.images:
                     valid_images.append([
                         os.path.join(self.workspace_, 'outputs',
-                                     os.path.splitext(os.path.basename(_img[0]))[0] + '.crop.png'),
+                                     os.path.splitext(os.path.basename(_img))[0] + '.crop.png'),
                         os.path.join(self.workspace_, 'outputs',
-                                     os.path.splitext(os.path.basename(_img[0]))[0] + '.mask.png'),
+                                     os.path.splitext(os.path.basename(_img))[0] + '.mask.png'),
                         os.path.join(self.workspace_, 'outputs',
-                                     os.path.splitext(os.path.basename(_img[0]))[0] + '.objects')
+                                     os.path.splitext(os.path.basename(_img))[0] + '.objects')
                     ])
             
             if not is_series:
