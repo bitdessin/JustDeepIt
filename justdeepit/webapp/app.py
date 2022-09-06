@@ -138,6 +138,7 @@ class ModuleFrame():
              params.update({
                 'config': {
                     'status': 'WAITING',
+                    'backend': 'PyTorch',
                     'architecture': 'U2Net',
                     'config': '',
                     'class_label': '',
@@ -149,8 +150,8 @@ class ModuleFrame():
                     'status': 'WAITING',
                     'model_weight': '',
                     'image_folder': '',
-                    'image_suffix': '',
-                    'mask_suffix': '',
+                    'annotation_format': 'mask',
+                    'annotation_path': '',
                     'strategy': 'resizing',
                     'windowsize': 320,
                     'batchsize': 8,
@@ -186,18 +187,21 @@ class ModuleFrame():
     
     def update_params(self, params, mode=None):
         if mode is None:
-            # update parameters for all modes
+            # update parameters for all modes, not implemented in this version
             pass
         else:
             params = dict(params)
             params = self.__update_checkboxes(params, mode)
             for param_id in params:
                 v = params.get(param_id)
-                v = v.strip(' ')
+                
                 if param_id in ['lr', 'cutoff']:
-                    v = float(v)
+                    v = float(v.strip(' '))
                 elif param_id in ['batchsize', 'epoch', 'cpu', 'gpu', 'openingks', 'closingks', 'windowsize']:
-                    v = int(v)
+                    v = int(v.strip(' '))
+                elif param_id == 'config':
+                    if v is not None and v == '':
+                        v = None
                 self.params[mode].update({param_id: v})
          
         # save the latest parameters       
@@ -251,8 +255,7 @@ def index(request: Request):
 
 
 @app.get('/module/{module_id}')
-def od(request: Request, module_id):
-    
+def module(request: Request, module_id):
     moduleframe.activate_module(module_id)
     
     # initialize module and parameters
@@ -261,18 +264,22 @@ def od(request: Request, module_id):
         'justdeepit_version': justdeepit.__version__,
         'module': module_id,
         'module_name': moduleframe.module_desc,
+        'supported_formats': get_supported_formats(module_id),
     }
     if module_id == 'OD' or module_id == 'IS':
         req_dict.update({
             'backends': ['MMDetection', 'Detectron2'],
-            'architectures': get_architectures(module_id,  moduleframe.params['config']['backend'], 'list'),
+            'architectures': get_architectures(module_id, moduleframe.params['config']['backend'], 'list'),
         })
     elif module_id == 'SOD':
         req_dict.update({
-             'architectures': ['U2Net'], 
+            'architectures': get_architectures(module_id, output_format='list'),
         })
+    else:
+        raise NotImplementedError('JustDeepIt only supports OD, IS, and SOD.')
     
     return templates.TemplateResponse('module.html', req_dict)
+
 
 
 
@@ -364,19 +371,15 @@ def od_training():
     logger.info('Task Started: [Train Model] ...')
     while not moduleframe.stop_threads.is_set():
         try:
-            statuses = []
             moduleframe.update_status('training', 'RUNNING')
             if os.path.splitext(moduleframe.params['training']['model_weight'])[1] != '.pth':
                 moduleframe.update_params({'model_weight': moduleframe.params['training']['model_weight'] + '.pth'},
                                           'training')
             
-            status_ = moduleframe.module.sort_train_images(moduleframe.params['config']['class_label'],
-                                                moduleframe.params['training']['image_folder'],
-                                                moduleframe.params['training']['annotation_path'],
-                                                moduleframe.params['training']['annotation_format'])
-            statuses.append(status_)
-            
-            status_ = moduleframe.module.train_model(moduleframe.params['config']['class_label'],
+            status = moduleframe.module.train_model(moduleframe.params['config']['class_label'],
+                                          moduleframe.params['training']['image_folder'],
+                                          moduleframe.params['training']['annotation_path'],
+                                          moduleframe.params['training']['annotation_format'],
                                           moduleframe.params['config']['architecture'],
                                           moduleframe.params['config']['config'],
                                           moduleframe.params['training']['model_weight'],
@@ -387,9 +390,8 @@ def od_training():
                                           moduleframe.params['config']['cpu'],
                                           moduleframe.params['config']['gpu'],
                                           moduleframe.params['config']['backend'])
-            statuses.append(status_)
             
-            status = validate_status(statuses)
+            status = validate_status(status)
             if status == 'COMPLETED':
                 model_config_ext = '.py' if moduleframe.params['config']['backend'][0].lower() == 'm' else '.yaml'
                 moduleframe.update_params({'config': os.path.splitext(moduleframe.params['training']['model_weight'])[0] + model_config_ext},
@@ -414,13 +416,11 @@ def od_inference():
     logger.info('Task Started: [Inference] ...')
     while not moduleframe.stop_threads.is_set():
         try:
-            statuses = []
             moduleframe.update_status('inference', 'RUNNING')
  
-            status_ = moduleframe.module.sort_query_images(moduleframe.params['inference']['image_folder'])
-            statuses.append(status_)
-            
-            status_ = moduleframe.module.detect_objects(moduleframe.params['config']['class_label'],
+            status_1 = moduleframe.module.detect_objects(
+                                             moduleframe.params['config']['class_label'],
+                                             moduleframe.params['inference']['image_folder'],
                                              moduleframe.params['config']['architecture'],
                                              moduleframe.params['config']['config'],
                                              moduleframe.params['inference']['model_weight'],
@@ -429,12 +429,10 @@ def od_inference():
                                              moduleframe.params['config']['cpu'],
                                              moduleframe.params['config']['gpu'],
                                              moduleframe.params['config']['backend'])
-            statuses.append(status_)
             
-            status_ = moduleframe.module.summarize_objects(moduleframe.params['config']['cpu'])
-            statuses.append(status_)
+            status_2 = moduleframe.module.summarize_objects(moduleframe.params['config']['cpu'])
             
-            status = validate_status(statuses)
+            status = validate_status([status_1, status_2])
             moduleframe.update_status('inference', status)
         
         except BaseException as e:
@@ -480,31 +478,25 @@ def sod_training():
     logger.info('Task Started: [Train Model] ...')
     while not moduleframe.stop_threads.is_set():
         try:
-            statuses = []
             moduleframe.update_status('training', 'RUNNING')
-            
-            if os.path.splitext(moduleframe.params['training']['model_weight']) != '.pth':
+            if os.path.splitext(moduleframe.params['training']['model_weight'])[1] != '.pth':
                 moduleframe.update_params({'model_weight': moduleframe.params['training']['model_weight'] + '.pth'},
                                           'training')
 
-            status_ = moduleframe.module.sort_train_images(moduleframe.params['training']['image_folder'],
-                                                           None,
-                                                           'mask',
-                                                           moduleframe.params['training']['image_suffix'],
-                                                           moduleframe.params['training']['mask_suffix'])
-            statuses.append(status_)
-            status_ = moduleframe.module.train_model(moduleframe.params['config']['architecture'],
-                                                     moduleframe.params['training']['model_weight'],
-                                                     moduleframe.params['training']['batchsize'],
-                                                     moduleframe.params['training']['epoch'],
-                                                     moduleframe.params['training']['lr'],
-                                                     moduleframe.params['config']['cpu'],
-                                                     moduleframe.params['config']['gpu'],
-                                                     moduleframe.params['training']['strategy'],
-                                                     moduleframe.params['training']['windowsize'])
-            statuses.append(status_)
+            status = moduleframe.module.train_model(moduleframe.params['training']['image_folder'],
+                                                    moduleframe.params['training']['annotation_path'],
+                                                    moduleframe.params['training']['annotation_format'],
+                                                    moduleframe.params['config']['architecture'],
+                                                    moduleframe.params['training']['model_weight'],
+                                                    moduleframe.params['training']['batchsize'],
+                                                    moduleframe.params['training']['epoch'],
+                                                    moduleframe.params['training']['lr'],
+                                                    moduleframe.params['config']['cpu'],
+                                                    moduleframe.params['config']['gpu'],
+                                                    moduleframe.params['training']['strategy'],
+                                                    moduleframe.params['training']['windowsize'])
         
-            status = validate_status(statuses)
+            status = validate_status(status)
             if status == 'COMPLETED':
                 moduleframe.update_params({'model_weight': moduleframe.params['training']['model_weight']},
                                           'inference')
@@ -527,13 +519,11 @@ def sod_inference():
     logger.info('Task Started: [Inference] ...')
     while not moduleframe.stop_threads.is_set():
         try:
-            statuses = []
             moduleframe.update_status('inference', 'RUNNING')
             
-            status_ = moduleframe.module.sort_query_images(moduleframe.params['inference']['image_folder'],
-                                                           moduleframe.params['inference']['align_images'])
-            statuses.append(status_)
-            status_ = moduleframe.module.detect_objects(moduleframe.params['config']['architecture'],
+            status_1 = moduleframe.module.sort_query_images(moduleframe.params['inference']['image_folder'],
+                                                            moduleframe.params['inference']['align_images'])
+            status_2 = moduleframe.module.detect_objects(moduleframe.params['config']['architecture'],
                                              moduleframe.params['inference']['model_weight'],
                                              moduleframe.params['inference']['batchsize'],
                                              moduleframe.params['inference']['strategy'],
@@ -543,13 +533,11 @@ def sod_inference():
                                              moduleframe.params['inference']['windowsize'],
                                              moduleframe.params['config']['cpu'],
                                              moduleframe.params['config']['gpu'])
-            statuses.append(status_)
-            status_ = moduleframe.module.summarize_objects(moduleframe.params['config']['cpu'],
+            status_3 = moduleframe.module.summarize_objects(moduleframe.params['config']['cpu'],
                                              moduleframe.params['inference']['timeseries'],
                                              moduleframe.params['inference']['openingks'],
                                              moduleframe.params['inference']['closingks'])
-            
-            status = validate_status(statuses)
+            status = validate_status([status_1, status_2, status_3])
             moduleframe.update_status('inference', status)
 
     
@@ -578,11 +566,11 @@ def get_architectures(module: str = '', backend: str = 'mmdetection', output_for
     archs = None
     m = None
     if module == 'OD':
-        m = justdeepit.models.OD()
+        m = justdeepit.models.OD(model_arch=None)
     elif module == 'IS':
-        m = justdeepit.models.IS()
+        m = justdeepit.models.IS(model_arch=None)
     elif module == 'SOD':
-        m = justdeepit.models.SOD()
+        m = justdeepit.models.SOD(model_arch=None)
     
     if m is not None:
         archs = m.available_architectures(backend)
@@ -591,6 +579,25 @@ def get_architectures(module: str = '', backend: str = 'mmdetection', output_for
         return JSONResponse(content=archs)
     else:
         return archs
+
+
+
+def get_supported_formats(module: str = ''):
+    supported_formats = None
+    m = None
+    if module == 'OD':
+        m = justdeepit.models.OD(model_arch=None)
+    elif module == 'IS':
+        m = justdeepit.models.IS(model_arch=None)
+    elif module == 'SOD':
+        m = justdeepit.models.SOD(model_arch=None)
+    
+    if m is not None:
+        supported_formats = m.supported_formats()
+    return supported_formats
+
+
+
 
 
 @app.get('/api/status')

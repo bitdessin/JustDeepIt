@@ -126,8 +126,6 @@ class MMDetBase(ModuleTemplate):
         def __set_cl(cfg, class_labels):
             for cfg_key in cfg:
                 if isinstance(cfg[cfg_key], dict):
-                    #if cfg_key == 'init_cfg' and 'type' in cfg[cfg_key]:
-                    #    cfg[cfg_key]['type'] = None
                     __set_cl(cfg[cfg_key], class_labels)
                 elif isinstance(cfg[cfg_key], (list, tuple)):
                     if isinstance(cfg[cfg_key][0], dict):
@@ -138,14 +136,15 @@ class MMDetBase(ModuleTemplate):
                         cfg[cfg_key] = class_labels
                     elif cfg_key == 'num_classes' or cfg_key == 'num_things_classes':
                         cfg[cfg_key] = len(class_labels)
-                    #elif cfg_key == 'pretrained':
-                    #    cfg[cfg_key] = None
             return cfg
         cfg.merge_from_dict(dict(classes=class_labels,
                                  num_classes=len(class_labels),
                                  num_things_classes=len(class_labels)))
         cfg.data = __set_cl(cfg.data, class_labels)
         cfg.model = __set_cl(cfg.model, class_labels)
+        # for RetinaNet: ResNet: init_cfg and pretrained cannot be specified at the same time
+        if 'pretrained' in cfg.model:
+            del cfg.model['pretrained']
         return cfg
     
 
@@ -204,7 +203,7 @@ class MMDetBase(ModuleTemplate):
 
     
     
-    def train(self, annotation, image_dpath,
+    def train(self, image_dpath, annotation,
               batchsize=36, epoch=1000, lr=0.0001, score_cutoff=0.7, cpu=8, gpu=1):
         
         if not torch.cuda.is_available():

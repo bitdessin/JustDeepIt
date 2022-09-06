@@ -23,75 +23,34 @@ class OD(AppBase):
     def __init__(self, workspace):
         super().__init__(workspace)
         self.app = 'OD'
-        self.images = []
     
     
      
     def __build_model(self, class_label, model_arch, model_config, model_weight, backend):
+        init_model_weight = model_weight if os.path.exists(model_weight) else None
         if self.app == 'OD':
-            return justdeepit.models.OD(class_label, model_arch, model_config, model_weight,
+            return justdeepit.models.OD(class_label, model_arch, model_config, init_model_weight,
                                     os.path.join(self.workspace_, 'tmp'), backend)
         elif self.app == 'IS':
-            return justdeepit.models.IS(class_label, model_arch, model_config, model_weight,
+            return justdeepit.models.IS(class_label, model_arch, model_config, init_model_weight,
                                     os.path.join(self.workspace_, 'tmp'), backend)
     
     
     
-    def sort_train_images(self, class_label=None, image_dpath=None, annotation_fpath=None, annotation_format='coco'):
-        
-        job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__SORT_IMAGES, self.code.STARTED, '')
-        
-        try:
-            images = []
-            with open(annotation_fpath, 'r') as infh:
-                image_records = json.load(infh)
-                for image_record in image_records['images']:
-                    images.append(image_record['file_name'])
-                
-            with open(os.path.join(self.workspace_, 'data', 'train', 'train_images.txt'), 'w') as outfh:
-                outfh.write('CLASS_LABEL\t{}\n'.format(class_label))
-                outfh.write('IMAGES_DPATH\t{}\n'.format(image_dpath))
-                outfh.write('ANNOTATION_FPATH\t{}\n'.format(annotation_fpath))
-                outfh.write('ANNOTATION_FORMAT\t{}\n'.format(annotation_format))
-                outfh.write('N_IMAGES\t{}\n'.format(len(images)))
-            logger.info('There are {} images are valid for model training.'.format(len(images)))
-            
-            job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__SORT_IMAGES, self.code.FINISHED, '')
-        except KeyboardInterrupt:
-            job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__SORT_IMAGES, self.code.INTERRUPT, '')
-        
-        except BaseException as e:
-            traceback.print_exc()
-            job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__SORT_IMAGES, self.code.ERROR, str(e))
-        else:
-            job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__SORT_IMAGES, self.code.COMPLETED, '')
-    
-        return job_status
-   
-    
-    def train_model(self, class_label=None, model_arch='fasterrcnn', model_config=None, model_weight=None, 
+    def train_model(self, class_label, image_dpath, annotation_path, annotation_format,
+                    model_arch='fasterrcnn', model_config=None, model_weight=None, 
                     batchsize=32, epoch=1000, lr=0.0001, score_cutoff=0.7, cpu=8, gpu=1, backend='mmdetection'):
-        
         job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.STARTED, '')
         try:
-            train_data_info = {}
-            with open(os.path.join(self.workspace_, 'data', 'train', 'train_images.txt'), 'r') as infh:
-                for kv in infh:
-                    k, v = kv.replace('\n', '').split('\t')
-                    train_data_info[k] = v
-                
-            init_model_weight = model_weight if os.path.exists(model_weight) else None
-            
-            model = self.__build_model(class_label, model_arch, model_config, init_model_weight, backend)
-            model.train(train_data_info['ANNOTATION_FPATH'], train_data_info['IMAGES_DPATH'],
+            self.check_training_images(image_dpath, annotation_path, annotation_format, class_label)
+            model = self.__build_model(class_label, model_arch, model_config, model_weight, backend)
+            model.train(image_dpath, annotation_path, annotation_format,
                         batchsize, epoch, lr, score_cutoff, cpu, gpu)
-            model.save(model_weight)  # save .pth and .yaml with same name
+            model.save(model_weight)
             
             job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.FINISHED, '')
-            
         except KeyboardInterrupt:
             job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.INTERRUPT, '')
-        
         
         except BaseException as e:
             traceback.print_exc()
@@ -104,44 +63,8 @@ class OD(AppBase):
     
     
     
-    def sort_query_images(self, query_image_dpath=None):
-        
-        job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SORT_IMAGES, self.code.STARTED, '')
-        try:
-            image_files = []
-            for f in sorted(glob.glob(os.path.join(query_image_dpath, '**'), recursive=True)):
-                if os.path.splitext(f)[1].lower() in self.image_ext:
-                    image_files.append(f)
-                
-            # write image files to text file
-            with open(os.path.join(self.workspace_, 'data', 'query', 'query_images.txt'), 'w') as outfh:
-                for image_file in image_files:
-                    outfh.write('{}\n'.format(image_file))
-        
-            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SORT_IMAGES, self.code.FINISHED, '')
-        except KeyboardInterrupt:
-            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SORT_IMAGES, self.code.INTERRUPT, '')
-        
-        except BaseException as e:
-            traceback.print_exc()
-            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SORT_IMAGES, self.code.ERROR, str(e))
-        else:
-            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SORT_IMAGES, self.code.COMPLETED, '')
-
-        return job_status
-    
-    
-    
-    def __seek_images(self):
-        self.images = []
-        with open(os.path.join(self.workspace_, 'data', 'query', 'query_images.txt'), 'r') as infh:
-            for _image in infh:
-                _image_info = _image.replace('\n', '').split('\t')
-                self.images.append(_image_info[0])
-    
-    
-    
-    def detect_objects(self, class_label=None, model_arch='fasterrcnn', model_config=None, model_weight=None,
+    def detect_objects(self, class_label, image_dpath,
+                       model_arch='fasterrcnn', model_config=None, model_weight=None,
                        score_cutoff=0.7, batchsize=32, cpu=8, gpu=1, backend='mmdetection'):
         
         def __save_outputs(ws, image_fpath, output, app_id):
@@ -153,7 +76,8 @@ class OD(AppBase):
         
         job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__INFER, self.code.STARTED, '')
         try:
-            self.__seek_images()
+            self.check_query_images(image_dpath)
+            self.seek_query_images()
         
             valid_ws = os.path.join(self.workspace_, 'tmp')
             # if config is not given, use the config saved during training process
@@ -219,7 +143,7 @@ class OD(AppBase):
             
         job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SUMMARIZE, self.code.STARTED, '')
         try:
-            self.__seek_images()
+            self.seek_query_images()
             logger.info('Finding objects and calculate the summary data using {} CPUs.'.format(cpu))
             
             images_meta = []

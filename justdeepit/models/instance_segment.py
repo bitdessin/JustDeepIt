@@ -48,18 +48,15 @@ class IS:
         >>> model = IS('./class_label.txt', model_arch='maskrcnn', model_weight='trained_weight.pth',
         >>>            backend='detectron2')
         >>> 
-        >>> # check the avaliable architectures
-        >>> model = IS()
-        >>> print(model.available_architectures)
     """  
-    
     
     
     def __init__(self, class_label=None, model_arch=None, model_config=None, model_weight=None, workspace=None, backend='mmdetection'):
         
         self.module = None
         self.__architectures = self.__available_architectures()
-
+        self.__supported_formats = ('COCO',) #, 'RGB mask')
+        
         self.backend = backend
         self.model_arch = model_arch
         if workspace is None:
@@ -72,6 +69,7 @@ class IS:
         return {
             'mmdetection': [
                 ['Mask R-CNN', 'mask_rcnn_x101_64x4d_fpn_mstrain-poly_3x_coco'],
+                ['Cascade Mask R-CNN', 'cascade_mask_rcnn_x101_64x4d_fpn_mstrain_3x_coco.py'],
                 ['custome',    None]
             ],
             'detectron2': [
@@ -134,12 +132,59 @@ class IS:
 
 
     def available_architectures(self, backend):
-        return [_[0] for _ in self.__architectures[self.__norm_backend(backend)]]
+        """Show the available architectures
+
+        Show the available architectures for instance segmentation.
+
+        Args:
+            backend (str): Specify the backend.
+                           ``detectron2`` or ``mmdetection`` can be speficied.
+
+        Returns:
+            A tuple of the supported architecture.
+
+        Examples:
+            >>> from justdeepit.models import IS
+            >>>
+            >>> model = IS()
+            >>> model.available_architectures('mmdetection')
+
+        """
+        return tuple([_[0] for _ in self.__architectures[self.__norm_backend(backend)]])
 
 
     
+
+    def supported_formats(self):
+        """Show the supported annotation formats
+
+        Show the supported annotation formats for instance segmentation.
+
+        Returns:
+            A tuple of the supported annotation formats.
+
+        Examples:
+            >>> from justdeepit.models import IS
+            >>>
+            >>> model = IS()
+            >>> model.supported_formats()
+
+        """
+        return self.__supported_formats
+
+
+
+    def __norm_format(self, x):
+        x = x.replace(' ', '').replace('-', '').lower()
+        if ('pascal' in x) or ('xml' in x):
+            x = 'voc'
+        if ('rgb' in x) and ('mask' in x):
+            x = 'rgbmask'
+        return x
     
-    def train(self, annotation, image_dpath,
+
+    
+    def train(self, image_dpath, annotation, annotation_format='COCO',
               batchsize=32, epoch=1000, lr=0.0001, score_cutoff=0.7, cpu=8, gpu=1):
         """Train model
         
@@ -149,8 +194,9 @@ class IS:
         a path to the directory containing the training images.
         
         Args:
-            annotation (str): A file path to COCO format annotation file.
             image_dpath (str): A path to directory which contains all training images.
+            annotation (str): A file path to COCO format annotation file.
+            annotation_format (str): Annotation format. Only COCO is supported in the current version.
             batch_size (int): Batch size for each GPU.
             epoch (int): Epoch.
             lr (float): Learning rate.
@@ -162,9 +208,13 @@ class IS:
             >>> from justdeepit.models import IS 
             >>> 
             >>> model = IS('./class_label.txt', model_arch='maskrcnn')
-            >>> model.train('annotations.coco.json', './train_images')
+            >>> model.train('./train_images', './annotations.coco.json')
         """
-        self.module.train(annotation, image_dpath,
+        annotation_format = self.__norm_format(annotation_format)
+        if annotation_format != 'coco':
+            raise NotImplementedError('JustDeepIt does not support {} format for training instance segmentation model.'.format(annotation_format))
+        
+        self.module.train(image_dpath, annotation,
                           batchsize=batchsize, epoch=epoch, lr=lr, score_cutoff=score_cutoff,
                           cpu=cpu, gpu=gpu)
     
@@ -186,7 +236,7 @@ class IS:
             >>> from justdeepit.models import IS
             >>> 
             >>> model = IS('./class_label.txt', model_arch='maskrcnn')
-            >>> model.train('annotations.coco.json', './train_images')
+            >>> model.train('./train_images', './annotations.coco.json')
             >>> odnet.save('./trained_weight.pth')
         ''' 
         self.module.save(weight_fpath, config_fpath)

@@ -7,6 +7,7 @@ import base64
 import hashlib
 import random
 import string
+import xml.etree.ElementTree as ET
 import numpy as np
 import cv2
 import skimage
@@ -198,7 +199,7 @@ class ImageAnnotation:
             return self.__set_regions_from_rgbmask(annotation)
         elif annotation_format == 'vott':
             return self.__set_regions_from_vott(annotation)
-        elif annotation_format == 'voc':
+        elif 'voc' in annotation_format:
             return self.__set_regions_from_voc(annotation)
         elif annotation_format == 'coco':
             return self.__set_regions_from_coco(annotation)
@@ -328,37 +329,25 @@ class ImageAnnotation:
         obj_id = 0
         obj_name = ''
         obj_bbox = [None, None, None, None]
-        with open(voc, 'r') as vocfh:
-            for vocline in vocfh:
-                if '<object>' in vocline:
-                    is_obj = True
-                if is_obj and ('</object>' in vocline):
-                    regions.append({
-                        'id': obj_id,
-                        'class': obj_name,
-                        'bbox': obj_bbox,
-                        'score': np.nan,
-                    })
-                    obj_name = ''
-                    obj_bbox = [None, None, None, None]
-                    obj_id += 1
-                    is_obj = False
-                if is_obj:
-                    m = re.search('<name>(.+)</name>', vocline)
-                    if m:
-                        obj_name = m.group(1)
-                    m = re.search('<xmin>([0-9]+)</xmin>', vocline)
-                    if m:
-                        obj_bbox[0] = int(m.group(1))
-                    m = re.search('<ymin>([0-9]+)</ymin>', vocline)
-                    if m:
-                        obj_bbox[1] = int(m.group(1))
-                    m = re.search('<xmax>([0-9]+)</xmax>', vocline)
-                    if m:
-                        obj_bbox[2] = int(m.group(1))
-                    m = re.search('<ymax>([0-9]+)</ymax>', vocline)
-                    if m:
-                        obj_bbox[3] = int(m.group(1))
+        
+        voc_tree = ET.parse(voc)
+        voc_root = voc_tree.getroot()
+        
+        obj_id = 0
+        for voc_data in voc_root:
+            if voc_data.tag == 'object':
+                regions.append({
+                    'id': obj_id,
+                    'class': voc_data.find('name').text,
+                    'bbox': [
+                        float(voc_data.find('bndbox').find('xmin').text),
+                        float(voc_data.find('bndbox').find('ymin').text),
+                        float(voc_data.find('bndbox').find('xmax').text),
+                        float(voc_data.find('bndbox').find('ymax').text)
+                    ],
+                    'score': np.nan,
+                })
+                obj_id += 1
         
         return regions
 
@@ -1254,19 +1243,22 @@ class ImageAnnotations:
         
         
         tag2id = {}
-        max_tag_id = 1
+        tag_ = []
+        for imann in self.image_annotations:
+            for region in imann.regions:
+                tag_.append(region['class'])
+        for tag_id, tag_name in enumerate(sorted(list(set(tag_)))):
+            tag2id[tag_name] = tag_id + 1
+        
         max_ann_id = 1
         for img_id, imann in enumerate(self.image_annotations):
             img_id += 1
             imann_coco = imann.format('coco')
             
             # check tags
-            imann_tag = {}
+            id2tag = {}
             for cate_ in imann_coco['categories']:
-                if cate_['name'] not in tag2id:
-                    tag2id[cate_['name']] = max_tag_id
-                    max_tag_id += 1
-                imann_tag[str(cate_['id'])] = cate_['name']
+                id2tag[str(cate_['id'])] = cate_['name']
             
             # update image info
             imann_coco['images'][0]['id'] = img_id
@@ -1275,7 +1267,7 @@ class ImageAnnotations:
             for ann_id in range(len(imann_coco['annotations'])):
                 imann_coco['annotations'][ann_id]['id'] = max_ann_id
                 imann_coco['annotations'][ann_id]['image_id'] = img_id
-                imann_coco['annotations'][ann_id]['category_id'] = tag2id[imann_tag[str(imann_coco['annotations'][ann_id]['category_id'])]]
+                imann_coco['annotations'][ann_id]['category_id'] = tag2id[id2tag[str(imann_coco['annotations'][ann_id]['category_id'])]]
                 max_ann_id += 1
             
             tmpl['images'].append(imann_coco['images'][0])
@@ -1290,8 +1282,7 @@ class ImageAnnotations:
         
         
         with open(output_fpath, 'w', encoding='utf-8') as fh:
-            json.dump(tmpl, fh, cls=JsonEncoder, ensure_ascii=False)
-            #json.dump(tmpl, fh, cls=JsonEncoder, ensure_ascii=False, indent=4)
+            json.dump(tmpl, fh, cls=JsonEncoder, ensure_ascii=False, indent=2)
         
         
     

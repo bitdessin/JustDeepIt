@@ -37,68 +37,30 @@ class SOD(AppBase):
     
     
     
-    def sort_train_images(self, image_dpath=None, annotation_fpath=None, annotation_format='mask', image_suffix=None, mask_suffix=None):
-        
-        job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__SORT_IMAGES, self.code.STARTED, '')
-        
-        try:
-            # generate mask images from annotation files if mask images are not given.
-            if annotation_format == 'coco':
-                ws_image_dpath = os.path.join(self.workspace_, 'data', 'train')
-                os.makedirs(ws_image_dpath, exist_ok=True)
-                for image_fpath in sorted(glob.glob(os.path.join(image_dpath, '**'), recursive=True)):
-                    image_fname, image_fext = os.path.splitext(image_fpath)
-                    if image_fext.lower() in self.image_ext:
-                        imgann = justdeepit.utils.ImageAnnotation(image_fpath, annotation_fpath, annotation_format)
-                        shutil.copy2(image_fpath, os.path.join(ws_image_dpath, os.path.basename(image_fname) + '.img' + image_fext))
-                        imgann.draw('bimask', os.path.join(ws_image_dpath, os.path.basename(image_fname) + '.mask.png'))
-                image_dpath = ws_image_dpath
-                image_suffix = '.img' + image_fext
-                mask_suffix = '.mask.png'
-                            
-            elif annotation_format == 'mask':
-                pass
-            else:
-                raise ValueError('Unsupportted annotation for training SOD model.')
-            
-            n_images = 0
-            with open(os.path.join(self.workspace_, 'data', 'train', 'train_images.txt'), 'w') as outfh:
-                for image_fpath in sorted(glob.glob(os.path.join(image_dpath, '*' + image_suffix))):
-                    mask_fpath = image_fpath[:-len(image_suffix)] + mask_suffix
-                    if os.path.exists(image_fpath) and os.path.exists(mask_fpath):
-                        outfh.write('{}\t{}\n'.format(image_fpath, mask_fpath))
-                        n_images += 1
-            logger.info('There are {} images are valid for model training.'.format(n_images))
-
-
-            job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__SORT_IMAGES, self.code.FINISHED, '')
-        except KeyboardInterrupt:
-            job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__SORT_IMAGES, self.code.INTERRUPT, '')
-        except BaseException as e:
-            traceback.print_exc()
-            job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__SORT_IMAGES, self.code.ERROR, str(e))
+    def __build_model(self, model_arch, model_weight, ws):
+        if os.path.exists(model_weight):
+            model = justdeepit.models.SOD(model_arch, model_weight, workspace=ws)
         else:
-            job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__SORT_IMAGES, self.code.COMPLETED, '')
-
-        return job_status
-
+            model = justdeepit.models.SOD(model_arch, workspace=ws)
+        return model
  
     
     
-    def train_model(self, model_arch, model_weight, batchsize, epoch, lr, cpu, gpu, strategy, window_size):
+    def train_model(self, image_dpath, annotation_path, annotation_format,
+                    model_arch, model_weight, batchsize, epoch, lr, cpu, gpu, strategy, window_size):
         
         job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.STARTED, '')
 
         try:
+            self.check_training_images(image_dpath, annotation_path, annotation_format)
+
             tmp_dpath = os.path.join(self.workspace_, 'tmp')
             logger.info('The check points will be saved as {} every 100 epochs.'.format(tmp_dpath))
-                 
-            if os.path.exists(model_weight):
-                model = justdeepit.models.SOD(model_arch, model_weight, workspace=tmp_dpath)
-            else:
-                model = justdeepit.models.SOD(model_arch, workspace=tmp_dpath)
-            model.train(os.path.join(self.workspace_, 'data', 'train', 'train_images.txt'),
-                        batch_size=batchsize, epoch=epoch, lr=lr, cpu=cpu, gpu=gpu, strategy=strategy, window_size=window_size)
+            
+            model = self.__build_model(model_arch, model_weight, tmp_dpath)
+            model.train(image_dpath, annotation_path, annotation_format,
+                        batch_size=batchsize, epoch=epoch, lr=lr, cpu=cpu, gpu=gpu,
+                        strategy=strategy, window_size=window_size)
             model.save(model_weight)
                 
         except KeyboardInterrupt:
@@ -114,12 +76,6 @@ class SOD(AppBase):
         return job_status    
     
     
-    
-    def __seek_images(self):
-        self.images = []
-        with open(os.path.join(self.workspace_, 'data', 'query', 'query_images.txt'), 'r') as infh:
-            for _image in infh:
-                self.images.append(_image.replace('\n', '').split('\t'))
     
     
     
@@ -313,26 +269,26 @@ class SOD(AppBase):
     def detect_objects(self, model_arch, model_weight, batchsize,
                        strategy, u_cutoff, image_opening, image_closing, window_size,
                        cpu, gpu):
-
+        
+        def __save_outputs(ws, image_fpath, output):
+            image_name = os.path.splitext(os.path.basename(image_fpath))[0]
+            output.draw('mask', os.path.join(ws, 'outputs', image_name + '.mask.png'))
+            output.draw('masked', os.path.join(ws, 'outputs', image_name + '.crop.png'))
+            output.draw('contour', os.path.join(ws, 'outputs', image_name + '.outline.png'))
+            
+        
         job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__INFER, self.code.STARTED, '')
 
         try:
-            self.__seek_images()
+            self.seek_query_images()
             model = justdeepit.models.SOD(model_arch, model_weight)
-            for image in self.images:
-                image_fpath = image[0]
-                logger.info('Processing {} ...'.format(image_fpath))
-                image_name = os.path.splitext(os.path.basename(image_fpath))[0]
-                
-                mask_obj = model.inference(image_fpath, strategy, batchsize, cpu, gpu,
-                                           window_size, u_cutoff, image_opening, image_closing)
-                
-                # save mask as images
-                mask_obj.draw('mask', os.path.join(self.workspace_, 'outputs', image_name + '.mask.png'))
-                mask_obj.draw('masked', os.path.join(self.workspace_, 'outputs', image_name + '.crop.png'))
-                mask_obj.draw('contour', os.path.join(self.workspace_, 'outputs', image_name + '.outline.png'))
-                # save mask as COCO
-                #mask_obj.save('coco', os.path.join(self.workspace_, 'detection_results', image_name + '.xml'))
+            outputs = model.inference(self.images,
+                                      strategy, batchsize, cpu, gpu,
+                                      window_size, u_cutoff, image_opening, image_closing)
+            
+            joblib.Parallel(n_jobs=cpu)(
+                joblib.delayed(__save_outputs)(self.workspace_, self.images[i], outputs[i]) for i in range(len(self.images)))
+
                 
         except KeyboardInterrupt:
             job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__INFER, self.code.INTERRUPT, '')
@@ -440,7 +396,7 @@ class SOD(AppBase):
 
         job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SUMMARIZE, self.code.STARTED, '')
 
-        self.__seek_images()
+        self.seek_query_images()
         try:
             logger.info('Finding objects and calculate the summary data using {} CPUs.'.format(cpu))
             
@@ -508,7 +464,7 @@ class SOD(AppBase):
     def generate_movie(self, fps=10.0, scale=1.0, fourcc='mp4v', ext='.mp4'):
 
         
-        self.__seek_images()
+        self.seek_query_images()
         
         _ = cv2.imread(self.images[0][0])
         _ = cv2.resize(_, dsize=None, fx=scale, fy=scale)

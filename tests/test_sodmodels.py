@@ -18,14 +18,9 @@ class TestModels(unittest.TestCase):
         self.ws = os.path.join('outputs', 'sodmodel')
         os.makedirs(self.ws, exist_ok=True)    
         
-        self.train_images = os.path.join(self.ws, 'train_images.txt')
-        self.query_images = []
-        
-        with open(self.train_images, 'w') as outfh:
-            for train_image_fpath in glob.glob(os.path.join(self.dataset, '*_image.jpg'), recursive=True):
-                self.query_images.append(train_image_fpath)
-                label_image_fpath = train_image_fpath.replace('_image.jpg', '_mask.png')
-                outfh.write('{}\t{}\n'.format(train_image_fpath, label_image_fpath))
+        self.train_images = os.path.join(self.dataset, 'images')
+        self.train_masks = os.path.join(self.dataset, 'masks')
+        self.query_images = self.train_images
         
         self.batchsize = 4
         self.epoch = 110
@@ -44,7 +39,7 @@ class TestModels(unittest.TestCase):
         
         # training
         u2net = SOD(workspace=self.ws)
-        u2net.train(self.train_images,
+        u2net.train(self.train_images, self.train_masks,
                     batch_size=self.batchsize, epoch=self.epoch, cpu=self.cpu, gpu=self.gpu,
                     strategy=train_strategy)
         u2net.save(trained_weight)
@@ -64,12 +59,12 @@ class TestModels(unittest.TestCase):
  
     
     def test_model_1(self):
-        self.__test_model('trained_weight.t1.pth', 'resize', 'resize')
+        self.__test_model('trained_weight.t1.pth', 'resizing', 'resizing')
         
     
     
     def test_model_2(self):
-        self.__test_model('trained_weight.t2.pth', 'randomcrop', 'slide')
+        self.__test_model('trained_weight.t2.pth', 'randomcrop', 'sliding')
         
 
 

@@ -1,5 +1,8 @@
 import os
+import glob
 import pkg_resources
+from justdeepit.utils import ImageAnnotation, ImageAnnotations
+
 
 class OD:
     """Base module to generate object detection model
@@ -48,9 +51,6 @@ class OD:
         >>> model = OD('./class_label.txt', model_arch='retinanet', model_weight='trained_weight.pth',
         >>>            backend='detectron2')
         >>> 
-        >>> # check the avaliable architectures
-        >>> model = OD()
-        >>> print(model.available_architectures)
     """  
     
     
@@ -59,6 +59,8 @@ class OD:
         
         self.module = None
         self.__architectures = self.__available_architectures()
+        self.__supported_formats = ('COCO', 'Pascal VOC')
+        self.__image_ext = ['.jpg', '.jpeg', '.png', '.tif', '.tiff']
         
         self.backend = backend
         self.model_arch = model_arch
@@ -141,12 +143,54 @@ class OD:
     
     
     def available_architectures(self, backend):
-        return [_[0] for _ in self.__architectures[self.__norm_backend(backend)]]
+        """Show the available architectures
         
+        Show the available architectures for object detection.
+        
+        Args:
+            backend (str): Specify the backend.
+                           ``detectron2`` or ``mmdetection`` can be speficied.
+        
+        Returns:
+            A tuple of the supported architecture.
+
+        Examples:
+            >>> from justdeepit.models import OD
+            >>> 
+            >>> model = OD()
+            >>> model.available_architectures('mmdetection')
+        
+        """
+        return tuple([_[0] for _ in self.__architectures[self.__norm_backend(backend)]])
         
     
     
-    def train(self, annotation, image_dpath,
+    def supported_formats(self):
+        """Show the supported annotation formats
+        
+        Show the supported annotation formats for object detection.
+        
+        Returns:
+            A tuple of the supported annotation formats.
+        
+        Examples:
+            >>> from justdeepit.models import OD
+            >>> 
+            >>> model = OD()
+            >>> model.supported_formats()
+        
+        """
+        return self.__supported_formats
+
+    
+    def __norm_format(self, x):
+        x = x.replace(' ', '').replace('-', '').lower()
+        if ('pascal' in x) or ('xml' in x):
+            x = 'voc'
+        return x
+    
+    
+    def train(self, image_dpath, annotation, annotation_format='COCO',
               batchsize=32, epoch=1000, lr=0.0001, score_cutoff=0.7, cpu=8, gpu=1):
         """Train model
         
@@ -156,8 +200,9 @@ class OD:
         a path to the directory containing the training images.
         
         Args:
-            annotation (str): A file path to COCO format annotation file.
             image_dpath (str): A path to directory which contains all training images.
+            annotation (str): A path to a file (COCO format) or folder (Pascal VOC format, each file should have an extension :file:`.xml`).
+            annotation_format (str): Annotation format. COCO or Pascal VOC are supported.
             batch_size (int): Batch size for each GPU.
             epoch (int): Epoch.
             lr (float): Learning rate.
@@ -169,9 +214,26 @@ class OD:
             >>> from justdeepit.models import OD
             >>> 
             >>> model = OD('./class_label.txt', model_arch='fasterrcnn')
-            >>> model.train('./annotations.coco.json', './train_images')
+            >>> model.train('./train_images', './annotations.coco.json')
         """
-        self.module.train(annotation, image_dpath,
+        annotation_format = self.__norm_format(annotation_format)
+        if annotation_format == 'coco':
+            pass
+        elif annotation_format == 'voc':
+            anns = ImageAnnotations()
+            for fpath in glob.glob(os.path.join(image_dpath, '*')):
+                fname, fext = os.path.splitext(os.path.basename(fpath))
+                if fext.lower() in self.__image_ext:
+                    ann_fpath = os.path.join(annotation, fname + '.xml')
+                    if os.path.exists(ann_fpath):
+                        anns.append(ImageAnnotation(fpath, ann_fpath))
+            if len(anns) > 0:
+                annotation = os.path.join(self.workspace, 'train_image_annotation.coco.json')
+                anns.format('coco', annotation)
+        else:
+            raise NotImplementedError('JustDeepIt does not support {} format for training object detection model.'.format(annotation_format))
+        
+        self.module.train(image_dpath, annotation,
                           batchsize=batchsize, epoch=epoch, lr=lr, score_cutoff=score_cutoff,
                           cpu=cpu, gpu=gpu)
     
@@ -193,7 +255,7 @@ class OD:
             >>> from justdeepit.models import OD
             >>> 
             >>> model = OD('./class_label.txt', model_arch='fasterrcnn')
-            >>> model.train('./annotations.coco.json', './train_images')
+            >>> model.train('./train_images', './annotations.coco.json')
             >>> odnet.save('./trained_weight.pth')
         ''' 
         self.module.save(weight_fpath, config_fpath)

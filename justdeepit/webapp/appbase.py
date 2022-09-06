@@ -1,6 +1,8 @@
 import os
+import glob
 import datetime
 import pathlib
+import json
 import logging
 import traceback
 
@@ -40,7 +42,7 @@ class AppBase:
         self.image_ext = ('.jpg', '.jpeg', '.png', '.tiff', '.tif')
         self.job_status_fpath = os.path.join(self.workspace_, 'config', 'job_status.txt')
         self.init_workspace()
-        
+        self.images = []
         
     
     def init_workspace(self):
@@ -105,6 +107,73 @@ class AppBase:
     
     def summarize_objects(self, *args, **kwargs):
         raise NotImplementedError()
+    
+    
+    
+    def check_training_images(self, image_dpath, annotation_path, annotation_format, class_label='NA'):
+        images = []
+        
+        if self.__norm_str(annotation_format) == 'coco':
+            with open(annotation_path, 'r') as infh:
+                image_records = json.load(infh)
+                for f in image_records['images']:
+                    if os.path.exists(os.path.join(image_dpath, os.path.basename(f['file_name']))):
+                        images.append(f)
+        
+        elif (self.__norm_str(annotation_format) == 'mask') or ('voc' in self.__norm_str(annotation_format)):
+            fdict = {}
+            for f in glob.glob(os.path.join(image_dpath, '*')):
+                fname = os.path.splitext(os.path.basename(f))[0]
+                if os.path.splitext(f)[1].lower() in self.image_ext:
+                    if fname not in fdict:
+                        fdict[fname] = 0
+                    fdict[fname] += 1
+            for f in glob.glob(os.path.join(annotation_path, '*')):
+                fname = os.path.splitext(os.path.basename(f))[0]
+                if fname not in fdict:
+                    fdict[fname] = 0
+                fdict[fname] += 1
+            for fname, fval in fdict.items():
+                if fval == 2:
+                    images.append(fname)
+        
+        else:
+            raise NotImplementedError('JustDeepIt does not support {} format.'.format(annotation_format))
+    
+        logger.info('There are {} images for model training.'.format(len(images)))
+        
+        with open(os.path.join(self.workspace_, 'data', 'train', 'train_images.txt'), 'w') as outfh:
+            outfh.write('CLASS_LABEL\t{}\n'.format(class_label))
+            outfh.write('IMAGES_DPATH\t{}\n'.format(image_dpath))
+            outfh.write('ANNOTATION_FPATH\t{}\n'.format(annotation_path))
+            outfh.write('ANNOTATION_FORMAT\t{}\n'.format(annotation_format))
+            outfh.write('N_IMAGES\t{}\n'.format(len(images)))
+    
+    
+    
+    def check_query_images(self, image_dpath):
+        images = []
+        for f in sorted(glob.glob(os.path.join(image_dpath, '**'), recursive=True)):
+            if os.path.splitext(f)[1].lower() in self.image_ext:
+                images.append(f)
+        with open(os.path.join(self.workspace_, 'data', 'query', 'query_images.txt'), 'w') as outfh:
+            for image in images:
+                outfh.write('{}\n'.format(image))
 
+        logger.info('There are {} images for inference.'.format(len(images)))
+    
+    
+    
+    def seek_query_images(self):
+        self.images = []
+        with open(os.path.join(self.workspace_, 'data', 'query', 'query_images.txt'), 'r') as infh:
+            for _image in infh:
+                _image_info = _image.replace('\n', '').split('\t')
+                self.images.append(_image_info[0])
+
+    
+    
+    def __norm_str(self, x):
+        return x.replace('-', '').replace(' ', '').lower()
 
 

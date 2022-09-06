@@ -1,5 +1,7 @@
+import os
+import glob
 from justdeepit.models.utils.u2net import U2Net
-
+from justdeepit.utils import ImageAnnotation, ImageAnnotations
 
 class SOD():
     """Base module to generate salient object detection model
@@ -29,16 +31,21 @@ class SOD():
     
     
     def __init__(self, model_arch='u2net', model_weight=None, workspace=None):
-        
-        self.available_architectures = ['U2Net']
         if workspace is None:
             workspace = os.path.abspath(os.getcwd())
+        self.workspace = workspace
+        
+        self.__architectures = ('U2Net',)
+        self.__supported_formats = ('mask', 'COCO')
+        self.__image_ext = ['.jpg', '.jpeg', '.png', '.tif', '.tiff']
         self.module = self.__init_module(model_arch, model_weight, workspace)
     
     
     def __init_module(self, model_arch, model_weight, workspace):
+        if model_arch is None:
+            return None
+            
         model_arch = model_arch.replace('-', '').replace(' ', '').lower()
-        
         if model_arch == 'u2net':
             module = U2Net(model_weight, workspace)
         else:
@@ -47,7 +54,54 @@ class SOD():
         return module
         
 
-    def train(self, train_data_fpath, batch_size=32, epoch=1000, lr=0.001, cpu=8, gpu=1,
+
+    def available_architectures(self, backend):
+        """Show the available architectures
+
+        Show the available architectures for salient object detection.
+
+        Returns:
+            A tuple of the supported architecture.
+
+        Examples:
+            >>> from justdeepit.models import SOD
+            >>>
+            >>> model = SOD()
+            >>> model.available_architectures()
+
+        """
+        return self.__architectures
+
+
+
+    def supported_formats(self):
+        """Show the supported annotation formats
+
+        Show the supported annotation formats for salient object detection.
+
+        Returns:
+            A tuple of the supported annotation formats.
+
+        Examples:
+            >>> from justdeepit.models import SOD
+            >>>
+            >>> model = SOD()
+            >>> model.supported_formats()
+
+        """
+        return self.__supported_formats
+
+    
+    def __norm_format(self, x):
+        x = x.replace(' ', '').replace('-', '').lower()
+        if ('pascal' in x) or ('xml' in x):
+            x = 'voc'
+        return x
+    
+    
+
+    def train(self, image_dpath, annotation, annotation_format='mask',
+              batch_size=32, epoch=1000, lr=0.001, cpu=8, gpu=1,
               strategy='resizing', window_size=320):
         """Train model
         
@@ -61,9 +115,9 @@ class SOD():
         The default size of the cropped square area is 320 x 320 pixels.
         
         Args:
-            train_data_fpath (str): A path to the tab-separeted file which contains the two columns.
-                                    On each line, the first column records a path to a training image,
-                                    and the second column records a path to the corresponding mask image.
+            image_dpath (str): A path to directory which contains all training images.
+            annotation (str): A path to directory which contains mask images (annotations).
+            annotation_format (str): Annotation format. Only mask image is supported in the current version.
             batch_size (int): Number of batch size.
                               Note that a large number of batch size may cause out of memory error.
             epoch (int): Number of epochs.
@@ -80,18 +134,54 @@ class SOD():
             >>> 
             >>> model = SOD()
             >>> 
-            >>> # train_images.txt --------------------
-            >>> # train_image_01.jpg  train_mask_01.png
-            >>> # train_image_02.jpg  train_mask_02.png
-            >>> # train_image_03.jpg  train_mask_03.png
-            >>> # train_image_04.jpg  train_mask_04.png
-            >>> #         :                   :
-            >>> # -------------------------------------
-            >>> 
-            >>> model.train('train_images.txt')
+            >>> model.train('./train_images', './mask_images')
             >>> 
         
         """
+        
+        images = []
+        masks = []
+        annotation_format = self.__norm_format(annotation_format)
+        if annotation_format == 'mask':
+            fdict = {}
+            for f in glob.glob(os.path.join(image_dpath, '*')):
+                fname = os.path.splitext(os.path.basename(f))[0]
+                if os.path.splitext(f)[1].lower() in self.__image_ext:
+                    if fname not in fdict:
+                        fdict[fname] = {'image': None, 'mask': None}
+                    fdict[fname]['image'] = f
+            for f in glob.glob(os.path.join(annotation, '*')):
+                fname = os.path.splitext(os.path.basename(f))[0]
+                if fname not in fdict:
+                    fdict[fname] = {'image': None, 'mask': None}
+                fdict[fname]['mask'] = f
+            for fname, fpath in fdict.items():
+                if fpath['image'] is not None and fpath['mask'] is not None:
+                    images.append(fpath['image'])
+                    masks.append(fpath['mask'])
+           
+        elif annotation_format == 'coco':
+            # generate mask for mdoel training form coco annotation
+            mask_dpath = os.path.join(self.workspace, 'mask')
+            if not os.path.exists(mask_dpath):
+                os.mkdir(mask_dpath)
+            
+            for f in sorted(glob.glob(os.path.join(image_dpath, '*'))):
+                image_fname, image_fext = os.path.splitext(f)
+                if image_fext.lower() in self.image_ext:
+                    ann = ImageAnnotation(f, annotation_fpath, annotation_format)
+                    m = os.path.join(mask_dpath, os.path.splitext(os.path.basename(image_fname))[0] + '.mask.png')
+                    ann.draw('bimask', m)
+                    images.append(f)
+                    masks.append(m)
+        else:
+            raise NotImplementedError('JustDeepIt does not support {} format for training salient object detection model.'.format(annotation_format))
+        
+        
+        train_data_fpath = os.path.join(self.workspace, 'train_images.txt')
+        with open(train_data_fpath, 'w') as outfh:
+            for image, mask in zip(images, masks):
+                outfh.write('{}\t{}\n'.format(image, mask))
         
         return self.module.train(train_data_fpath, batch_size, epoch, lr, cpu, gpu,
                           strategy, window_size)
@@ -111,7 +201,7 @@ class SOD():
             >>> from justdeepit.models import SOD
             >>> 
             >>> model = SOD()
-            >>> model.train('train_images.txt')
+            >>> model.train('./train_images', './mask_images')
             >>> model.save('final_weight.pth')
             >>> 
 

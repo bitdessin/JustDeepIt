@@ -126,13 +126,13 @@
                 <td colspan="3"><input type="text" id="module-training-image_folder" class="file-path" name="image_folder" /></td>
                 <td><button class="select-file" type="button" value="module-training-image_folder+folder">Select</button></td>
             </tr>
-            {% if module == 'OD' or module == 'IS' %}
             <tr>
                 <td><label for="module-training-annotation_path">annotation</label></td>
                 <td colspan="2">
                     <select id="module-training-annotation_format" name="annotation_format">
-                        <option value="COCO">COCO</option>
-                        <option value="Pascal VOC">Pascal VOC</option>
+                    {% for supported_format in supported_formats %}
+                        <option value="{{ supported_format }}">{{ supported_format }}</option>
+                    {% endfor %}
                     <select>
                 </td>
                 <td></td>
@@ -143,7 +143,6 @@
                 <td colspan="3"><input type="text" id="module-training-annotation_path" class="file-path" name="annotation_path" /></td>
                 <td><button class="select-file" type="button" value="module-training-annotation_path+any">Select</button></td>
             </tr>
-            {% endif %}
             {% if module == 'SOD' %}
             <tr>
                 <td><label for="module-training-strategy">strategy</label></td>
@@ -154,11 +153,6 @@
                     <select>
                 </td>
                 <td colspan="2"><div id="module-training-resizing-option" style="visibility:hidden;"><label for="module-training-windowsize">window size</label> <input type="text" id="module-training-windowsize" class="digits" name="windowsize" value="320" size="4" /></div></td>
-            </tr>
-            <tr>
-                <td>annotation</td>
-                <td colspan="2"><label for="module-training-image_suffix">image suffix</label> <input type="text" id="module-training-image_suffix" class="text" name="image_suffix" value=".jpg" /></td>
-                <td colspan="2"><label for="module-training-mask_suffix">mask suffix</label> <input type="text" id="module-training-mask_suffix" class="text" name="mask_suffix" value="_mask.png"/></td>
             </tr>
             {% endif %}
             <tr>

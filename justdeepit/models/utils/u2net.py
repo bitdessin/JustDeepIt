@@ -3,6 +3,7 @@ import logging
 import datetime
 import gc
 import joblib
+import glob
 import tqdm
 import tempfile
 import math
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 class REBNCONV(torch.nn.Module):
     def __init__(self,in_ch=3, out_ch=3, dirate=1):
-        super(REBNCONV, self).__init__()
+        super().__init__()
         self.conv_s1 = torch.nn.Conv2d(in_ch, out_ch, 3, padding=1 * dirate, dilation=1 * dirate)
         self.bn_s1 = torch.nn.BatchNorm2d(out_ch)
         self.relu_s1 = torch.nn.ReLU(inplace=True)
@@ -39,7 +40,7 @@ def _upsample_like(src,tar):
 
 class RSU7(torch.nn.Module):
     def __init__(self, in_ch=3, mid_ch=12, out_ch=3):
-        super(RSU7,self).__init__()
+        super().__init__()
 
         self.rebnconvin = REBNCONV(in_ch, out_ch, dirate=1)
         self.rebnconv1 = REBNCONV(out_ch, mid_ch, dirate=1)
@@ -94,7 +95,7 @@ class RSU7(torch.nn.Module):
 
 class RSU6(torch.nn.Module):
     def __init__(self, in_ch=3, mid_ch=12, out_ch=3):
-        super(RSU6,self).__init__()
+        super().__init__()
 
         self.rebnconvin = REBNCONV(in_ch, out_ch, dirate=1)
         self.rebnconv1 = REBNCONV(out_ch, mid_ch, dirate=1)
@@ -144,7 +145,7 @@ class RSU6(torch.nn.Module):
 
 class RSU5(torch.nn.Module):
     def __init__(self, in_ch=3, mid_ch=12, out_ch=3):
-        super(RSU5,self).__init__()
+        super().__init__()
 
         self.rebnconvin = REBNCONV(in_ch, out_ch, dirate=1)
         self.rebnconv1 = REBNCONV(out_ch, mid_ch, dirate=1)
@@ -186,7 +187,7 @@ class RSU5(torch.nn.Module):
 
 class RSU4(torch.nn.Module):
     def __init__(self, in_ch=3, mid_ch=12, out_ch=3):
-        super(RSU4,self).__init__()
+        super().__init__()
 
         self.rebnconvin = REBNCONV(in_ch, out_ch, dirate=1)
         self.rebnconv1 = REBNCONV(out_ch, mid_ch, dirate=1)
@@ -221,7 +222,7 @@ class RSU4(torch.nn.Module):
 
 class RSU4F(torch.nn.Module):
     def __init__(self, in_ch=3, mid_ch=12, out_ch=3):
-        super(RSU4F,self).__init__()
+        super().__init__()
 
         self.rebnconvin = REBNCONV(in_ch, out_ch, dirate=1)
         self.rebnconv1 = REBNCONV(out_ch, mid_ch, dirate=1)
@@ -251,8 +252,8 @@ class RSU4F(torch.nn.Module):
 
 class U2NetArch(torch.nn.Module):
 
-    def __init__(self,in_ch=3, out_ch=1):
-        super(self).__init__()
+    def __init__(self, in_ch=3, out_ch=1):
+        super().__init__()
         
         self.stage1 = RSU7(in_ch, 32, 64)
         self.pool12 = torch.nn.MaxPool2d(2, stride=2, ceil_mode=True)
@@ -769,7 +770,7 @@ class U2Net(ModuleTemplate):
             if (image.shape[0] < 640) or (image.shape[0] < 640):
                 strategy = 'resizing'
             else:
-                strategy = 'slide'
+                strategy = 'sliding'
         
         # query images
         images_fpath = []
@@ -779,7 +780,7 @@ class U2Net(ModuleTemplate):
             images_fpath = [image_path]
         else:
             for f in glob.glob(os.path.join(image_path, '*')):
-                if os.path.splitext(f)[1].lower() in ['.jpg', '.png', '.tiff']:
+                if os.path.splitext(f)[1].lower() in ['.jpg', '.jpeg', '.png', '.tiff']:
                     images_fpath.append(f)
         
         # model

@@ -172,7 +172,7 @@ class DetectronBase(ModuleTemplate):
         return n
     
     
-    def train(self, annotation, image_dpath,
+    def train(self, image_dpath, annotation,
               batchsize=36, epoch=1000, lr=0.0001, score_cutoff=0.7, cpu=8, gpu=1):
         
         if not torch.cuda.is_available():

@@ -27,6 +27,8 @@ class TestBbox(unittest.TestCase):
         
         self.coco = [os.path.join(self.output_dpath, 'data', 'images'),
                      os.path.join(self.output_dpath, 'data', 'annotations', 'COCO', 'instances_default.json')]
+        self.voc = [os.path.join(self.output_dpath, 'data', 'images'),
+                    os.path.join(self.output_dpath, 'data', 'annotations', 'PascalVOC')]
     
     
     def test_coco2x(self):
@@ -48,17 +50,30 @@ class TestBbox(unittest.TestCase):
         imgann.draw('mask',    pref + 'maskalpha05.png', alpha=0.5)
         imgann.draw('masked',  pref + 'masked.png')
         imgann.draw('bbox',    pref + 'bbox.png')
-        imgann.draw('contour', pref + 'contour.png')
         
         # coco to image with label
         imgann.draw('mask',    pref + 'mask.v2.png', label=True, score=True)
         imgann.draw('mask',    pref + 'maskalpha05.v2.png', label=True, score=True, alpha=0.5)
         imgann.draw('masked',  pref + 'masked.v2.png', label=True, score=True)
         imgann.draw('bbox',    pref + 'bbox.v2.png', label=True, score=True)
-        imgann.draw('contour', pref + 'contour.v2.png', label=True, score=True)
         
-
-
+    
+    def  test_voc2x(self):
+        pref = os.path.join(self.output_dpath, 'test_voc2x_')
+        
+        anns = ImageAnnotations()
+        for i, img_fpath in enumerate(glob.glob(os.path.join(self.voc[0], '*'))):
+            ann_fpath = os.path.join(self.voc[1], os.path.splitext(os.path.basename(img_fpath))[0] + '.xml')
+            ann = ImageAnnotation(img_fpath, ann_fpath, 'voc')
+            
+            if i == 0:
+                ann.draw('mask', pref + 'mask.png')
+                ann.draw('mask',    pref + 'maskalpha05.png', alpha=0.5)
+                ann.draw('masked',  pref + 'masked.png')
+                ann.draw('bbox',    pref + 'bbox.png')
+            
+            anns.append(ann)
+        anns.format('coco', pref + 'coco.json')
 
 
 class TestSegmentation(unittest.TestCase):
@@ -125,6 +140,7 @@ class TestSegmentation(unittest.TestCase):
             imgann.draw('masked',  pref + mask_i + '_masked.png', label=True, score=True)
             imgann.draw('bbox',    pref + mask_i + '_bbox.png', label=True, score=True)
             imgann.draw('contour', pref + mask_i + '_contour.png', label=True, score=True)
+            imgann.draw('bbox+contour', pref + mask_i + '_bbboxcontour.png', label=True, score=True)
         
         anns = ImageAnnotations(imganns)
         anns.format('coco', pref + 'coco.json')
@@ -155,34 +171,6 @@ class TestImageAnnotations(unittest.TestCase):
         
         imanns.format('coco', os.path.join(self.output_dpath, 'coco.json'))
     
-
-
-
-class TestImageOrientation(unittest.TestCase):
-
-    def __init__(self, *args, **kwargs):
-        super(TestImageOrientation, self).__init__(*args, **kwargs)
-
-        self.images = {
-        #    '1': [['inputs/orient/ori_1_01.jpg', 'inputs/orient/ori_1_01.json'],
-        #          ['inputs/orient/ori_1_02.jpg', 'inputs/orient/ori_1_02.json']],
-        #    '3': [['inputs/orient/ori_3_01.jpg', 'inputs/orient/ori_3_01.json'],
-        #          ['inputs/orient/ori_3_02.jpg', 'inputs/orient/ori_3_02.json']],
-        #    '6': [['inputs/orient/ori_6_01.jpg', 'inputs/orient/ori_6_01.json'],
-        #          ['inputs/orient/ori_6_02.jpg', 'inputs/orient/ori_6_02.json']],
-        #    '8': [['inputs/orient/ori_8_01.jpg', 'inputs/orient/ori_8_01.json'],
-        #          ['inputs/orient/ori_8_02.jpg', 'inputs/orient/ori_8_02.json']],
-        }
-        self.output_dpath = 'outputs/utils/imageorientation'
-
-
-    def test_image_orientation(self):
-        pass
-        #for ori, images_fpath in self.images.items():
-        #    for fpath in images_fpath:
-        #        imann = ImageAnnotation(fpath[0], fpath[1], 'vott')
-        #        imann.draw('contour', os.path.join(self.output_dpath,
-        #                    os.path.splitext(os.path.basename(fpath[0]))[0] + '.contour.png'))
 
 
 
