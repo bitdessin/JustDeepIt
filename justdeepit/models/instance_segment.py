@@ -2,17 +2,27 @@ import os
 import pkg_resources
 
 class IS:
-    """Base module to generate instance segmentation model
-    
-    Class :class:`IS <justdeepit.models.IS>` generates instance segmentation models
+    """A class to generate model for instance segmentation
+
+    The :class:`IS <justdeepit.models.IS>` class is used for generating
+    deep neural network (DNN) architectures (i.e., models) for instance segmentation
     by internally calling the MMDetection or Detectron2 library.
-    This class generates a model from the configuration file
-    (``model_config``) considering the backend.
 
-    If ``backend`` is specified to ``detectron2``,
-    then calls Detectron2 package to generate a model,
-    otherwise if ``mmdetection`` is specified then calls MMDetection to generate a model. 
+    User can specify DNN architectures using the ``model_arch`` or ``model_config``
+    argument. If the ``model_arch`` is specified and ``model_config`` is ``None``,
+    the :class:`IS <justdeepit.models.IS>` class generates a DNN architecture
+    according the ``model_arch`` using the pre-defined configuration.
+    The pre-defined DNN architectures for instance segmentation can be checked with the
+    :func:`available_architectures <justdeepit.models.IS.available_architectures>` method.
+    Alternatively, if the ``model_config`` argument is specified,
+    the :class:`IS <justdeepit.models.IS>` class generates a DNN architecture
+    following the configuration specified with the ``model_config``,
+    regardless of whether the ``model_arch`` is specified.
 
+    The backend for generating DNN architectures can be specified to the MMDetection
+    or Detectron2. Currently, the MMDetection supports more architectures than Detectron2
+    and model training under GPU environments. Detectron2 can train architectures
+    fast and supports CPU and GPU environments.
 
     Args:
         class_label (str): A path to a file which contains class labels.
@@ -70,11 +80,11 @@ class IS:
             'mmdetection': [
                 ['Mask R-CNN', 'mask_rcnn_x101_64x4d_fpn_mstrain-poly_3x_coco'],
                 ['Cascade Mask R-CNN', 'cascade_mask_rcnn_x101_64x4d_fpn_mstrain_3x_coco.py'],
-                ['custome',    None]
+                ['custom',    None]
             ],
             'detectron2': [
                 ['Mask R-CNN', 'COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml'],
-                ['custome',    None]
+                ['custom',    None]
             ]
         }
 
@@ -95,7 +105,7 @@ class IS:
             # set model_config according to model_arch
             for available_arch, available_config in self.__architectures[backend_]:
                 if model_arch_ == self.__norm_arch(available_arch):
-                    if model_arch_ == 'custome':
+                    if model_arch_ == 'custom':
                         if model_config is None or  model_config == '':
                             ValueError('The argument `model_config` cannot be none or empty when the user customized architecture is set.')
                     else:
@@ -132,9 +142,13 @@ class IS:
 
 
     def available_architectures(self, backend):
-        """Show the available architectures
+        """Display the pre-trained architectures for instance segmentation
 
-        Show the available architectures for instance segmentation.
+        This method is used to display the DNN architectures pre-trained
+        in JustDeepIt for instance segmentation.
+        As the different backend supports the
+        different architectures, this method requires user to specify
+        the backend.
 
         Args:
             backend (str): Specify the backend.
@@ -156,9 +170,9 @@ class IS:
     
 
     def supported_formats(self):
-        """Show the supported annotation formats
-
-        Show the supported annotation formats for instance segmentation.
+        """Display the supported annotation formats for training
+        
+        Display the supported annotation formats for traning instance segmentation architecture.
 
         Returns:
             A tuple of the supported annotation formats.
@@ -187,11 +201,11 @@ class IS:
     def train(self, image_dpath, annotation, annotation_format='COCO',
               batchsize=32, epoch=1000, lr=0.0001, score_cutoff=0.7, cpu=8, gpu=1):
         """Train model
-        
-        Method :func:`train <justdeepit.models.IS.train>` is used for
-        training models based on MMDetection or Detectron2.
-        This method requires a COCO format annotation file and
-        a path to the directory containing the training images.
+ 
+        The :func:`train <justdeepit.models.IS.train>` is used for training a model.
+        The training images (``image_dpath``), annotation files (``annotation``),
+        and annotation format (``annotation_format``) must be specified.
+        Note that, the current version of JustDeepIt only supports COCO format.
         
         Args:
             image_dpath (str): A path to directory which contains all training images.
@@ -208,7 +222,7 @@ class IS:
             >>> from justdeepit.models import IS 
             >>> 
             >>> model = IS('./class_label.txt', model_arch='maskrcnn')
-            >>> model.train('./train_images', './annotations.coco.json')
+            >>> model.train('./train_images', './annotations.coco.json', 'COCO')
         """
         annotation_format = self.__norm_format(annotation_format)
         if annotation_format != 'coco':

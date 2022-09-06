@@ -6,9 +6,12 @@ Instance Segmentation
 Instance segmentation determines the pixelwise mask for each object in an image.
 JustDeepIt internally calls the MMDetection or Detectron2 library
 to build instance segmentation models and perform model training and image segmentation.
-The latest version of JustDeepIt supports Mask R-CNN\ [#maskrcnn]_.
+The following image is an example of sugar beet and weed segmentation results with
+Mask R-CNN using SugarBeets2016 dataset\ [#sugarbeet]_.
 
 
+.. image:: ../_static/tutorials_SugarBeets2016_inference_output.jpg
+    :align: center
 
 
 GUI
@@ -49,9 +52,10 @@ Detailed descriptions of the arguments are provided in the following table.
     
     "**backend**", "The backend to build an instance segmentation model.
     The current version of JustDeepIt supports MMDetection and Detectron2 as a backend."
-    "**architecture**", "Architecture of instance segmentation model."
+    "**architecture**", "Architecture of instance segmentation model. If ``custom`` is specified,
+    user can use the customized configuration to generate a model."
     "**config**", "A path to a configuration file of MMDetection or Detectron2.
-    If the path is not given, then use the default configuration file defined in JustDeepIt."
+    This field will be activated when ``custom`` is specified in **architecture**."
     "**class label**", "A path to a text file which contains class labels.
     The file should be multiple rows with one column,
     and string in each row represents a class label
@@ -176,15 +180,21 @@ can be used as the backend.
     model = IS('./class_label.txt', model_arch='maskrcnn', backend='detectron2')
 
 
-The available architectures for instance segmentation
+Currently, MMDetection requires GPU computational environment for model training
+and supports more architectures than Detectron2,
+but the latter supports both CPUs and GPUs for model training.
+The available architectures for object detection
 can be checked by executing the following code.
 
 
 .. code-block:: py
 
     from justdeepit.models import IS
+    
     model = IS()
-    print(model.available_architectures)
+    
+    model.available_architectures('mmdetection')
+    model.available_architectures('detectron2')
 
 
 
@@ -194,7 +204,7 @@ Training
 
 Method :meth:`train <justdeepit.models.IS.train>` is used for the model training
 and requires at least two arguments
-to specify the annotations and a folder containing the training images.
+to specify a folder containing the training images and annotations.
 Annotations can be specified in a single file in the COCO format.
 Training process requires a GPU environment if MMDetection is chosen as the backend
 because it only supports GPU training.
@@ -202,17 +212,15 @@ Refer to the API documentation of :meth:`train <justdeepit.models.IS.train>`
 for detailed usage.
 
 
-
 .. code-block:: py
 
     from justdeepit.models import IS
 
-    coco_fmt = '/path/to/coco/annotation.json'
     train_images_dpath = '/path/to/folder/images'
+    annotation_coco = '/path/to/coco/annotation.json'
 
     model = IS('./class_label.txt', model_arch='maskrcnn')
-
-    model.train(coco_fmt, train_images_dpath)
+    model.train(train_images_dpath, annotation_coco)
 
 
 
@@ -220,8 +228,6 @@ for detailed usage.
 The trained weight can be saved using method :meth:`save <justdeepit.models.IS.save>`,
 which simultaneously stores the trained weight (extension :file:`.pth`)
 and model configuration file (extensions :file:`.py` for MMDetection backend and :file:`.yaml` for Detectron2 backend).
-The users can apply the weight and configuration file as needed
-for generating a model using the MMDetection or Detectron2 library directly.
 Refer to the API documentation of :meth:`save <justdeepit.models.IS.save>`
 for detailed usage.
 
@@ -242,15 +248,13 @@ is used to perform instance segmentation against the test images using the train
 This method requires at least one argument to specify a single image,
 list of images, or a folder containing multiple images.
 The segmentation results are returned as class object
-:class:`justdeepit.utils.ImageAnnotations <justdeepit.utils.ImageAnnotations>`,
-which is a list of class objects :class:`justdeepit.utils.ImageAnnotation <justdeepit.utils.ImageAnnotation>`.
+:class:`justdeepit.utils.ImageAnnotations <justdeepit.utils.ImageAnnotations>`.
 
 
 To save the results in the COCO format,
 we can use method :meth:`format <justdeepit.utils.ImageAnnotations.format>`
 implemented in class :class:`justdeepit.utils.ImageAnnotations <justdeepit.utils.ImageAnnotations>`
 to generate a JSON file in the COCO format.
-
 
 
 .. code-block:: py
@@ -292,4 +296,4 @@ References
 ===========
 
 .. [#maskrcnn] He K, Gkioxari G, Dollár P, Girshick R. Mask R-CNN. https://arxiv.org/abs/1703.06870
-
+.. [#sugarbeet] Chebrolu, N., Lottes, P., Schaefer, A., Winterhalter, W., Burgard, W., and Stachniss, C. (2017). Agricultural robot dataset for plant classification, localization and mapping on sugar beet fields. Int. J. Rob. Res. 36(10). doi: 10.1177/0278364917720510.

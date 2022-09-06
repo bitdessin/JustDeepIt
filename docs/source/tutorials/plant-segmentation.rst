@@ -28,11 +28,16 @@ In this study, we use the images at level tray for training and plant segmentati
 
 The dataset contains 27 tray-level images with filenames :file:`ara2013_tray*_rgb.png`
 where * represents digits from 01 to 27.
-We create folders :file:`train` and :file:`test`
-in the workspace (:file:`PPD2013`) to store the training and test images, respectively.
+We create folders :file:`trains`, :file:`masks`, and :file:`tests`
+in the workspace (:file:`PPD2013`) to store the training, mask, and test images, respectively.
 We copy four images with the corresponding masks, tray01, tray09, tray18, and tray27,
-into folder :file:`train`
-and all the images without masks into folder :file:`test`.
+into folder :file:`trains` and :file:`masks`, respectively;
+and then copy all the images without masks into folder :file:`tests`.
+Note that the training and mask images should be the same name under the different folders.
+Here, for example, we (i) rename the image :file:`ara2013_tray01_rgb.png` to :file:`ara2013_tray01.png` and 
+put the image into the :file:`trains` folder
+and (ii) rename the mask :file:`ara2013_tray01_fg.png` to :file:`ara2013_tray01.png` and
+put the mask into the :file:`masks` folder.
 
 The above dataset preparation can be performed manually or automatically using the following shell scripts:
 
@@ -65,7 +70,7 @@ and start "Salient Object Detection" mode.
 
 
 We set the **workspace** to the location containing folders
-:file:`train` and :file:`test`,
+:file:`trains`, :file:`masks`, and :file:`tests`,
 and press **Load Workspace** button.
 Note that the value of **workspace** may be different from
 the screenshot below depending on user's environment.
@@ -86,12 +91,11 @@ Trainig
 
 To train the model, 
 we select tab **Training**
-and specify **model weight** as the location to store the training weight
-and **image folder** as the folder (i.e., :file:`train`)
-containing training images and masks (i.e., annotation labels).
-Then, we set the suffixes of the training images and mask to ``_rgb.png`` and ``_fg.png``, respectively.
+and specify **model weight** as the location to store the training weight,
+**image folder** as the folder containing training images (i.e., :file:`trains`)
+and **annotation** as the folder containing mask images (i.e., :file:`masks`).
 The other parameters are set as shown in the screenshot below.
-Note that the values of **model weight** and **image folder** may be different
+Note that the values of **model weight**, **image folder**, and **annotation** may be different
 from the screenshot depending on user's environment.
 
 
@@ -124,7 +128,7 @@ Inference
 In tab **Inference**,
 we specify **model weight** to the training weights,
 whose file usually has extension :file:`.pth`,
-**image folder** as the folder containing images for detection (i.e., :file:`test`),
+**image folder** as the folder containing images for detection (i.e., :file:`tests`),
 and the other parameters as shown in the screenshot below.
 The values of **model weight** and **image folder** may be different
 from the screenshot depending on user's environment.

@@ -8,7 +8,7 @@ justdeepit.models.IS
    :member-order: bysource
 
 .. autoclass:: IS
-   :members: train, save, inference
+   :members: train, save, inference, available_architectures, supported_formats
    :no-undoc-members:
    :member-order: bysource
 

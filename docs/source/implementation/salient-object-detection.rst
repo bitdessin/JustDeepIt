@@ -5,12 +5,12 @@ Salient Object Detection
 Salient object detection is typically used to identify the major object in an image.
 It can be applied to one-class object segmentation tasks such as background removal,
 plant segmentation, root segmentation, and tumor segmentation.
-The fowllowing image is an example of plant segmentation using the dataset of
-`CVPPP 2017 Challenges <https://www.plant-phenotyping.org/CVPPP2017-challenge>`_.
+The fowllowing image is an example of salient object detection tasks.
 
 
-.. image:: ../_static/salient_object_detection_image.jpg
+.. image:: ../_static/sod_example_tasks.jpg
     :align: center
+    :width: 80%
 
 
 
@@ -74,8 +74,8 @@ Detailed descriptions of the arguments are provided in the following table.
     "**model weight**", "A path to store the model weight.
     If the file is exists, then resume training from the given weight."
     "**image folder**", "A path to an folder which contains training images."
-    "**image suffix**", "A string of suffix of training images."
-    "**mask suffix**", "A string of suffix of mask (ground truth) images."
+    "**annotation format**", "Annotation format."
+    "**annotation**", "A path to a file (when the format is COCO) or folder (when the format is mask)."
     "**batch size**", "Batch size."
     "**epochs**", "Number of epochs."
     "**strategy**", "A training strategy. ``resizing`` or ``randomcrop`` can be selected."
@@ -131,15 +131,14 @@ Detailed descriptions of these functions are provided below.
 
 
 
-Model Trainig
---------------
+Training
+--------
 
 
-Method :meth:`train <justdeepit.models.SOD.train>` is used for the model training
-and requires at least one argument to specify a file which contains training images and mask images.
-The file should be a tab-separeted file which contains the two columns.
-On each line, the first column records a path to a training image,
-and the second column records a path to the corresponding mask image.
+Method :meth:`train <justdeepit.models.SOD.train>` is used for the model training.
+It requires user to specify training images, annotation, and annotation format.
+The annotations can be specified in a single file in the COCO format
+or a folder containing multiple mask images.
 Refer to the API documentation of :meth:`train <justdeepit.models.SOD.train>` for the detailed usage.
 
 
@@ -147,14 +146,13 @@ Refer to the API documentation of :meth:`train <justdeepit.models.SOD.train>` fo
 
     from justdeepit.models import SOD
     
-    ## train_images.txt
-    ## ----------------
-    ## train_image_01.jpg   train_mask_01.png
-    ## train_image_02.jpg   train_mask_02.png
-    ##       :                    :
-    
+    # train a model with images and masks
     model = SOD()
-    model.train('train_images.txt')
+    model.train('./train_images', './mask_images', 'mask')
+    
+    # train a model with images and COCO format annotation
+    model = SOD()
+    model.train('./train_images', './annotation.coco.json', 'COCO')
 
 
 

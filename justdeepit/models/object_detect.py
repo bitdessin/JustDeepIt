@@ -5,16 +5,27 @@ from justdeepit.utils import ImageAnnotation, ImageAnnotations
 
 
 class OD:
-    """Base module to generate object detection model
+    """A class to generate model for object detection
     
-    Class :class:`OD <justdeepit.models.OD>` generates object detection models
+    The :class:`OD <justdeepit.models.OD>` class is used for generating
+    deep neural network (DNN) architectures (i.e., models) for object detection
     by internally calling the MMDetection or Detectron2 library.
-    This class generates a model from the configuration file
-    (``model_config``) considering the backend.
-
-    If ``backend`` is specified to ``detectron2``,
-    then calls Detectron2 package to generate a model,
-    otherwise if ``mmdetection`` is specified then calls MMDetection to generate a model. 
+    
+    User can specify DNN architectures using the ``model_arch`` or ``model_config``
+    argument. If the ``model_arch`` is specified and ``model_config`` is ``None``,
+    the :class:`OD <justdeepit.models.OD>` class generates a DNN architecture
+    according the ``model_arch`` using the pre-defined configuration.
+    The pre-defined DNN architectures for object detection can be checked with the
+    :func:`available_architectures <justdeepit.models.OD.available_architectures>` method.
+    Alternatively, if the ``model_config`` argument is specified,
+    the :class:`OD <justdeepit.models.OD>` class generates a DNN architecture
+    following the configuration specified with the ``model_config``,
+    regardless of whether the ``model_arch`` is specified.
+    
+    The backend for generating DNN architectures can be specified to the MMDetection
+    or Detectron2. Currently, the MMDetection supports more architectures than Detectron2
+    and model training under GPU environments. Detectron2 can train architectures
+    fast and supports CPU and GPU environments.
 
 
     Args:
@@ -69,7 +80,7 @@ class OD:
         self.workspace = workspace
         self.module = self.__init_module(class_label, model_arch, model_config, model_weight, workspace, backend)
     
-    
+
     def __available_architectures(self):
         return {
             'mmdetection': [
@@ -81,12 +92,12 @@ class OD:
                 ['YOLO-F',        'yolof_r50_c5_8x8_1x_coco'],
                 ['SSD',           'ssd512_coco'],
                 ['FCOS',          'fcos_r101_caffe_fpn_gn-head_mstrain_640-800_2x_coco'],
-                ['custome',       None],
+                ['custom',       None],
             ],
             'detectron2': [
                 ['Faster R-CNN', 'COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml'],
                 ['RetinaNet',    'COCO-Detection/retinanet_R_101_FPN_3x.yaml'],
-                ['custome',      None]
+                ['custom',      None]
             ]
         }
         
@@ -106,7 +117,7 @@ class OD:
             # set model_config according to model_arch
             for available_arch, available_config in self.__architectures[backend_]:
                 if model_arch_ == self.__norm_arch(available_arch):
-                    if model_arch_ == 'custome':
+                    if model_arch_ == 'custom':
                         if model_config is None or  model_config == '':
                             ValueError('The argument `model_config` cannot be none or empty when the user customized architecture is set.')
                     else:
@@ -143,9 +154,13 @@ class OD:
     
     
     def available_architectures(self, backend):
-        """Show the available architectures
+        """Display the pre-trained architectures for object detection
         
-        Show the available architectures for object detection.
+        This method is used to display the DNN architectures pre-trained
+        in JustDeepIt for object detection.
+        As the different backend supports the
+        different architectures, this method requires user to specify
+        the backend.
         
         Args:
             backend (str): Specify the backend.
@@ -166,9 +181,9 @@ class OD:
     
     
     def supported_formats(self):
-        """Show the supported annotation formats
+        """Display the supported annotation formats for training
         
-        Show the supported annotation formats for object detection.
+        Display the supported annotation formats for traning object detection architecture.
         
         Returns:
             A tuple of the supported annotation formats.
@@ -194,14 +209,14 @@ class OD:
               batchsize=32, epoch=1000, lr=0.0001, score_cutoff=0.7, cpu=8, gpu=1):
         """Train model
         
-        Method :func:`train <justdeepit.models.OD.train>` is used for
-        training models based on MMDetection or Detectron2.
-        This method requires a COCO format annotation file and
-        a path to the directory containing the training images.
+        The :func:`train <justdeepit.models.OD.train>` is used for training a model.
+        The training images (``image_dpath``), annotation files (``annotation``),
+        and annotation format (``annotation_format``) must be specified.
         
         Args:
             image_dpath (str): A path to directory which contains all training images.
-            annotation (str): A path to a file (COCO format) or folder (Pascal VOC format, each file should have an extension :file:`.xml`).
+            annotation (str): A path to a file (COCO format) or folder
+                    (Pascal VOC format, each file should have an extension :file:`.xml`).
             annotation_format (str): Annotation format. COCO or Pascal VOC are supported.
             batch_size (int): Batch size for each GPU.
             epoch (int): Epoch.
@@ -214,7 +229,7 @@ class OD:
             >>> from justdeepit.models import OD
             >>> 
             >>> model = OD('./class_label.txt', model_arch='fasterrcnn')
-            >>> model.train('./train_images', './annotations.coco.json')
+            >>> model.train('./train_images', './annotations.coco.json', 'COCO')
         """
         annotation_format = self.__norm_format(annotation_format)
         if annotation_format == 'coco':

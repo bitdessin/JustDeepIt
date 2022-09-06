@@ -14,9 +14,9 @@ Dataset
 
 The artificial dataset used for this quick start is stored in
 GitHub (`JustDeepIt/tutorials/SOD <https://github.com/biunit/JustDeepIt/tree/main/tutorials/SOD>`_).
-The :file:`data` folder contains :file:`train_images` and :file:`query_images` folders.
-:file:`train_images` folder contains training images and mask images (annotation).
-:file:`query_images` folder contains test images, actually these images are same as the images in :file:`train_images`.
+The :file:`data` folder contains :file:`images` and :file:`masks` folders.
+The :file:`images` folder contains training images,
+and the :file:`masks` folder contains mask images (annotation).
 The user can use :code:`git` command to download the dataset from GitHub with the following script.
 
 
@@ -28,15 +28,10 @@ The user can use :code:`git` command to download the dataset from GitHub with th
     # data run_u2net.py
 
     ls JustDeepIt/tutorials/SOD/data
-    # query_images train_images
-    
-    ls JustDeepIt/tutorials/SOD/data/train_images
-    # e01_image.jpg e02_mask.png  e04_image.jpg e05_mask.png  e07_image.jpg e08_mask.png  e10_image.jpg
-    # e01_mask.png  e03_image.jpg e04_mask.png  e06_image.jpg e07_mask.png  e09_image.jpg e10_mask.png
-    # e02_image.jpg e03_mask.png  e05_image.jpg e06_mask.png  e08_image.jpg e09_mask.png
+    # images masks
 
 
-.. image:: ../_static/quickstart_sod_data.png
+.. image:: ../_static/quickstart_sod_data.jpg
     :align: center
 
 
@@ -97,13 +92,12 @@ Training
 
 To train the model,
 we select tab **Training**
-and specify the **model weight** as the location storing the training weight
-and **image folder** as the folder (i.e., :file:`data/train_images`)
-containing training images and masks.
-Next, we set the suffixes of the training images and mask
-to ``_image.jpg`` and ``_mask.png``, respectively.
+and specify the **model weight** as the location storing the training weight,
+**image folder** as the folder containing training images (i.e., :file:`data/images`),
+**annotation** as the folder containing mask images (i.e., :file:`data/masks`),
+and **annotation format** as ``mask``.
 The other parameters are set as shown in screenshot below.
-Note that the values of **model weight** and **image folder** may be
+Note that the values of **model weight**, **image folder**, and **annotation** may be
 different from the screenshot depending on user's environment.
 Then, we press button **Start Training** for model training.
 
@@ -122,7 +116,8 @@ Inference
 In tab **Inference**, the **model weight** is specified to the training weights,
 whose file extension is :file:`.pth` in general.
 We specify **image folder** to the folder
-containing the images (e.g., :file:`data/query_images`) for inference.
+containing the images for inference.
+Here, for convenience, we use the training images (e.g., :file:`data/images`) for inference.
 Note that the values of **model weight** and **image folder** may be
 different from the screenshot depending on user's environment.
 Then, we press button **Start Inference** for inference.

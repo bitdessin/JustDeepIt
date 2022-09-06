@@ -21,14 +21,16 @@ which can be downloaded from `Kaggle (LGG Segmentation Dataset) <https://www.kag
 The dataset contains MRI scans from 110 patients
 and mask images of tumor areas in the TIFF format.
 The MRI scan and mask images are named, respectively,
-such as TCGA_DU_7013_19860523_32.tif and TCGA_DU_7013_19860523_33_mask.tif.
+such as :file:`TCGA_DU_7013_19860523_32.tif`
+and :file:`TCGA_DU_7013_19860523_33_mask.tif`.
 We randomly select images from about 90% of patients for training
 and use the remaining patients' images for validation.
 To prepare for training and validation,
-we copy all the training images and mask images into folder :file:`train`
-and all the validation images into folder :file:`test`.
-Note that, to clearly distinguish the MRI scan images and mask images,
-we add the suffix :file:`_image.tif` to the MRI scan images during the copy.
+we copy the training images and mask images into folder :file:`trains` and :file:`masks`, respectively;
+and then copy all the validation images into folder :file:`tests`.
+Note that the training and mask images should be the same name under the different folders.
+Here, for example, we renamed the mask :file:`TCGA_DU_7013_19860523_33_mask.tif`
+to :file:`TCGA_DU_7013_19860523_33.tif` during the copy process.
 The above dataset preparation can be performed manually
 or automatically using the following shell scripts:
 
@@ -82,12 +84,10 @@ Trainig
 
 To train the model,
 we select tab **Training**
-and then specify **model weight** as the location to store the training weight
-and **image folder** as the folder (i.e., :file:`train`)
-containing training images and masks (i.e., annotation labels).
-Then, we set the suffixes of the training images and mask to ``_image.tif`` and ``_mask.tif``, respectively.
-The other parameters are set as shown in the screenshot below.
-Note that the values of **model weight** and **image folder** may be different
+and then specify **model weight** as the location to store the training weight,
+**image folder** as the folder containing training images (i.e., :file:`trains`),
+and **annotation** as the folder containing mask images (i.e., :file:`masks`)
+Note that the values of **model weight**, **image folder**, and **annotation** may be different
 from the screenshot depending on user's environment.
 
 
@@ -113,7 +113,7 @@ Inference
 In tab **Inference**,
 we specify **model weight** to the training weights,
 whose file usually has extension :file:`.pth`,
-**image folder** to the folder containing images for detection (i.e., :file:`test`),
+**image folder** to the folder containing images for detection (i.e., :file:`tests`),
 and the other parameters as shown in the screenshot below.
 Note that the values of **model weight** and **image folder** may be different
 from the screenshot depending on user's environment.

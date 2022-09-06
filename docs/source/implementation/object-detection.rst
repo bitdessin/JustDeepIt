@@ -39,9 +39,9 @@ Preferences
 -----------
 
 Tab **Preferences** is used for setting common parameters,
-such as the architecture of the detection model,
+such as the architecture of detection model,
 number of CPUs and GPUs to be used,
-and the location (i.e., directory path) to the workspace
+and the location (i.e., directory path) to a workspace
 which is used to save intermediate and final results.
 The required fields are highlighted with orange borders.
 Detailed descriptions of the arguments are provided in the following table.
@@ -59,9 +59,10 @@ Detailed descriptions of the arguments are provided in the following table.
     
     "**backend**", "The backend to build an object detection model.
     The current version of JustDeepIt supports MMDetection and Detectron2 as a backend."
-    "**architecture**", "Architecture of object detection model."
+    "**architecture**", "Architecture of object detection model. If ``custom`` is specified,
+    user can use the customized configuration to generate a model."
     "**config**", "A path to a configuration file of MMDetection or Detectron2.
-    If the path is not given, then use the default configuration file defined in JustDeepIt."
+    This field will be activated when ``custom`` is specified in **architecture**."
     "**class label**", "A path to a text file which contains class labels.
     The file should be multiple rows with one column,
     and string in each row represents a class label
@@ -188,9 +189,7 @@ can be used as the backend.
 
 
 Currently, MMDetection requires GPU computational environment for model training
-and supports more architectures
-(e.g, Faster R-CNN, SSD, RetinaNet, FCOS, and YOLOv3)
-than Detectron2 (e.g., Faster R-CNN and RetinaNet),
+and supports more architectures than Detectron2,
 but the latter supports both CPUs and GPUs for model training.
 The available architectures for object detection
 can be checked by executing the following code.
@@ -199,8 +198,11 @@ can be checked by executing the following code.
 .. code-block:: py
 
     from justdeepit.models import OD
+    
     model = OD()
-    print(model.available_architectures)
+    
+    model.available_architectures('mmdetection')
+    model.available_architectures('detectron2')
 
 
 
@@ -210,7 +212,7 @@ Training
 
 Method :meth:`train <justdeepit.models.OD.train>` is used for the model training
 and requires at least two arguments
-to specify the annotations and folder containing the training images.
+to specify a folder containing the training images and annotations.
 Annotations can be specified in a single file in the COCO format
 or a folder containing multiple files in the Pascal VOC format.
 Training process requires a GPU environment if MMDetection is chosen as the backend
@@ -219,24 +221,38 @@ Refer to the API documentation of :meth:`train <justdeepit.models.OD.train>`
 for detailed usage.
 
 
+Training a model with annotation in COCO format.
+
+
 .. code-block:: py
 
     from justdeepit.models import OD
-
-    coco_fmt = '/path/to/coco/annotation.json'
+    
     train_images_dpath = '/path/to/folder/images'
+    annotation_coco = '/path/to/coco/annotation.json'
 
     model = OD('./class_label.txt', model_arch='fasterrcnn')
-    model.train(coco_fmt, train_images_dpath)
+    model.train(train_images_dpath, annotation_coco)
+    
+
+Training a model with annotation in Pascal VOC (xml) format.
 
 
+.. code-block:: py
+    
+    from justdeepit.models import OD
+    
+    train_images_dpath = '/path/to/folder/images'
+    annotation_voc = '/path/to/folder/voc'
+
+    model = OD('./class_label.txt', model_arch='fasterrcnn')
+    model.train(train_images_dpath, annotation_voc, 'pascalvoc')
+    
 
 
 The trained weight can be saved using method :meth:`save <justdeepit.models.OD.save>`,
 which simultaneously stores the trained weight (extension :file:`.pth`)
 and model configuration file (extensions :file:`.py` for MMDetection backend and :file:`.yaml` for Detectron2 backend).
-Users can apply the weight and configuration file as needed
-for generating a model using the MMDetection or Detectron2 library directly.
 Refer to the API documentation of :meth:`save <justdeepit.models.OD.save>`
 for detailed usage.
 
@@ -257,9 +273,7 @@ is used to detect objects in the test images using the trained model.
 This method requires at least one argument to specify a single image,
 list of images, or a folder containing multiple images.
 The detection results are returned as
-a class object of :class:`justdeepit.utils.ImageAnnotations <justdeepit.utils.ImageAnnotations>`,
-which is a list of class objects of :class:`justdeepit.utils.ImageAnnotation <justdeepit.utils.ImageAnnotation>`.
-
+a class object of :class:`justdeepit.utils.ImageAnnotations <justdeepit.utils.ImageAnnotations>`.
 
 To save the results in the COCO format,
 we can use method :meth:`format <justdeepit.utils.ImageAnnotations.format>`

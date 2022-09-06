@@ -31,14 +31,14 @@ def main(img_from, img_to):
                 for img in sorted(glob.glob(os.path.join(patient_dpath, '*.tif'))):
                     dest = ''
                     if '_mask.tif' not in img:
-                        dest = os.path.join(img_to, 'train', os.path.basename(img)[:-4] + '_image.tif')
+                        dest = os.path.join(img_to, 'trains', os.path.basename(img))
                     else:
-                        dest = os.path.join(img_to, 'train', os.path.basename(img))
+                        dest = os.path.join(img_to, 'masks', os.path.basename(img).replace('_mask', ''))
                     shutil.copy(img, dest)
             else:
                 for img in sorted(glob.glob(os.path.join(patient_dpath, '*.tif'))):
                     if '_mask.tif' not in img:
-                        shutil.copy(img, os.path.join(img_to, 'test', os.path.basename(img)))
+                        shutil.copy(img, os.path.join(img_to, 'tests', os.path.basename(img)))
 
 
 

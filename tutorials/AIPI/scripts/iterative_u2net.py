@@ -56,7 +56,7 @@ def process_image(fpath):
     
 
 def draw_fig(imgann, image_dpath):
-    mask_fpath = os.path.join(image_dpath, os.path.basename(imgann.image_path) + '.mask.png')
+    mask_fpath = os.path.join(image_dpath, os.path.splitext(os.path.basename(imgann.image_path))[0] + '.png')
     imgann.draw('mask', mask_fpath)
 
     
@@ -107,14 +107,9 @@ def main(ws):
         
         print('>>> training model ...')
         u2net = justdeepit.models.U2Net(weight)
-        train_image_list = 'train_images_iterate{}'.format(i + 1)
-        with open(train_image_list, 'w') as outfh:
-            for image_fpath in glob.glob(os.path.join(images_0_dpath, '*')):
-                mask_fpath = os.path.join(images_i_dpath, os.path.basename(image_fpath) + '.mask.png')
-                if os.path.exists(mask_fpath):
-                    outfh.write('{}\t{}\n'.format(image_fpath, mask_fpath))
         write_exe_time('START_TRAINMODEL\t{}'.format(i))
-        u2net.train(train_image_list, batch_size=16, epoch=10, strategy='resize', gpu=1, cpu=32)
+        u2net.train(train_image_list, images_i_dpath, 'mask',
+                    batch_size=16, epoch=10, strategy='resize', gpu=1, cpu=32)
         write_exe_time('FINISH_TRAINMODEL\t{}'.format(i))
         updated_weight_fpath = os.path.join(ws, 'weights', 'u2net.{}.pth'.format(i + 1))
         u2net.save(updated_weight_fpath)

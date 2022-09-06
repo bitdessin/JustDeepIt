@@ -33,11 +33,20 @@ have made deep learning much easier and more accessible to researchers.
 However, deep learning technologies remain challenging
 for programming beginners
 because they require computer programming skills 
-and a basic familiarity with character user interfaces (CUI).
+and a basic familiarity with character user interfaces (CUIs).
 JustDeepIt aims to
-(i) simplify object detection and instance segmentation using deep learning
-and (ii) faciliate collaborative researches between experimental and informatics researchers,
-by providing both CUI and graphical user interface (GUI).
+simplify object detection, instance segmentation,
+and salient object detection using deep learning
+by providing graphical user interface (GUI).
+In addition, to ensure flexibility and extensibility,
+JustDeepIt also provides CUI.
 It may be applicable for image analysis in various disciplines beyond plant science.
+
+
+
+
+.. image:: _static/cv_tasks.jpg
+    :align: center
+
 
 

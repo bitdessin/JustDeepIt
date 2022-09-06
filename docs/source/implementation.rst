@@ -3,14 +3,15 @@ Implementation
 ==============
 
 
-JustDeepIt implements a character user interface (CUI)
-and graphical user interface (GUI) for the user to build deep learning models
-for object detection, instance segmentation, and salient object detection.
+JustDeepIt implements a graphical user interface (GUI) and character user interface (CUI)
+to solve various image analysis problems using deep learning technologies
+including for object detection, instance segmentation, and salient object detection.
+The GUI is implemented using the `FastAPI <https://fastapi.tiangolo.com/>`_.
+It allows users to perform image analysis using deep learning 
+with simple mouse and keyboard operations.
+The CUI can be used via application programming interfaces
+which contains a few straightforward functions to simplify its usage.
 The CUI is assumed to be used on computer clusters that only support this environment,
-and it can be used via simple and intelligible application programming interfaces (APIs).
-The GUI is interactively manipulated through the mouse and keyboard.
-The basic GUI configuration is implemented using the
-`FastAPI <https://fastapi.tiangolo.com/>`_ library.
 The detailed CUI and GUI implementations for each task are presented in the following sections.
 
 

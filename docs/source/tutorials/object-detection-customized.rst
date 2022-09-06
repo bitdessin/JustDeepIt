@@ -71,7 +71,7 @@ At the startup screen, we press "Object Detection" button to start object detect
 
 
 Next, at the **Preferences** screen,
-we set the **architecture** to *custome*,
+we set the **architecture** to *custom*,
 set **config** to *faster_rcnn_x101_64x4d_fpn_mstrain_3x_coco*,
 and the other parameters as shown in the screenshot below.
 

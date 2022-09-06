@@ -277,7 +277,7 @@ function refreshModule(force_run=false) {
 
 
 function refreshConfigField() {
-    if ($('#module-config-architecture').val() != 'custome') {
+    if ($('#module-config-architecture').val() != 'custom') {
         $('#module-config-config').val(null);
         $('#module-config-config').attr('readonly', true);
         //$('#config-edition-open').attr('disabled', true);
