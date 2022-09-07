@@ -142,17 +142,27 @@ or a folder containing multiple mask images.
 Refer to the API documentation of :meth:`train <justdeepit.models.SOD.train>` for the detailed usage.
 
 
+Training a model using images with masks.
+
 .. code-block:: python
 
     from justdeepit.models import SOD
     
-    # train a model with images and masks
     model = SOD()
     model.train('./train_images', './mask_images', 'mask')
+ 
+
+Training a model using images with the annotations in COCO format.
+
+
+.. code-block:: python
+
+    from justdeepit.models import SOD
     
-    # train a model with images and COCO format annotation
     model = SOD()
     model.train('./train_images', './annotation.coco.json', 'COCO')
+
+
 
 
 

@@ -102,7 +102,7 @@ class SOD():
     
 
     def train(self, image_dpath, annotation, annotation_format='mask',
-              batch_size=32, epoch=1000, lr=0.001, cpu=8, gpu=1,
+              batchsize=32, epoch=1000, lr=0.001, cpu=8, gpu=1,
               strategy='resizing', window_size=320):
         """Train model
         
@@ -119,7 +119,7 @@ class SOD():
             image_dpath (str): A path to directory which contains all training images.
             annotation (str): A path to a file (when the format is COCO) or folder (when the format is mask).
             annotation_format (str): Annotation format.
-            batch_size (int): Number of batch size.
+            batchsize (int): Number of batch size.
                               Note that a large number of batch size may cause out of memory error.
             epoch (int): Number of epochs.
             lr (float): Learning rate.
@@ -184,7 +184,7 @@ class SOD():
             for image, mask in zip(images, masks):
                 outfh.write('{}\t{}\n'.format(image, mask))
         
-        return self.module.train(train_data_fpath, batch_size, epoch, lr, cpu, gpu,
+        return self.module.train(train_data_fpath, batchsize, epoch, lr, cpu, gpu,
                           strategy, window_size)
 
 
@@ -216,7 +216,7 @@ class SOD():
 
     
     
-    def inference(self, image_path, strategy='resizing', batch_size=8, cpu=4, gpu=1,
+    def inference(self, image_path, strategy='resizing', batchsize=8, cpu=4, gpu=1,
                   window_size=320,
                   u_cutoff=0.1, image_opening_kernel=0, image_closing_kernel=0):
         """Object Segmentation
@@ -235,7 +235,7 @@ class SOD():
                               or a path to a directory which contains multiple images.
             strategy (str): Strategy for model trainig. One of ``resizing`` or ``slide`` can be specified.
             output_type (str): Output format. 
-            batch_size (int): Number of batch size. Note that a large number of
+            batchsize (int): Number of batch size. Note that a large number of
                               batch size may cause out of memory error.
             epoch (int): Number of epochs.
             cpu (int): Number of CPUs are used for prerpocessing training images.
@@ -271,7 +271,7 @@ class SOD():
             
         """
         
-        return self.module.inference(image_path, strategy, batch_size, cpu, gpu,
+        return self.module.inference(image_path, strategy, batchsize, cpu, gpu,
                               window_size, u_cutoff,
                               image_opening_kernel, image_closing_kernel)
 

@@ -58,15 +58,6 @@ Model
 
 We refer to quick start for :doc:`object-detection` to train the model,
 then we obtain the :file:`class_label.txt` file and :file:`fasterrcnn.pth` file.
-To skip this step, we run the following command to download the trained model
-(i.e., :file:`fasterrcnn.pth`) into the tutorial folder.
-
-
-.. code-block:: sh
-    
-    # git clone https://github.com/biunit/JustDeepIt
-    cd JustDeepIt/tutorials/WebApp
-    wget https://biunit.dev/src/justdeepit.fasterrcnn.pth -O fasterrcnn.pth
 
 
 

@@ -151,7 +151,7 @@ class UNet(ModuleTemplate):
 
     
     
-    def train(self, train_data_fpath, batch_size=8, epoch=10000, lr=0.001, cpu=1, gpu=1):
+    def train(self, train_data_fpath, batchsize=8, epoch=10000, lr=0.001, cpu=1, gpu=1):
         
         
 
@@ -219,13 +219,13 @@ def train:
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
-        batch_size=config['batch_size'],
+        batchsize=config['batchsize'],
         shuffle=True,
         num_workers=config['num_workers'],
         drop_last=True)
     val_loader = torch.utils.data.DataLoader(
         val_dataset,
-        batch_size=config['batch_size'],
+        batchsize=config['batchsize'],
         shuffle=False,
         num_workers=config['num_workers'],
         drop_last=False)

@@ -218,7 +218,7 @@ class OD:
             annotation (str): A path to a file (COCO format) or folder
                     (Pascal VOC format, each file should have an extension :file:`.xml`).
             annotation_format (str): Annotation format. COCO or Pascal VOC are supported.
-            batch_size (int): Batch size for each GPU.
+            batchsize (int): Batch size for each GPU.
             epoch (int): Epoch.
             lr (float): Learning rate.
             score_cutoff (float): Cutoff of score for object detection.

@@ -211,7 +211,7 @@ class IS:
             image_dpath (str): A path to directory which contains all training images.
             annotation (str): A file path to COCO format annotation file.
             annotation_format (str): Annotation format. Only COCO is supported in the current version.
-            batch_size (int): Batch size for each GPU.
+            batchsize (int): Batch size for each GPU.
             epoch (int): Epoch.
             lr (float): Learning rate.
             score_cutoff (float): Cutoff of score for instance segmentation.

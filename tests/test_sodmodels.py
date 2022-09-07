@@ -40,14 +40,14 @@ class TestModels(unittest.TestCase):
         # training
         u2net = SOD(workspace=self.ws)
         u2net.train(self.train_images, self.train_masks,
-                    batch_size=self.batchsize, epoch=self.epoch, cpu=self.cpu, gpu=self.gpu,
+                    batchsize=self.batchsize, epoch=self.epoch, cpu=self.cpu, gpu=self.gpu,
                     strategy=train_strategy)
         u2net.save(trained_weight)
         
         # detection
         u2net = SOD(model_weight=trained_weight, workspace=self.ws)
         outputs = u2net.inference(self.query_images, strategy=detect_strategy, u_cutoff=0.5,
-                                 batch_size=self.batchsize, cpu=self.cpu, gpu=self.gpu)
+                                 batchsize=self.batchsize, cpu=self.cpu, gpu=self.gpu)
         for output in outputs:
             output.draw('bbox+contour', os.path.join(self.ws,
                         os.path.splitext(os.path.basename(output.image_path))[0] + '.' + detect_strategy + '.contour.png'), label=True)

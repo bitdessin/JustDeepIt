@@ -59,7 +59,7 @@ class SOD(AppBase):
             
             model = self.__build_model(model_arch, model_weight, tmp_dpath)
             model.train(image_dpath, annotation_path, annotation_format,
-                        batch_size=batchsize, epoch=epoch, lr=lr, cpu=cpu, gpu=gpu,
+                        batchsize=batchsize, epoch=epoch, lr=lr, cpu=cpu, gpu=gpu,
                         strategy=strategy, window_size=window_size)
             model.save(model_weight)
                 
