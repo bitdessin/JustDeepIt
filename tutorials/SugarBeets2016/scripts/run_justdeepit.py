@@ -12,15 +12,15 @@ def train(dataset_dpath, model_backend):
     
     # traininng images
     train_images = os.path.join(dataset_dpath, 'train')
-    train_images_annotation = os.path.join(dataset_dpath, 'train.json')
+    train_images_annotation = os.path.join(dataset_dpath, 'train.coco.json')
     class_label = os.path.join(dataset_dpath, 'class_label.txt')
     # temporary folder
     ws_dpath = os.path.join('outputs', model_backend) 
     os.makedirs(ws_dpath, exist_ok=True)
     
     net = IS(class_label, model_arch='maskrcnn', workspace=ws_dpath, backend=model_backend)
-    net.train(train_images_annotation, train_images,
-              batchsize=4, epoch=100, lr=0.0001, gpu=1, cpu=16)
+    net.train(train_images, train_images_annotation,
+              batchsize=8, epoch=100, lr=0.001, gpu=1, cpu=8)
     net.save(os.path.join(ws_dpath, 'sugarbeets.pth'))
 
 
@@ -35,7 +35,7 @@ def test(dataset_dpath, model_backend):
     
     net = IS(class_label, model_arch='maskrcnn',
              model_weight=trained_weight, workspace=ws_dpath, backend=model_backend)
-    detect_outputs = net.inference(images, score_cutoff=0.5, batchsize=4, gpu=1, cpu=16)
+    detect_outputs = net.inference(images, score_cutoff=0.5, batchsize=8, gpu=1, cpu=8)
     for detect_output in detect_outputs:
         output_img_fpath = os.path.join(ws_dpath, os.path.basename(detect_output.image_path))
         detect_output.draw('rgbmask', output_img_fpath,
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     run_mode = sys.argv[1]
     model_backend = sys.argv[2] if len(sys.argv) >= 3 else 'detectron2'
     
-    dataset_dpath = '.'
+    dataset_dpath = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
     
     if run_mode == 'train':
         train(dataset_dpath, model_backend)

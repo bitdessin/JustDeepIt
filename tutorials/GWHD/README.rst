@@ -41,9 +41,9 @@ Detectron2
 
 .. code-block:: sh
     
-    python scripts/run_justdeepit.py train 
+    python scripts/run_justdeepit.py train detectron2
     
-    python scripts/run_justdeepit.py test
+    python scripts/run_justdeepit.py test detectron2
 
 
 

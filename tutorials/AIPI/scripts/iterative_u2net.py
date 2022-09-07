@@ -86,9 +86,9 @@ def main(ws):
             images_0_fpath_batch = images_0_fpath[batch_from:batch_to]
         
             weight = os.path.join(ws, 'weights', 'u2net.{}.pth'.format(i))
-            u2net = justdeepit.models.U2Net(weight)
+            u2net = justdeepit.models.SOD(model_weight=weight)
             write_exe_time('START_DETECTION\t{}\tMINIBATCH {}'.format(i, j))
-            outputs = u2net.inference(images_0_fpath_batch, batch_size=16, strategy='resize', gpu=1, cpu=32)
+            outputs = u2net.inference(images_0_fpath_batch, batchsize=16, strategy='resizing', gpu=1, cpu=32)
             write_exe_time('FINISH_DETECTION\t{}\tMINIBATCH {}'.format(i, j))
         
             print('    writing mask images ...')
@@ -106,10 +106,10 @@ def main(ws):
         write_exe_time('FINISH_VALIDMASK\t{}'.format(i))
         
         print('>>> training model ...')
-        u2net = justdeepit.models.U2Net(weight)
+        u2net = justdeepit.models.SOD(model_weight=weight)
         write_exe_time('START_TRAINMODEL\t{}'.format(i))
-        u2net.train(train_image_list, images_i_dpath, 'mask',
-                    batch_size=16, epoch=10, strategy='resize', gpu=1, cpu=32)
+        u2net.train(images_0_dpath, images_i_dpath, 'mask',
+                    batchsize=16, epoch=10, strategy='resizing', gpu=1, cpu=32)
         write_exe_time('FINISH_TRAINMODEL\t{}'.format(i))
         updated_weight_fpath = os.path.join(ws, 'weights', 'u2net.{}.pth'.format(i + 1))
         u2net.save(updated_weight_fpath)

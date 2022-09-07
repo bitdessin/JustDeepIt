@@ -30,6 +30,7 @@ def get_images(img_dpath, ann_dpath):
             img_list.append(os.path.join(img_dpath, img_fpath))
             ann_list.append(os.path.join(ann_dpath, img_fpath))
     
+    print(img_dpath, len(img_list), len(ann_list))
     return img_list, ann_list
     
     

@@ -161,7 +161,7 @@ can be used for this purpose.
     
     cd JustDeepIt/tutorials/OD
     
-    python run_justdeepit.py
+    python scripts/run_justdeepit.py
 
 
 

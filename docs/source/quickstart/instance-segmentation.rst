@@ -156,9 +156,9 @@ can be used for this purpose.
 
 .. code-block:: sh
 
-    cd JustDeepIt/tutorials/ID
+    cd JustDeepIt/tutorials/IS
 
-    python run_justdeepit.py
+    python scripts/run_justdeepit.py
 
 
 

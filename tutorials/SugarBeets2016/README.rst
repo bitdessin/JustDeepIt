@@ -54,7 +54,7 @@ Detectron2
 
     python scripts/run_justdeepit.py train
 
-    python scripts/run_justdeepit.py valid
+    python scripts/run_justdeepit.py test
 
 
 .. </script>

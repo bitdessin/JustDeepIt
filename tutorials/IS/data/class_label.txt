@@ -1,4 +1,4 @@
-giraffe
-rabbit
 eagle
+giraffe
 goat
+rabbit

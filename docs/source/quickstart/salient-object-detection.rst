@@ -153,7 +153,7 @@ can be used for this purpose.
 
     cd JustDeepIt/tutorials/SOD
 
-    python run_justdeepit.py
+    python scripts/run_justdeepit.py
 
 
 

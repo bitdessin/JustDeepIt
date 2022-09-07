@@ -1,7 +1,7 @@
 import os
 import glob
 import logging
-from justdeepit.models import IS
+from justdeepit.models import OD
 logging.basicConfig(level=logging.WARNING)
 logging.getLogger('detectron2.utils.events').setLevel(level=logging.WARNING)
 logging.getLogger('fvcore.common.checkpoint').setLevel(level=logging.WARNING)
@@ -9,17 +9,18 @@ logging.getLogger('mmdet').setLevel(level=logging.WARNING)
 
 
 
-def run_maskrcnn(backend, train_images, train_annotation, class_label, query_images, ws_dpath):
+def run_fasterrcnn(backend, train_images, train_annotation, class_label, query_images, ws_dpath):
 
-    weight = os.path.join(ws_dpath, 'maskrcnn.pth')
+    weight = os.path.join(ws_dpath, 'fasterrcnn.pth')
     
     # training
-    net = IS(class_label, model_arch='maskrcnn', workspace=ws_dpath, backend=backend)
-    net.train(train_annotation, train_images, batchsize=8, epoch=1000, lr=0.001, gpu=1, cpu=32)
+    net = OD(class_label, model_arch='fasterrcnn', workspace=ws_dpath, backend=backend)
+    net.train(train_images, train_annotation,
+              batchsize=8, epoch=100, lr=0.001, gpu=1, cpu=32)
     net.save(weight)
     
     # detection
-    net = IS(class_label, model_arch='maskrcnn', model_weight=weight, workspace=ws_dpath, backend=backend)
+    net = OD(class_label, model_arch='fasterrcnn', model_weight=weight, workspace=ws_dpath, backend=backend)
     outputs = net.inference(query_images, batchsize=8, gpu=1, cpu=32)
     for output in outputs:
         output.draw('bbox+contour', os.path.join(ws_dpath,
@@ -38,11 +39,11 @@ if __name__ == '__main__':
 
     ws_dpath = './workspace_mmdet'
     os.makedirs(ws_dpath, exist_ok=True)
-    run_maskrcnn('mmdet', train_images, train_annotation, class_label, query_images, ws_dpath)
+    run_fasterrcnn('mmdet', train_images, train_annotation, class_label, query_images, ws_dpath)
 
     ws_dpath = './workspace_d2'
     os.makedirs(ws_dpath, exist_ok=True)
-    run_maskrcnn('detectron2', train_images, train_annotation, class_label, query_images, ws_dpath)
+    run_fasterrcnn('detectron2', train_images, train_annotation, class_label, query_images, ws_dpath)
 
 
 
