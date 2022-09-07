@@ -1,65 +1,200 @@
-====
-GWHD
-====
+====================
+Wheat head detection
+====================
 
 
-Dataset
-=======
+Heading is a key phenological stage during growth of most crops
+because it reflects the transition from the vegetative growth stage to the reproductive stage.
+Monitoring heading helps researchers understand the interactions
+between growth stages and environments.
+Furthermore, it supports farmers in management activities,
+such as making decisions about a treatment to be applied.
+Detecting crop heads from images captured by fixed-point cameras or drones
+allows to conduct high-throughput phenotyping and efficiently run large farms.
+Deep learning technology has become more common for various detection tasks.
+In this tutorial, we use JustDeepIt to train Faster R-CNN\ [#fasterrcnn]_ for wheat head detection.
 
-.. <dataset>
+
+
+Dataset preparation
+===================
+
+
+The global wheat head detection (GWHD) dataset is a large-scale dataset
+used for wheat head detection\ [#gwhd]_.
+The images in the GWHD dataset were taken from various cultivars
+growing in different environments worldwide.
+Detailed descriptions of the GWHD dataset and instructions for downloading
+are available on the `Global Wheat website <http://www.global-wheat.com/>`_
+and `AIcrowd Global Wheat Challenge 2021 <https://www.aicrowd.com/challenges/global-wheat-challenge-2021>`_.
+
+Following the dataset instructions written in
+`AIcrowd Global Wheat Challenge 2021 <https://www.aicrowd.com/challenges/global-wheat-challenge-2021>`_,
+we download files :file:`train.zip` and :file:`test.zip`.
+By decompressing file :file:`train.zip`, we obtaine folder :file:`train` and file :file:`train.csv`.
+Folder :file:`train` contains images of wheat heads,
+and file :file:`train.csv` contains the bounding-box coordinates of wheat heads
+for each image in folder :file:`train`.
+Then, we decompress :file:`test.zip` to obtain folder :file:`test` which contains test images.
+
+As JustDeepIt requires annotations in the COCO format,
+we first convert file :file:`train.csv` into a file in the COCO format (:file:`train.json`).
+Python script :file:`gwhd2coco.py` stored in GitHub
+(`JustDeepIt/tutorials/GWHD/scripts <https://github.com/biunit/JustDeepIt/tree/main/tutorials/GWHD/scripts>`_) can be used for format conversion.
+In addition, JustDeepIt requires a text file containing class names.
+We create a file :file:`class_label.txt` containing only "spike" on the first line,
+as the GWHD dataset only has one class, namely, wheat head.
+
+The above dataset preparation can be performed manually or automatically using the following shell scripts:
+
 
 .. code-block:: sh
-    
+
     # download tutorials/GWHD or clone JustDeepIt repository from https://github.com/jsun/JustDeepIt
     git clone https://github.com/jsun/JustDeepIt
     cd JustDeepIt/tutorials/GWHD
-    
+
     # download image data (train.zip and test.zip) from http://www.global-wheat.com/ manually
     # and put train.zip and test.zip in JustDeepIt/tutorials/GWHD
-    
+
     # decompress data
     unzip train.zip
     unzip test.zip
-    
+
     # generate COCO format annotation from GWHD format (CSV format) annotation
     python scripts/gwhd2coco.py ./train train.csv train.json
-    
+
     # make class label
     echo "spike" > class_label.txt
 
 
-.. </dataset>
+
+
+Settings
+========
 
 
 
-Model training and validation
-=============================
-
-Detectron2
-----------
-
-
-.. code-block:: sh
-    
-    python scripts/run_justdeepit.py train detectron2
-    
-    python scripts/run_justdeepit.py test detectron2
-
-
-
-
-
-
-MMDetection
------------
+To start JustDeepIt, we open the terminal and run the following command.
+Then, we open the web browser, access to \http://127.0.0.1:8000,
+and start "Object Detection" mode.
 
 
 .. code-block:: sh
+
+    justdeepit
+    # INFO:uvicorn.error:Started server process [61]
+    # INFO:uvicorn.error:Waiting for application startup.
+    # INFO:uvicorn.error:Application startup complete.
+    # INFO:uvicorn.error:Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+
+
+
+We set the **architecture** to Faster R-CNN,
+the **workspace** to the location containing folder :file:`train` and file :file:`train.json`,
+and the other parameters as shown in the screenshot below.
+Note that the value of **workspace** may be different from the screenshot
+depending on user's environment.
+Then, we press button **Load Workspace**.
+
+
+.. image:: ../_static/tutorials_GWHD_pref.png
+    :align: center
+
+
+
+Once the **Preferences** is set,
+the functions of **Training** and **Inference** become available.
+
+
+Training
+========
+
+
+To train the model,
+we select tab **Training**
+and specify the **model weight** as the location storing the training weights,
+**image folder** as the folder containing training images (i.e., :file:`train`),
+**annotation** format as the format of the annotation file (COCO in this case),
+and **annotation** as the file of image annotations (i.e., :file:`train.json`).
+The other parameters are set as shown in screenshot below.
+Note that the values of **model weight**, **image folder**, and **annotation** may be
+different from the screenshot depending on user's environment.
+Then, we press button **Start Training** for model training.
+
+
+
+.. image:: ../_static/tutorials_GWHD_train.png
+    :align: center
+
+
+Training takes 1-2 days, and it depends on the computer hardware.
+
+
+
+Inference
+=========
+
+In tab **Inference**, the **model weight** is specified to the training weights,
+whose file extension is :file:`.pth` in general.
+Then, we specify **image folder** to the folder containing the images for detection
+(i.e., :file:`test`),
+and other parameters as shown in screenshot below.
+Note that the values of **model weight** and **image folder** may be
+different from the screenshot depending on user's environment.
+Next, we press button **Start Inference** for object detection.
+
+
+.. image:: ../_static/tutorials_GWHD_eval.png
+    :align: center
+
+
+The detection results will be stored in folder :file:`justdeepitws/outputs` of the workspace
+as images with bounding boxes and a JSON file in the COCO format (:file:`annotation.json`).
+Examples of wheat head detection results are shown in the figure below.
+
+.. image:: ../_static/tutorials_GWHD_inference_output.jpg
+    :align: center
+
+
+
+
+
+
+API
+====
+
+
+Model training and object detection can be performed using the JustDeepIt API.
+Python script :file:`run_justdeepit.py` stored in GitHub
+(`JustDeepIt/tutorials/GWHD/scripts <https://github.com/biunit/JustDeepIt/tree/main/tutorials/GWHD/scripts>`_) can be used for this purpose.
+See GitHub (`JustDeepIt/tutorials/GWHD/ <https://github.com/biunit/JustDeepIt/tree/main/tutorials/GWHD>`_) for detailed information.
+
+
     
+.. code-block:: sh
+    
+    cd JustDeepIt/tutorials/GWHD
+    
+    # run with Detectron2 backend
+    python run_justdeepit.py train
+    python run_justdeepit.py test
+    
+    # run with MMDetection backend
     python scripts/run_justdeepit.py train mmdetection
-    
     python scripts/run_justdeepit.py test mmdetection
-    
+
+
+
+
+
+
+
+References
+==========
+
+.. [#fasterrcnn] Ren S, He K, Girshick R, Sun J. Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks. https://arxiv.org/abs/1506.01497
+.. [#gwhd] David E, Madec S, Sadeghi-Tehran P, Aasen H, Zheng B, Liu S, Kirchgessner N, Ishikawa G, Nagasawa K, Badhon M A, Pozniak C, Solan B, Hund A, Chapman S C, Baret F, Stavness I, Guo W. Global Wheat Head Detection (GWHD) Dataset: A Large and Diverse Dataset of High-Resolution RGB-Labelled Images to Develop and Benchmark Wheat Head Detection Methods. https://doi.org/10.34133/2020/3521852
 
 
 
