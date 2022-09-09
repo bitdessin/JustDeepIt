@@ -656,7 +656,7 @@ class U2Net(ModuleTemplate):
             raise ValueError('Undefined strategy for transforming training images.')
         
         train_dataset = TrainDatasetLoader(train_data_fpath, transform=transform)
-        train_dataloader = torch.utils.data.DataLoader(train_dataset, batchsize=batchsize, shuffle=True, num_workers=cpu)
+        train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batchsize, shuffle=True, num_workers=cpu)
         
         optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
 
@@ -895,7 +895,7 @@ class U2Net(ModuleTemplate):
     def __inference_subset(self, images_fpath, transform, device, batchsize, cpu, u_cutoff,
                            tqdm_desc='Processed batches: ', tqdm_leave=True):
         valid_image = InferenceDatasetLoader(images_fpath, transform)
-        valid_dataloader = torch.utils.data.DataLoader(valid_image, batchsize=batchsize, num_workers=cpu)
+        valid_dataloader = torch.utils.data.DataLoader(valid_image, batch_size=batchsize, num_workers=cpu)
         
         pred_masks = []
         for data in tqdm.tqdm(valid_dataloader, desc=tqdm_desc, leave=tqdm_leave):
