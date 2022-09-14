@@ -33,21 +33,31 @@ class TestModels(unittest.TestCase):
     
     
     
-    def __test_model(self, weight, train_strategy, detect_strategy):
+    def __test_model(self, weight, train_strategy, detect_strategy, set_optim=False):
     
         trained_weight = os.path.join(self.ws, weight)
         
         # training
         u2net = SOD(workspace=self.ws)
-        u2net.train(self.train_images, self.train_masks,
-                    batchsize=self.batchsize, epoch=self.epoch, cpu=self.cpu, gpu=self.gpu,
-                    strategy=train_strategy)
+        if set_optim:
+            u2net.train(self.train_images, self.train_masks,
+                        optimizer='SGD(params, lr=0.1, momentum=0)',
+                        scheduler='ExponentialLR(optimizer, gamma=0.9)',
+                        batchsize=self.batchsize, epoch=self.epoch,
+                        cpu=self.cpu, gpu=self.gpu,
+                        strategy=train_strategy)
+        else:
+            u2net.train(self.train_images, self.train_masks,
+                        batchsize=self.batchsize, epoch=self.epoch,
+                        cpu=self.cpu, gpu=self.gpu,
+                        strategy=train_strategy)
         u2net.save(trained_weight)
         
         # detection
         u2net = SOD(model_weight=trained_weight, workspace=self.ws)
-        outputs = u2net.inference(self.query_images, strategy=detect_strategy, u_cutoff=0.5,
-                                 batchsize=self.batchsize, cpu=self.cpu, gpu=self.gpu)
+        outputs = u2net.inference(self.query_images, strategy=detect_strategy,
+                                  u_cutoff=0.5, batchsize=self.batchsize,
+                                  cpu=self.cpu, gpu=self.gpu)
         for output in outputs:
             output.draw('bbox+contour', os.path.join(self.ws,
                         os.path.splitext(os.path.basename(output.image_path))[0] + '.' + detect_strategy + '.contour.png'), label=True)
@@ -66,6 +76,10 @@ class TestModels(unittest.TestCase):
     def test_model_2(self):
         self.__test_model('trained_weight.t2.pth', 'randomcrop', 'sliding')
         
+    
+    
+    def test_model_3(self):
+        self.__test_model('trained_weight.t2.pth', 'randomcrop', 'sliding', True)
 
 
 

@@ -155,17 +155,25 @@
                 <td colspan="2"><div id="module-training-resizing-option" style="visibility:hidden;"><label for="module-training-windowsize">window size</label> <input type="text" id="module-training-windowsize" class="digits" name="windowsize" value="320" size="4" /></div></td>
             </tr>
             {% endif %}
+            {% if module == 'SOD' %}
+            <tr>
+                <td><label for="module-training-optimizer">optimizer</label></td>
+                <td colspan="4">
+                    <input type="text" id="module-training-optimizer" class="text-full" name="optimizer" />
+                </td>
+            </tr>
+            <tr>
+                <td><label for="module-training-scheduler">scheduler</label></td>
+                <td colspan="4">
+                    <input type="text" id="module-training-scheduler" class="text-full" name="scheduler" />
+                </td>
+            </tr>
+            {% endif %}
             <tr>
                 <td>parameters</td>
                 <td colspan="4">
                     <label for="module-training-batchsize">batch size</label> <input type="text" id="module-training-batchsize" class="digits" name="batchsize" />
                     <label for="module-training-epoch" style="margin-left: 3em;">epoch</label> <input type="text" id="module-training-epoch" class="digits" name="epoch" />
-                </td>
-            </tr>
-            <tr>
-                <td></td>
-                <td colspan="4">
-                    <label for="module-training-lr">learning rate</label> <input type="text" id="module-training-lr" class="digits" name="lr" />
                     <label for="module-training-cutoff" style="margin-left: 3em;">cutoff</label> <input type="text" id="module-training-cutoff" class="digits" name="cutoff" />
                 </td>
             </tr>
@@ -215,7 +223,7 @@
                         <option value="sliding">sliding</option>
                     <select>
                 </td>
-                <td colspan="2"><div id="module-inference-resizing-option" style="visibility:hidden;"><label for="module-inference-windowsize">window size</label> <input type="text" id="module-inference-windowsize" class="digits" name="windowsize" value="320" size="4" /></div></td>
+                <td colspan="2"><div id="module-inference-resizing-option" style="visibility:hidden;"><label for="module-inference-windowsize">window size</label> <input type="text" id="module-inference-windowsize" class="digits" name="windowsize" size="4" /></div></td>
             </tr>
             <tr>
                 <td>post-processing</td>

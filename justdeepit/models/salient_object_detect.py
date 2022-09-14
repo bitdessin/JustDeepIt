@@ -102,7 +102,7 @@ class SOD():
     
 
     def train(self, image_dpath, annotation, annotation_format='mask',
-              batchsize=32, epoch=1000, lr=0.001, cpu=8, gpu=1,
+              batchsize=32, epoch=1000, optimizer=None, scheduler=None, cpu=8, gpu=1,
               strategy='resizing', window_size=320):
         """Train model
         
@@ -120,9 +120,14 @@ class SOD():
             annotation (str): A path to a file (when the format is COCO) or folder (when the format is mask).
             annotation_format (str): Annotation format.
             batchsize (int): Number of batch size.
-                              Note that a large number of batch size may cause out of memory error.
+                             Note that a large number of batch size may cause out of memory error.
             epoch (int): Number of epochs.
-            lr (float): Learning rate.
+            optimizer (str): String to specify PyTorch optimizer. The optimizers supported by
+                    PyTorch can be checked from
+                    the `PyTorch website <https://pytorch.org/docs/stable/optim.html>`_.
+            scheduler (str): String to specify PyTorch optimization scheduler. The schedulers supported by
+                    PyTorch can be checked from
+                    the `PyTorch website <https://pytorch.org/docs/stable/optim.html>`_.
             cpu (int): Number of CPUs are used for prerpocessing training images.
             gpu (int): Number of GPUs are uesd for traininng model.
             strategy (str): Strategy for model trainig. One of ``resizing`` or ``randomcrop`` can be specified.
@@ -137,7 +142,12 @@ class SOD():
             >>> 
             >>> model.train('./train_images', './mask_images', 'mask')
             >>> 
-        
+            >>> 
+            >>> # set optimizer and scheduler
+            >>> model.train('./train_images', '.mask_images', 'mask',
+            >>>             optimizer='Adam(params, lr=0.001, betas=(0.9, 0.999), eps=1e-08)',
+            >>>             scheduler='ExponentialLR(optimizer, gamma=0.9)')
+            >>> 
         """
         
         images = []
@@ -184,7 +194,7 @@ class SOD():
             for image, mask in zip(images, masks):
                 outfh.write('{}\t{}\n'.format(image, mask))
         
-        return self.module.train(train_data_fpath, batchsize, epoch, lr, cpu, gpu,
+        return self.module.train(train_data_fpath, batchsize, epoch, optimizer, scheduler, cpu, gpu,
                           strategy, window_size)
 
 

@@ -47,7 +47,7 @@ class SOD(AppBase):
     
     
     def train_model(self, image_dpath, annotation_path, annotation_format,
-                    model_arch, model_weight, batchsize, epoch, lr, cpu, gpu, strategy, window_size):
+                    model_arch, model_weight, batchsize, epoch, optimizer, scheduler, cpu, gpu, strategy, window_size):
         
         job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.STARTED, '')
 
@@ -59,8 +59,9 @@ class SOD(AppBase):
             
             model = self.__build_model(model_arch, model_weight, tmp_dpath)
             model.train(image_dpath, annotation_path, annotation_format,
-                        batchsize=batchsize, epoch=epoch, lr=lr, cpu=cpu, gpu=gpu,
-                        strategy=strategy, window_size=window_size)
+                        batchsize=batchsize, epoch=epoch,
+                        optimizer=optimizer, scheduler=scheduler,
+                        cpu=cpu, gpu=gpu, strategy=strategy, window_size=window_size)
             model.save(model_weight)
                 
         except KeyboardInterrupt:

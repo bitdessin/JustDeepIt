@@ -109,7 +109,7 @@ table.module-panels td {
     overflow: hidden;
     box-sizing: border-box;
 }
-input.file-path, input.digits, input.text {
+input.file-path, input.digits, input.text, input.text-full {
     font-size: 0.9em;
     line-height: 20px;
     border: 1px solid #ccc;
@@ -130,6 +130,9 @@ input.digits, select.digits {
 input.text {
     margin-left: 1em;
     width: 10em;
+}
+input.text-full {
+    width: 100%;
 }
 textarea#config-edition-content {
     width: 100%;

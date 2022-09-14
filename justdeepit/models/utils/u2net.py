@@ -598,38 +598,43 @@ class U2Net(ModuleTemplate):
     
  
     
-
-    def train(self, train_data_fpath, batchsize=8, epoch=10000, lr=0.001, cpu=8, gpu=1,
+    def __set_optimizer(self, optimizer):
+        if optimizer is None:
+            optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
+        else:
+            _prefix = []
+            if 'torch.' not in optimizer:
+                _prefix.append('torch')
+            if 'optim.' not in optimizer:
+                _prefix.append('optim')
+            optimizer = '.'.join(_prefix) + '.' + optimizer
+            optimizer_lf = optimizer.split('(', 1)[0]
+            optimizer_rg = optimizer.split(',', 1)[1]
+            optimizer = optimizer_lf + '(self.model.parameters(),' + optimizer_rg
+            optimizer = eval(optimizer)
+        return optimizer
+    
+    
+    def __set_scheduler(self, optimizer, scheduler):
+        if scheduler is not None:
+            _prefix = []
+            if 'torch.' not in scheduler:
+                _prefix.append('torch')
+            if 'optim.' not in scheduler:
+                _prefix.append('optim')
+            if 'lr_scheduler.' not in scheduler:
+                _prefix.append('lr_scheduler')
+            scheduler = '.'.join(_prefix) + '.' + scheduler
+            scheduler_lf = scheduler.split('(', 1)[0]
+            scheduler_rg = scheduler.split(',', 1)[1]
+            scheduler = scheduler_lf + '(optimizer, ' + scheduler_rg
+            scheduler = eval(scheduler)
+        return scheduler
+    
+    
+    def train(self, train_data_fpath, batchsize=8, epoch=10000, optimizer=None, scheduler=None, cpu=8, gpu=1,
               strategy='resizing', window_size=320):
-        """Train model
         
-        Method :func:`train` is used for
-        training U\ :sup:`2`-Net using *resizing* or *random cropping* approach.
-        The *resizing* approach scales the original image to 288 × 288 pixels for training,
-        whereas *random cropping* randomly crops small square areas from the original image,
-        and resizes the areas to 288 × 288 pixels for training.
-        The size of the square areas can be specified by the user
-        according to the characteristics of the target task.
-        The default size of the cropped square area is 320 x 320 pixels.
-        
-        Args:
-            train_data_fpath (str): A path to the tab-separeted file which contains the two columns.
-                                    On each line, the first column records a path to a training image,
-                                    and the second column records a path to the corresponding mask image.
-            temp_dpath (str): A path to save the checkpoint during model training.
-                                    If ``None``, the checkpoint will be not saved.
-            batchsize (int): Number of batch size.
-                              Note that a large number of batch size may cause out of memory error.
-            epoch (int): Number of epochs.
-            epoch (float): Learning rate.
-            cpu (int): Number of CPUs are used for prerpocessing training images.
-            gpu (int): Number of GPUs are uesd for traininng model.
-            strategy (str): Strategy for model trainig. One of ``resizing`` or ``randomcrop`` can be specified.
-            window_size (int): The width of images should be randomly cropped from the original images
-                                    when ``randomcrop`` srategy was selected.
-
-        
-        """
         if not torch.cuda.is_available():
             gpu = 0
         if torch.cuda.device_count() < gpu:
@@ -637,6 +642,7 @@ class U2Net(ModuleTemplate):
         
         device = self.__get_device(gpu)
         self.model = self.model.to(device)
+        
         
         transform = None
         if strategy[0:4] == 'rand':
@@ -658,8 +664,9 @@ class U2Net(ModuleTemplate):
         train_dataset = TrainDatasetLoader(train_data_fpath, transform=transform)
         train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batchsize, shuffle=True, num_workers=cpu)
         
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
-
+        optimizer = self.__set_optimizer(optimizer)
+        scheduler = self.__set_scheduler(optimizer, scheduler)
+       
         for i in range(1, epoch + 1):
             self.model.train()
             
@@ -697,6 +704,9 @@ class U2Net(ModuleTemplate):
                 running_tar_loss += loss2.data.item()
                 
                 del d0, d1, d2, d3, d4, d5, d6, loss2, loss
+            
+            if scheduler is not None:
+                scheduler.step()
             
             if i % 20 == 0 or i == epoch:
                 logger.info('{:s} - [epoch: {:3d}/{:3d}] train loss: {:3f}, tar loss: {:3f} '.format(

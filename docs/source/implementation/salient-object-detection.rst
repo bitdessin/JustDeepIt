@@ -59,7 +59,7 @@ Training
 
 Tab **Training** is used to train the model for salient object detection.
 It allows users to set general parameters of training,
-such as the learning rate, batch size, and number of epochs.
+such as the optimization algorithm, optimization scheduler, batch size, and number of epochs.
 Detailed descriptions of the arguments are provided in the following table.
 
 
@@ -76,10 +76,15 @@ Detailed descriptions of the arguments are provided in the following table.
     "**image folder**", "A path to an folder which contains training images."
     "**annotation format**", "Annotation format."
     "**annotation**", "A path to a file (when the format is COCO) or folder (when the format is mask)."
-    "**batch size**", "Batch size."
-    "**epochs**", "Number of epochs."
     "**strategy**", "A training strategy. ``resizing`` or ``randomcrop`` can be selected."
     "**cropping size**", "An integer of cropping size for ``randomcrop`` strategy."
+    "**optimizer**", "A PyTorch optimizer. The supported optimizers can be checked from the
+    `PyTorch website <https://pytorch.org/docs/stable/optim.html>`_."
+    "**scheduler**", "A PyTorch optimization scheduler. The supported schedulers can be checked from the
+    `PyTroch website <https://pytorch.org/docs/stable/optim.html>`_."
+    "**batch size**", "Batch size."
+    "**epoch**", "Number of epochs."
+    "**cutoff**", "A threshold to determine the object areas."
 
 
 
@@ -107,10 +112,10 @@ Detailed descriptions of the arguments are provided in the following table.
     "**cutoff**", "Cutoff of confidence score for inference."
     "**strategy**", "A training strategy. ``resizing`` or ``sliding`` can be selected."
     "**cropping size**", "An integer of cropping size for ``sliding`` strategy."
-    "**time-series**", "If the input images are taken with a fixed camera in time-series, turning on this option will give object ID by considering the time-series."
-    "**align image**", "Turning on this option, JustDeepIt will align all images by position before any post-processings."
     "**image opening kernel size**", "Kernel size for image opening process which is used for remove small white spots (e.g. noise, very small objects, etc)."
     "**image closing kernel size**", "Kernel size for image closing process which is used for remove small black spots (e.g. a small hole in the object area)."
+    "**time-series**", "If the input images are taken with a fixed camera in time-series, turning on this option will give object ID by considering the time-series."
+    "**align image**", "Turning on this option, JustDeepIt will align all images by position before any post-processings."
 
 
 
