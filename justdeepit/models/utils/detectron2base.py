@@ -124,31 +124,6 @@ class DetectronBase(ModuleTemplate):
         return device
    
     
-    def train_customdata(self, train_data_fpath, batchsize=36, epoch=100, lr=0.0001, score_cutoff=0.7, gpu=1, cpu=8):
-
-        # train settings
-        train_dataset_id = 'ds:{}_train'.format(train_data_fpath)
-        self.cfg.MODEL.DEVICE = self.__get_device(gpu)
-        self.cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = score_cutoff
-        self.cfg.DATALOADER.NUM_WORKERS = cpu
-        self.cfg.SOLVER.IMS_PER_BATCH = batchsize
-        self.cfg.SOLVER.BASE_LR  = lr
-        self.cfg.SOLVER.MAX_ITER = epoch
-        self.cfg.DATASETS.TRAIN = (train_dataset_id, )
-        self.cfg.DATASETS.TEST = ()
-
-        # dataset settings
-        detectron2.data.DatasetCatalog.clear()
-        detectron2.data.DatasetCatalog.register(train_dataset_id,
-                                lambda: self.__dataloader(train_data_fpath))
-        detectron2.data.MetadataCatalog.get(train_dataset_id).set(thing_classes=self.class_labels)
-        
-        # train model
-        trainer = detectron2.engine.DefaultTrainer(self.cfg)
-        trainer.resume_or_load(resume=False)
-        trainer.train()
-        
-        self.model = trainer.model
         
 
     def __dataloader(self, train_data_fpath):
@@ -173,7 +148,9 @@ class DetectronBase(ModuleTemplate):
     
     
     def train(self, image_dpath, annotation,
-              batchsize=36, epoch=1000, lr=0.0001, score_cutoff=0.7, cpu=8, gpu=1):
+              optimizer=None, scheduler=None,
+              batchsize=8, epoch=100, score_cutoff=0.5, cpu=4, gpu=1):
+        lr = 0.001
         
         if not torch.cuda.is_available():
             gpu = 0
@@ -204,7 +181,7 @@ class DetectronBase(ModuleTemplate):
         self.model = trainer.model
 
     
-    def inference(self, image_path, score_cutoff=0.7, batchsize=32, cpu=8, gpu=1):
+    def inference(self, image_path, score_cutoff=0.5, batchsize=8, cpu=4, gpu=1):
         images_fpath = []
         if isinstance(image_path, list):
             images_fpath = image_path

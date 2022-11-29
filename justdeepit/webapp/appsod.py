@@ -47,7 +47,10 @@ class SOD(AppBase):
     
     
     def train_model(self, image_dpath, annotation_path, annotation_format,
-                    model_arch, model_weight, batchsize, epoch, optimizer, scheduler, cpu, gpu, strategy, window_size):
+                    model_arch, model_weight,
+                    optimizer, scheduler, 
+                    batchsize, epoch,
+                    cpu, gpu, strategy, window_size):
         
         job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.STARTED, '')
 
@@ -59,9 +62,9 @@ class SOD(AppBase):
             
             model = self.__build_model(model_arch, model_weight, tmp_dpath)
             model.train(image_dpath, annotation_path, annotation_format,
-                        batchsize=batchsize, epoch=epoch,
-                        optimizer=optimizer, scheduler=scheduler,
-                        cpu=cpu, gpu=gpu, strategy=strategy, window_size=window_size)
+                        optimizer, scheduler,
+                        batchsize, epoch, cpu, gpu,
+                        strategy=strategy, window_size=window_size)
             model.save(model_weight)
                 
         except KeyboardInterrupt:
@@ -72,7 +75,7 @@ class SOD(AppBase):
             job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.ERROR, str(e))
         else:
             job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.COMPLETED,
-                                            'Params: batchsize {}; epoch {}; lr: {}.'.format(batchsize, epoch, lr))
+                                            'Params: batchsize {}; epoch {}; optimizer: {}; scheduler: {}.'.format(batchsize, epoch, optimizer, scheduler))
 
         return job_status    
     
@@ -268,7 +271,7 @@ class SOD(AppBase):
    
     
     def detect_objects(self, model_arch, model_weight, batchsize,
-                       strategy, u_cutoff, image_opening, image_closing, window_size,
+                       strategy, score_cutoff, image_opening, image_closing, window_size,
                        cpu, gpu):
         
         def __save_outputs(ws, image_fpath, output):
@@ -285,7 +288,7 @@ class SOD(AppBase):
             model = justdeepit.models.SOD(model_arch, model_weight)
             outputs = model.inference(self.images,
                                       strategy, batchsize, cpu, gpu,
-                                      window_size, u_cutoff, image_opening, image_closing)
+                                      window_size, score_cutoff, image_opening, image_closing)
             
             joblib.Parallel(n_jobs=cpu)(
                 joblib.delayed(__save_outputs)(self.workspace_, self.images[i], outputs[i]) for i in range(len(self.images)))
@@ -347,14 +350,6 @@ class SOD(AppBase):
                                         skimage.morphology.square(image_closing_kernel))
                 mask4label[mask4label > 0] = 1
 
-                #if erosion_size > 0:
-                #    # shrinks bright regions and enlarges dark regions
-                #    mask4label = skimage.morphology.erosion(mask4label, skimage.morphology.square(erosion_size))
-                
-                #if dilation_size > 0:
-                #    # enlarges bright regions and shrinks dark regions
-                #    mask4label = skimage.morphology.dilation(mask4label, skimage.morphology.square(dilation_size))
-                
                 labeled_mask = skimage.measure.label(mask4label, background=0)
             else:
                 labeled_mask = np.load(master_mask)['label']

@@ -30,22 +30,24 @@ class OD(AppBase):
         init_model_weight = model_weight if os.path.exists(model_weight) else None
         if self.app == 'OD':
             return justdeepit.models.OD(class_label, model_arch, model_config, init_model_weight,
-                                    os.path.join(self.workspace_, 'tmp'), backend)
+                                        os.path.join(self.workspace_, 'tmp'), backend)
         elif self.app == 'IS':
             return justdeepit.models.IS(class_label, model_arch, model_config, init_model_weight,
-                                    os.path.join(self.workspace_, 'tmp'), backend)
+                                        os.path.join(self.workspace_, 'tmp'), backend)
     
     
     
     def train_model(self, class_label, image_dpath, annotation_path, annotation_format,
                     model_arch='fasterrcnn', model_config=None, model_weight=None, 
-                    batchsize=32, epoch=1000, lr=0.0001, score_cutoff=0.7, cpu=8, gpu=1, backend='mmdetection'):
+                    optimizer=None, scheduler=None,
+                    batchsize=8, epoch=100, score_cutoff=0.5, cpu=4, gpu=1, backend='mmdetection'):
         job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.STARTED, '')
         try:
             self.check_training_images(image_dpath, annotation_path, annotation_format, class_label)
             model = self.__build_model(class_label, model_arch, model_config, model_weight, backend)
             model.train(image_dpath, annotation_path, annotation_format,
-                        batchsize, epoch, lr, score_cutoff, cpu, gpu)
+                        optimizer, scheduler,
+                        batchsize, epoch, score_cutoff, cpu, gpu)
             model.save(model_weight)
             
             job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.FINISHED, '')
@@ -57,7 +59,7 @@ class OD(AppBase):
             job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.ERROR, str(e))
         else:
             job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.COMPLETED,
-                                            'Params: batchsize {}; epoch {}; lr: {}.'.format(batchsize, epoch, lr))
+                                            'Params: batchsize {}; epoch {}; optimizer: {}; scheduler: {}.'.format(batchsize, epoch, optimizer, scheduler))
         
         return job_status
     
@@ -65,7 +67,7 @@ class OD(AppBase):
     
     def detect_objects(self, class_label, image_dpath,
                        model_arch='fasterrcnn', model_config=None, model_weight=None,
-                       score_cutoff=0.7, batchsize=32, cpu=8, gpu=1, backend='mmdetection'):
+                       score_cutoff=0.8, batchsize=8, cpu=4, gpu=1, backend='mmdetection'):
         
         def __save_outputs(ws, image_fpath, output, app_id):
             image_name = os.path.splitext(os.path.basename(image_fpath))[0]

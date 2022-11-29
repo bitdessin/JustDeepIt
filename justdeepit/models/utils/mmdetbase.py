@@ -200,11 +200,25 @@ class MMDetBase(ModuleTemplate):
             return cfg
         else:
             cfg.dump(output_fpath)
-
     
+    
+    def __set_optimizer(self, optimizer):
+        if optimizer is not None and optimizer.replace(' ', '') != '':
+            if optimizer[0] != '{' or optimizer[0:4] != 'dict':
+                optimizer = 'dict(' + optimizer + ')'
+            self.cfg.optimizer = eval(optimizer)
+    
+    
+    def __set_scheduler(self, scheduler):
+        if scheduler is not None and scheduler.replace(' ', '') != '':
+            if scheduler[0] != '{' or scheduler[0:4] != 'dict':
+                scheduler = 'dict(' + scheduler + ')'
+            self.cfg.scheduler = eval(scheduler)
+       
     
     def train(self, image_dpath, annotation,
-              batchsize=36, epoch=1000, lr=0.0001, score_cutoff=0.7, cpu=8, gpu=1):
+              optimizer=None, scheduler=None,
+              batchsize=8, epoch=100, score_cutoff=0.5, cpu=4, gpu=1):
         
         if not torch.cuda.is_available():
             gpu = 0
@@ -219,7 +233,9 @@ class MMDetBase(ModuleTemplate):
         if gpu == 0:
             raise EnvironmentError('CPU training is not supported by MMDetection. Make sure the system can recognize GPU and set gpu more than zero.')
         elif gpu == 1:
-            self.__train(None, annotation, image_dpath, batchsize, epoch, lr, score_cutoff, cpu, gpu)
+            self.__train(None, image_dpath, annotation,
+                         optimizer, scheduler,
+                         batchsize, epoch, score_cutoff, cpu, gpu)
         elif gpu > 1:
             raise EnvironmentError('The current JustDeepIt does not support multiple GPUs for trianing.')
             
@@ -246,7 +262,8 @@ class MMDetBase(ModuleTemplate):
 
             try:
                 torch.multiprocessing.spawn(self.__train,
-                         args=(annotation, image_dpath, s_per_gpu, epoch, lr, score_cutoff, w_per_gpu, gpu,
+                         args=(image_dpath, annotation,
+                               s_per_gpu, epoch, lr, score_cutoff, w_per_gpu, gpu,
                                True, master_addr, master_port),
                          nprocs=gpu)
             except KeyboardInterrupt:
@@ -261,8 +278,9 @@ class MMDetBase(ModuleTemplate):
     
 
 
-    def __train(self, rank, annotation, image_dpath,
-                batchsize=36, epoch=1000, lr=0.0001, score_cutoff=0.7, cpu=8, gpu=1,
+    def __train(self, rank, image_dpath, annotation,
+                optimizer, scheduler,
+                batchsize, epoch, score_cutoff, cpu, gpu,
                 distributed=False, master_addr='127.0.0.1', master_port='29555'):
         self.cfg.gpu_ids = range(gpu)
         if gpu > 1:
@@ -283,12 +301,14 @@ class MMDetBase(ModuleTemplate):
                         img_prefix = image_dpath,
                         ann_file = annotation,
                         pipeline = self.cfg.train_pipeline))),
-            # runner = dict(type='EpochBasedRunner', max_epochs=epoch),
             checkpoint_config = dict(interval = 100))
         
         
         self.cfg.merge_from_dict(train_cfg)
         self.cfg.runner = dict(type='EpochBasedRunner', max_epochs=epoch)
+        self.cfg.total_epochs = epoch
+        self.__set_optimizer(optimizer)
+        self.__set_scheduler(scheduler)
         
         datasets = [mmdet.datasets.build_dataset(self.cfg.data.train)]
         model = mmdet.models.build_detector(self.cfg.model)
@@ -305,7 +325,7 @@ class MMDetBase(ModuleTemplate):
 
     
     
-    def inference(self, image_path, score_cutoff=0.7, batchsize=32, cpu=8, gpu=1):
+    def inference(self, image_path, score_cutoff=0.5, batchsize=8, cpu=4, gpu=1):
         
         if not torch.cuda.is_available():
             gpu = 0

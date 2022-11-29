@@ -199,7 +199,8 @@ class IS:
 
     
     def train(self, image_dpath, annotation, annotation_format='COCO',
-              batchsize=32, epoch=1000, lr=0.0001, score_cutoff=0.7, cpu=8, gpu=1):
+              optimizer=None, scheduler=None,
+              batchsize=8, epoch=100, score_cutoff=0.5, cpu=4, gpu=1):
         """Train model
  
         The :func:`train <justdeepit.models.IS.train>` is used for training a model.
@@ -211,12 +212,13 @@ class IS:
             image_dpath (str): A path to directory which contains all training images.
             annotation (str): A file path to COCO format annotation file.
             annotation_format (str): Annotation format. Only COCO is supported in the current version.
+            optimizer (str): String to specify optimizer/solver supported by MMDetection or Detectron2.
+            scheduler (str): String to specify optimization scheduler.
             batchsize (int): Batch size for each GPU.
             epoch (int): Epoch.
-            lr (float): Learning rate.
             score_cutoff (float): Cutoff of score for instance segmentation.
-            gpu (int): Number of GPUs for model training.
             cpu (int): Number of workers for pre-prociessing images for each GPU.
+            gpu (int): Number of GPUs for model training.
         
         Examples:
             >>> from justdeepit.models import IS 
@@ -229,7 +231,8 @@ class IS:
             raise NotImplementedError('JustDeepIt does not support {} format for training instance segmentation model.'.format(annotation_format))
         
         self.module.train(image_dpath, annotation,
-                          batchsize=batchsize, epoch=epoch, lr=lr, score_cutoff=score_cutoff,
+                          optimizer, scheduler,
+                          batchsize=batchsize, epoch=epoch, score_cutoff=score_cutoff,
                           cpu=cpu, gpu=gpu)
     
     
@@ -257,7 +260,7 @@ class IS:
     
     
     
-    def inference(self, images, score_cutoff=0.7, batchsize=32, cpu=8, gpu=1):
+    def inference(self, images, score_cutoff=0.5, batchsize=8, cpu=4, gpu=1):
         '''Detect objects from images
         
         Method :func:`inference <justdeepit.models.IS.inference>` is used to
@@ -268,8 +271,8 @@ class IS:
                           multiple images.
             score_cutoff (float): Cutoff for instance segmentation.
             batchsize (int): Number of batches.
-            gpu (int): Number of GPUs.
             cpu (int): Number of CPUs.
+            gpu (int): Number of GPUs.
         
         Returns:
             :class:`ImageAnnotation <justdeepit.utils.ImageAnnotation>` class object

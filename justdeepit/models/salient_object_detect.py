@@ -102,7 +102,8 @@ class SOD():
     
 
     def train(self, image_dpath, annotation, annotation_format='mask',
-              batchsize=32, epoch=1000, optimizer=None, scheduler=None, cpu=8, gpu=1,
+              optimizer=None, scheduler=None,
+              batchsize=8, epoch=100, cpu=4, gpu=1,
               strategy='resizing', window_size=320):
         """Train model
         
@@ -119,15 +120,15 @@ class SOD():
             image_dpath (str): A path to directory which contains all training images.
             annotation (str): A path to a file (when the format is COCO) or folder (when the format is mask).
             annotation_format (str): Annotation format.
-            batchsize (int): Number of batch size.
-                             Note that a large number of batch size may cause out of memory error.
-            epoch (int): Number of epochs.
             optimizer (str): String to specify PyTorch optimizer. The optimizers supported by
                     PyTorch can be checked from
                     the `PyTorch website <https://pytorch.org/docs/stable/optim.html>`_.
             scheduler (str): String to specify PyTorch optimization scheduler. The schedulers supported by
                     PyTorch can be checked from
                     the `PyTorch website <https://pytorch.org/docs/stable/optim.html>`_.
+            batchsize (int): Number of batch size.
+                             Note that a large number of batch size may cause out of memory error.
+            epoch (int): Number of epochs.
             cpu (int): Number of CPUs are used for prerpocessing training images.
             gpu (int): Number of GPUs are uesd for traininng model.
             strategy (str): Strategy for model trainig. One of ``resizing`` or ``randomcrop`` can be specified.
@@ -179,10 +180,10 @@ class SOD():
             
             for f in sorted(glob.glob(os.path.join(image_dpath, '*'))):
                 image_fname, image_fext = os.path.splitext(f)
-                if image_fext.lower() in self.image_ext:
-                    ann = ImageAnnotation(f, annotation_fpath, annotation_format)
+                if image_fext.lower() in self.__image_ext:
+                    ann = ImageAnnotation(f, annotation, annotation_format)
                     m = os.path.join(mask_dpath, os.path.splitext(os.path.basename(image_fname))[0] + '.mask.png')
-                    ann.draw('bimask', m)
+                    ann.draw('mask', m)
                     images.append(f)
                     masks.append(m)
         else:
@@ -194,7 +195,10 @@ class SOD():
             for image, mask in zip(images, masks):
                 outfh.write('{}\t{}\n'.format(image, mask))
         
-        return self.module.train(train_data_fpath, batchsize, epoch, optimizer, scheduler, cpu, gpu,
+        return self.module.train(train_data_fpath,
+                          optimizer, scheduler,
+                          batchsize, epoch,
+                          cpu, gpu,
                           strategy, window_size)
 
 
@@ -228,7 +232,7 @@ class SOD():
     
     def inference(self, image_path, strategy='resizing', batchsize=8, cpu=4, gpu=1,
                   window_size=320,
-                  u_cutoff=0.1, image_opening_kernel=0, image_closing_kernel=0):
+                  score_cutoff=0.5, image_opening_kernel=0, image_closing_kernel=0):
         """Object Segmentation
         
         Method :func:`inference <justdeepit.models.SOD.inference>` performs
@@ -252,7 +256,7 @@ class SOD():
             gpu (int): Number of GPUs are used for object segmentation.
             window_size (int): The width of images should be cropped from the original images
                                        when ``slide`` srategy was selected.
-            u_cutoff (float): A threshold to cutoff U2Net outputs. Values higher than this threshold
+            score_cutoff (float): A threshold to cutoff U2Net outputs. Values higher than this threshold
                               are considering as detected objects.
             image_opening_kernel (int): The kernel size for image closing
                                         to remove the noise that detected as object.
@@ -282,7 +286,7 @@ class SOD():
         """
         
         return self.module.inference(image_path, strategy, batchsize, cpu, gpu,
-                              window_size, u_cutoff,
+                              window_size, score_cutoff,
                               image_opening_kernel, image_closing_kernel)
 
 

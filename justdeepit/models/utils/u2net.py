@@ -616,7 +616,11 @@ class U2Net(ModuleTemplate):
     
     
     def __set_scheduler(self, optimizer, scheduler):
-        if scheduler is not None:
+        if scheduler is None:
+            return None
+        elif scheduler.replace(' ', '') == '':
+            return None
+        else:
             _prefix = []
             if 'torch.' not in scheduler:
                 _prefix.append('torch')
@@ -632,7 +636,10 @@ class U2Net(ModuleTemplate):
         return scheduler
     
     
-    def train(self, train_data_fpath, batchsize=8, epoch=10000, optimizer=None, scheduler=None, cpu=8, gpu=1,
+    def train(self, train_data_fpath,
+              optimizer=None, scheduler=None,
+              batchsize=8, epoch=100,
+              cpu=4, gpu=1,
               strategy='resizing', window_size=320):
         
         if not torch.cuda.is_available():
@@ -734,7 +741,7 @@ class U2Net(ModuleTemplate):
     
     def inference(self, image_path, strategy='resizing', batchsize=8, cpu=4, gpu=1,
                   window_size=320,
-                  u_cutoff=0.1, image_opening_kernel=0, image_closing_kernel=0):
+                  score_cutoff=0.5, image_opening_kernel=0, image_closing_kernel=0):
         """Object Segmentation
         
         Method :func:`inference` performs
@@ -758,7 +765,7 @@ class U2Net(ModuleTemplate):
             gpu (int): Number of GPUs are used for object segmentation.
             window_size (int): The width of images should be cropped from the original images
                                        when ``slide`` srategy was selected.
-            u_cutoff (float): A threshold to cutoff U2Net outputs. Values higher than this threshold
+            score_cutoff (float): A threshold to cutoff U2Net outputs. Values higher than this threshold
                               are considering as detected objects.
             image_opening_kernel (int): The kernel size for image closing
                                         to remove the noise that detected as object.
@@ -808,13 +815,13 @@ class U2Net(ModuleTemplate):
         # detection
         pred_masks = []
         if strategy[0:5] == 'resiz':
-            pred_masks = self.__inference_subset(images_fpath, transform, device, batchsize, cpu, u_cutoff)
+            pred_masks = self.__inference_subset(images_fpath, transform, device, batchsize, cpu, score_cutoff)
         elif strategy[0:4] == 'slid':
             # perform prediction one-by-one
             for image_fpath in tqdm.tqdm(images_fpath, desc='Processed images: ', leave=True):
                 tqdm_desc = ''
                 image_blocks, blocks_info = self.__slice_image(image_fpath, window_size)
-                pred_mask_blocks = self.__inference_subset(image_blocks, transform, device, batchsize, cpu, u_cutoff, 'Inferencing sliced blocks', False)
+                pred_mask_blocks = self.__inference_subset(image_blocks, transform, device, batchsize, cpu, score_cutoff, 'Inferencing sliced blocks', False)
                 pred_masks.append(self.__merge_sliced_images(pred_mask_blocks, blocks_info))
         else:
             raise NotImplementedError('Only resizing and sliding approaches can be used during detection.')
@@ -826,22 +833,22 @@ class U2Net(ModuleTemplate):
             imganns = []
             for i in tqdm.tqdm(range(len(pred_masks)), desc='Post-processed images: '):
                 imganns.append(self._inference_post_process(
-                    images_fpath[i], pred_masks[i], u_cutoff, image_opening_kernel, image_closing_kernel))
+                    images_fpath[i], pred_masks[i], score_cutoff, image_opening_kernel, image_closing_kernel))
         else:
             imganns = joblib.Parallel(n_jobs=cpu)(
                 joblib.delayed(self._inference_post_process)(
-                    images_fpath[i], pred_masks[i], u_cutoff, image_opening_kernel, image_closing_kernel
+                    images_fpath[i], pred_masks[i], score_cutoff, image_opening_kernel, image_closing_kernel
                 ) for i in tqdm.tqdm(range(len(pred_masks)), desc='Post-processed images: '))
         
         return justdeepit.utils.ImageAnnotations(imganns)
         
         
  
-    def _inference_post_process(self, image_fpath, pred_mask, u_cutoff, image_opening_kernel, image_closing_kernel):
+    def _inference_post_process(self, image_fpath, pred_mask, score_cutoff, image_opening_kernel, image_closing_kernel):
         input_image_shape = skimage.io.imread(image_fpath).shape
         pred_mask = skimage.transform.resize(pred_mask, (input_image_shape[0], input_image_shape[1]),
                                              mode='constant', order=0, preserve_range=True)
-        pred_mask[(pred_mask > u_cutoff)] = 1
+        pred_mask[(pred_mask > score_cutoff)] = 1
         
         # opening and closing preocess
         if image_opening_kernel > 0:
@@ -902,7 +909,7 @@ class U2Net(ModuleTemplate):
        
     
     
-    def __inference_subset(self, images_fpath, transform, device, batchsize, cpu, u_cutoff,
+    def __inference_subset(self, images_fpath, transform, device, batchsize, cpu, score_cutoff,
                            tqdm_desc='Processed batches: ', tqdm_leave=True):
         valid_image = InferenceDatasetLoader(images_fpath, transform)
         valid_dataloader = torch.utils.data.DataLoader(valid_image, batch_size=batchsize, num_workers=cpu)

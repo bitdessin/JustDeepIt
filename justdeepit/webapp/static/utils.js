@@ -190,13 +190,14 @@ function refreshRunningLog() {
         cache: false,
     }).done(function(logData, textStatus, jqXHR) {
         $('#app-log-msg').html(logData.slice(1, -1).replaceAll('\\"', '"'));
-        $('#app-log-msg').animate({
-            scrollTop: $('#app-log-msg')[0].scrollHeight - $('#app-log-msg')[0].clientHeight
-        }, 1500);
     }).fail(function(XMLHttpRequest, textStatus, errorThrown) {
         console.log("XMLHttpRequest : " + XMLHttpRequest.status);
         console.log("textStatus     : " + textStatus);
         console.log("errorThrown    : " + errorThrown.message);
+    }).always(function() {
+        $('#app-log-msg').animate({
+            scrollTop: $('#app-log-msg')[0].scrollHeight - $('#app-log-msg')[0].clientHeight
+        }, 1500);
     });
 }
  
@@ -280,19 +281,42 @@ function refreshConfigField() {
     if ($('#module-config-architecture').val() != 'custom') {
         $('#module-config-config').val(null);
         $('#module-config-config').attr('readonly', true);
-        //$('#config-edition-open').attr('disabled', true);
         $('#config-select-open').attr('disabled', true);
-        //$('#config-edition-open').addClass('button-disable');
         $('#config-select-open').addClass('button-disable');
     } else {
         $('#module-config-config').attr('readonly', false);
-        //$('#config-edition-open').attr('disabled', false);
         $('#config-select-open').attr('disabled', false);
-        //$('#config-edition-open').removeClass('button-disable');
         $('#config-select-open').removeClass('button-disable');
     }
 }
  
+
+function refreshTrainOptimizer() {
+    default_optmizer = '';
+    default_scheduler = '';
+    if ($('#module').val() === 'SOD') {
+        default_optmizer = 'Adam(params, lr=0.001, betas=(0.9, 0.999)';
+        default_scheduler = 'ExponentialLR(optimizer, gamma=0.9)';
+    } else {
+        if ($('#module-config-backend').val().toLowerCase() == 'mmdetection') {
+            default_optmizer = 'dict(type="Adam", lr=0.001)';
+            default_scheduler = 'dict(policy="CosineAnnealing", warmup="linear", warmup_iters=1000, warmup_ratio=0.1)';
+        }
+    }
+    $('#module-training-optimizer').attr('placeholder', default_optmizer);
+    $('#module-training-scheduler').attr('placeholder', default_scheduler);
+    
+    if ($('#module').val() !== 'SOD') {
+        if ($('#module-config-backend').val().toLowerCase() === 'detectron2') {
+            $('#module-training-optimizer').attr('disabled', true);
+            $('#module-training-scheduler').attr('disabled', true);
+        } else {
+            $('#module-training-optimizer').attr('disabled', false);
+            $('#module-training-scheduler').attr('disabled', false);
+        }
+    }
+}
+
 
 
 
@@ -305,6 +329,7 @@ $(function(){
             $('.module-tab-active').removeClass('module-tab-active');
             $(this).addClass('module-tab-active');
             const i = $('.module-tab').index(this);
+            if (i === 1) refreshTrainOptimizer(); // set optimizer and scheduler placeholders
             $('.module-tab-content').removeClass('module-tab-content-active')
                                  .eq($('.module-tab').index(this))
                                  .addClass('module-tab-content-active');
@@ -409,6 +434,7 @@ $(function(){
             }
             $('#module-config-architecture').html(archListHTML);
             refreshConfigField();
+            refreshTrainOptimizer();
         }).fail(function(XMLHttpRequest, textStatus, errorThrown) {
             console.log("XMLHttpRequest : " + XMLHttpRequest.status);
             console.log("textStatus     : " + textStatus);

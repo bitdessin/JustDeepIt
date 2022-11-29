@@ -66,7 +66,9 @@ class OD:
     
     
     
-    def __init__(self, class_label=None, model_arch=None, model_config=None, model_weight=None, workspace=None, backend='mmdetection'):
+    def __init__(self, class_label=None,
+                 model_arch=None, model_config=None, model_weight=None,
+                 workspace=None, backend='mmdetection'):
         
         self.module = None
         self.__architectures = self.__available_architectures()
@@ -107,19 +109,19 @@ class OD:
             return None
         
         backend_ = self.__norm_backend(backend)
+        model_arch_ = self.__norm_arch(model_arch)
         
         if model_config is None:
             # check model arch
-            model_arch_ = self.__norm_arch(model_arch)
             if model_arch_ not in [self.__norm_arch(_[0]) for _ in self.__architectures[backend_]]:
                 NotImplementedError('JustDeepIt does not support {} archtecture when {} is specified as a backend.'.format(model_arch, backend))
-        
+            
             # set model_config according to model_arch
             for available_arch, available_config in self.__architectures[backend_]:
                 if model_arch_ == self.__norm_arch(available_arch):
                     if model_arch_ == 'custom':
                         if model_config is None or  model_config == '':
-                            ValueError('The argument `model_config` cannot be none or empty when the user customized architecture is set.')
+                            ValueError('The argument `model_config` cannot be `None` or empty when the user customized architecture is set.')
                     else:
                         model_config = available_config
                     break
@@ -206,7 +208,8 @@ class OD:
     
     
     def train(self, image_dpath, annotation, annotation_format='COCO',
-              batchsize=32, epoch=1000, lr=0.0001, score_cutoff=0.7, cpu=8, gpu=1):
+              optimizer=None, scheduler=None,
+              batchsize=8, epoch=100, score_cutoff=0.5, cpu=4, gpu=1):
         """Train model
         
         The :func:`train <justdeepit.models.OD.train>` is used for training a model.
@@ -218,18 +221,25 @@ class OD:
             annotation (str): A path to a file (COCO format) or folder
                     (Pascal VOC format, each file should have an extension :file:`.xml`).
             annotation_format (str): Annotation format. COCO or Pascal VOC are supported.
+            optimizer (str): String to specify optimizer supported by MMDetection.
+            scheduler (str): String to specify optimization scheduler.
             batchsize (int): Batch size for each GPU.
             epoch (int): Epoch.
-            lr (float): Learning rate.
             score_cutoff (float): Cutoff of score for object detection.
-            gpu (int): Number of GPUs for model training.
             cpu (int): Number of workers for pre-prociessing images for each GPU.
+            gpu (int): Number of GPUs for model training.
         
         Examples:
             >>> from justdeepit.models import OD
             >>> 
-            >>> model = OD('./class_label.txt', model_arch='fasterrcnn')
+            >>> model = OD('./class_label.txt', model_arch='fasterrcnn', backend='mmdetection')
             >>> model.train('./train_images', './annotations.coco.json', 'COCO')
+            >>> 
+            >>> # set optimizer and scheduler
+            >>> model.train('./train_images', './annotations.coco.json', 'COCO',
+            >>>             optimizer='dict(type="Adam", lr=0.0003, weight_decay=0.0001)',
+            >>>             scheduler='dict(policy="CosineAnnealing", warmup="linear", warmup_iters=1000, warmup_ratio=1.0 / 10, min_lr_ratio=1e-5)')
+            >>> 
         """
         annotation_format = self.__norm_format(annotation_format)
         if annotation_format == 'coco':
@@ -249,7 +259,8 @@ class OD:
             raise NotImplementedError('JustDeepIt does not support {} format for training object detection model.'.format(annotation_format))
         
         self.module.train(image_dpath, annotation,
-                          batchsize=batchsize, epoch=epoch, lr=lr, score_cutoff=score_cutoff,
+                          optimizer, scheduler,
+                          batchsize, epoch, score_cutoff,
                           cpu=cpu, gpu=gpu)
     
     
@@ -277,7 +288,7 @@ class OD:
     
     
     
-    def inference(self, images, score_cutoff=0.7, batchsize=32, cpu=8, gpu=1):
+    def inference(self, images, score_cutoff=0.5, batchsize=8, cpu=4, gpu=1):
         '''Detect objects from images
         
         Method :func:`inference <justdeepit.models.OD.inference>` is used to
@@ -288,8 +299,8 @@ class OD:
                           multiple images.
             score_cutoff (float): Cutoff for object detection.
             batchsize (int): Number of batches.
-            gpu (int): Number of GPUs.
             cpu (int): Number of CPUs.
+            gpu (int): Number of GPUs.
         
         Returns:
             :class:`ImageAnnotation <justdeepit.utils.ImageAnnotation>` class object
@@ -314,7 +325,7 @@ class OD:
             >>> 
         '''
         
-        return self.module.inference(images, score_cutoff=score_cutoff, batchsize=batchsize, cpu=cpu, gpu=gpu)
+        return self.module.inference(images, score_cutoff, batchsize, cpu, gpu)
     
     
 
