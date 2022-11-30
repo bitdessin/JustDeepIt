@@ -49,7 +49,7 @@ setup(
     ],
     keywords     = 'object detection, object segmentation',
     author       = 'Jianqiang Sun',
-    author_email = 'jsun@aabbdd.jp',
+    author_email = 'sun@biunit.dev',
     url          = 'https://github.com/biunit/JustDeepIt',
     license      = 'MIT',
     packages     = find_packages(),
