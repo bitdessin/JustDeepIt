@@ -71,7 +71,7 @@ Training
 
 Tab **Training** is used to train the model for instance segmentation.
 It allows users to set general parameters of training,
-such as the learning rate, batch size, and number of epochs.
+such as the optimization algorithm, optimization scheduler, batch size, and number of epochs.
 Detailed descriptions of the arguments are provided in the following table.
 
 
@@ -89,8 +89,13 @@ Detailed descriptions of the arguments are provided in the following table.
     "**image folder**", "A path to a folder which contains training images."
     "**annotation format**", "Annotation format."
     "**annotation**", "A path to a file (COCO format)."
+    "**optimizer**", "A optimizer for MMDetection backend. The supported optimizers can be checked from the
+    `MMDetection website <https://mmdetection.readthedocs.io/en/latest/tutorials/customize_runtime.html>`_.
+    This option is only available when backend is MMDetection."
+    "**scheduler**", "A scheduler for MMDetection backend.  The supported schedulers can be checked from the
+    `MMDetection website <https://mmdetection.readthedocs.io/en/latest/tutorials/customize_runtime.html>`_.
+    This option is only available when backend is MMDetection."
     "**batch size**", "Batch size."
-    "**learning rate**", "Initial learning rate."
     "**epochs**", "Number of epochs."
     "**cutoff**", "Cutoff of confidence score for training."
 

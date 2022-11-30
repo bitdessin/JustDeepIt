@@ -14,7 +14,17 @@ by providing both graphical user interface (GUI) and CUI operations.
 JustDeepIt can be used for plant detection, pest detection,
 and a variety of tasks in life sciences, agriculture, and other fields.
 
-- [Documentation](https://justdeepit.readthedocs.io/en/latest/index.html)
 
+## Documentation
+
+- https://justdeepit.readthedocs.io/en/latest/index.html
+
+
+## Citation
+
+Sun J, Cao W and Yamanaka T (2022)
+JustDeepIt: Software tool with graphical and character user interfaces for deep learning-based object detection and segmentation in image analysis.
+Front. Plant Sci. 13:964058.
+doi: [10.3389/fpls.2022.964058](https://doi.org/10.3389/fpls.2022.964058)
 
 

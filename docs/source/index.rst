@@ -50,3 +50,8 @@ It may be applicable for image analysis in various disciplines beyond plant scie
 
 
 
+**Citation**: Sun J, Cao W and Yamanaka T (2022) JustDeepIt: Software tool with graphical and character user interfaces for deep learning-based object detection and segmentation in image analysis. Front. Plant Sci. 13:964058. doi: `10.3389/fpls.2022.964058 <https://doi.org/10.3389/fpls.2022.964058>`_
+
+
+
+
