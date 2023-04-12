@@ -7,6 +7,7 @@ import base64
 import hashlib
 import random
 import string
+import pkg_resources
 import xml.etree.ElementTree as ET
 import numpy as np
 import cv2
@@ -819,9 +820,12 @@ class ImageAnnotation:
         
     
     
-    def __put_text(self, img, text, pos=(0, 0),
+    def __put_text_cv(self, img, text, pos=(0, 0),
                    font=cv2.FONT_HERSHEY_SIMPLEX, font_scale=1, font_thickness=2,
                    color=(0, 255, 0), bg_color=(0, 0, 0)):
+        '''
+        Write a text into image with OpenCV methods.
+        '''
         x, y = pos
         text_size, _ = cv2.getTextSize(text, font, font_scale, font_thickness)
         text_w, text_h = text_size
@@ -829,6 +833,33 @@ class ImageAnnotation:
         cv2.putText(img, text, (x + 5, y + text_h + font_scale + 5), font, font_scale, color, font_thickness)
         return img
 
+    
+    def __pil2cv(self, img):
+        img_cv_rgb = np.array(img, dtype = np.uint8)
+        img_cv_bgr = np.array(img)[:, :, ::-1]
+        return img_cv_bgr
+    
+    
+    def __cv2pil(self, img):
+        return PIL.Image.fromarray(img[:, :, ::-1])
+    
+    
+    def __put_text(self, img, text, pos=(0, 0),
+                         font=None, font_scale=28, font_thickness=1,
+                         color=(0, 255, 0), bg_color=(0, 0, 0)):
+        x, y = pos
+        x = x + 5
+        y = y - font_scale - 5
+        if font is None:
+            font = pkg_resources.resource_filename('justdeepit', 'src/font/NotoSans-Medium.ttf')
+        img_pil = self.__cv2pil(img)
+        font = PIL.ImageFont.truetype(font=font, size=font_scale)
+        draw = PIL.ImageDraw.Draw(img_pil)
+        l_, t_, r_, b_ = draw.textbbox((x, y), text, font=font)
+        draw.rectangle((l_ - 5, t_ - 5, r_ + 5, b_ + 5),
+                       fill=color[::-1], outline=color[::-1], width=5)
+        draw.text((x, y), text, font=font, fill=bg_color[::-1])
+        return self.__pil2cv(img_pil)
     
 
     def __get_bg_color(self, col):
