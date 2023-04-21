@@ -72,7 +72,7 @@ class OD:
         
         self.module = None
         self.__architectures = self.__available_architectures()
-        self.__supported_formats = ('COCO', 'Pascal VOC')
+        self.__supported_formats = ('COCO', 'Pascal VOC', 'VoTT')
         self.__image_ext = ['.jpg', '.jpeg', '.png', '.tif', '.tiff']
         
         self.backend = backend
@@ -218,9 +218,9 @@ class OD:
         
         Args:
             image_dpath (str): A path to directory which contains all training images.
-            annotation (str): A path to a file (COCO format) or folder
+            annotation (str): A path to a file (COCO, VoTT format) or folder
                     (Pascal VOC format, each file should have an extension :file:`.xml`).
-            annotation_format (str): Annotation format. COCO or Pascal VOC are supported.
+            annotation_format (str): Annotation format. COCO, VoTT, and Pascal VOC are supported.
             optimizer (str): String to specify optimizer supported by MMDetection.
             scheduler (str): String to specify optimization scheduler.
             batchsize (int): Batch size for each GPU.
@@ -252,6 +252,15 @@ class OD:
                     ann_fpath = os.path.join(annotation, fname + '.xml')
                     if os.path.exists(ann_fpath):
                         anns.append(ImageAnnotation(fpath, ann_fpath))
+            if len(anns) > 0:
+                annotation = os.path.join(self.workspace, 'train_image_annotation.coco.json')
+                anns.format('coco', annotation)
+        elif annotation_format == 'vott':
+            anns = ImageAnnotations()
+            for fpath in glob.glob(os.path.join(image_dpath, '*')):
+                fname, fext = os.path.splitext(os.path.basename(fpath))
+                if fext.lower() in self.__image_ext:
+                    anns.append(ImageAnnotation(fpath, annotation))
             if len(anns) > 0:
                 annotation = os.path.join(self.workspace, 'train_image_annotation.coco.json')
                 anns.format('coco', annotation)

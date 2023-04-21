@@ -470,7 +470,7 @@ $(function(){
                     data: dirtree,
             });
             if (selectType === 'any') {
-                if ($('#module-training-annotation_format').val() === 'COCO') {
+                if ($('#module-training-annotation_format').val() === 'COCO' || $('#module-training-annotation_format').val() === 'VoTT') {
                     selectType = 'file';
                 } else {
                     selectType = 'folder';

@@ -1,5 +1,7 @@
 import os
+import glob
 import pkg_resources
+from justdeepit.utils import ImageAnnotation, ImageAnnotations
 
 class IS:
     """A class to generate model for instance segmentation
@@ -65,7 +67,8 @@ class IS:
         
         self.module = None
         self.__architectures = self.__available_architectures()
-        self.__supported_formats = ('COCO',) #, 'RGB mask')
+        self.__supported_formats = ('COCO', 'VoTT') #, 'RGB mask')
+        self.__image_ext = ['.jpg', '.jpeg', '.png', '.tif', '.tiff']
         
         self.backend = backend
         self.model_arch = model_arch
@@ -211,7 +214,7 @@ class IS:
         Args:
             image_dpath (str): A path to directory which contains all training images.
             annotation (str): A file path to COCO format annotation file.
-            annotation_format (str): Annotation format. Only COCO is supported in the current version.
+            annotation_format (str): Annotation format. COCO or VoTT are supported in the current version.
             optimizer (str): String to specify optimizer/solver supported by MMDetection or Detectron2.
             scheduler (str): String to specify optimization scheduler.
             batchsize (int): Batch size for each GPU.
@@ -227,7 +230,18 @@ class IS:
             >>> model.train('./train_images', './annotations.coco.json', 'COCO')
         """
         annotation_format = self.__norm_format(annotation_format)
-        if annotation_format != 'coco':
+        if annotation_format == 'coco':
+            pass
+        elif annotation_format == 'vott':
+            anns = ImageAnnotations()
+            for fpath in glob.glob(os.path.join(image_dpath, '*')):
+                fname, fext = os.path.splitext(os.path.basename(fpath))
+                if fext.lower() in self.__image_ext:
+                    anns.append(ImageAnnotation(fpath, annotation))
+            if len(anns) > 0:
+                annotation = os.path.join(self.workspace, 'train_image_annotation.coco.json')
+                anns.format('coco', annotation)
+        else:
             raise NotImplementedError('JustDeepIt does not support {} format for training instance segmentation model.'.format(annotation_format))
         
         self.module.train(image_dpath, annotation,

@@ -358,31 +358,41 @@ class ImageAnnotation:
         vott_data = None
         with open(vott, 'r') as jsonfh:
             vott_data = json.load(jsonfh)
+        
+        # find image and annotaiton from the multi-entry VoTT annotation
+        vott_regions = None
+        for vott_image_id, vott_image_meta in vott_data['assets'].items():
+            if vott_image_meta['asset']['name'] == os.path.basename(self.image_path):
+                vott_regions = vott_image_meta['regions']
+                break
 
-        for vott_region in vott_data['regions']:
-            bbox_xy = [[int(np.floor(vott_region['boundingBox']['left'])),
-                        int(np.floor(vott_region['boundingBox']['top']))],
-                       [int(np.floor(vott_region['boundingBox']['left'])) + int(np.floor(vott_region['boundingBox']['width'])),
-                        int(np.floor(vott_region['boundingBox']['top'])) + int(np.floor(vott_region['boundingBox']['height']))]]
-            polygon_xy = [[int(np.floor(p['x'])), int(np.floor(p['y']))] for p in vott_region['points']]
+        if vott_regions is not None:
+            for vott_region in vott_regions:
+                bbox_xy = [[int(np.floor(vott_region['boundingBox']['left'])),
+                            int(np.floor(vott_region['boundingBox']['top']))],
+                           [int(np.floor(vott_region['boundingBox']['left'])) + \
+                                    int(np.floor(vott_region['boundingBox']['width'])),
+                            int(np.floor(vott_region['boundingBox']['top'])) + \
+                                    int(np.floor(vott_region['boundingBox']['height']))]]
+                polygon_xy = [[int(np.floor(p['x'])), int(np.floor(p['y']))] for p in vott_region['points']]
+    
+                bbox_xy = self.__exif_transpose(bbox_xy, self.image.shape[0:2], self.exif_orientation)
+                polygon_xy = self.__exif_transpose(polygon_xy, self.image.shape[0:2], self.exif_orientation)
 
-            bbox_xy = self.__exif_transpose(bbox_xy, self.image.shape[0:2], self.exif_orientation)
-            polygon_xy = self.__exif_transpose(polygon_xy, self.image.shape[0:2], self.exif_orientation)
-
-            if bbox_xy[0][0] > bbox_xy[1][0]:
-                bbox_xy[0][0], bbox_xy[1][0] = bbox_xy[1][0], bbox_xy[0][0]
-            if bbox_xy[0][1] > bbox_xy[1][1]:
-                bbox_xy[0][1], bbox_xy[1][1] = bbox_xy[1][1], bbox_xy[0][1]
+                if bbox_xy[0][0] > bbox_xy[1][0]:
+                    bbox_xy[0][0], bbox_xy[1][0] = bbox_xy[1][0], bbox_xy[0][0]
+                if bbox_xy[0][1] > bbox_xy[1][1]:
+                    bbox_xy[0][1], bbox_xy[1][1] = bbox_xy[1][1], bbox_xy[0][1]
             
-            for vott_tag in vott_region['tags']:
-                region = {
-                    'id' : vott_region['id'] + '_' + vott_tag,
-                    'class': vott_tag,
-                    'bbox': [bbox_xy[0][0], bbox_xy[0][1], bbox_xy[1][0], bbox_xy[1][1]],
-                    'contour' : np.array(polygon_xy),
-                    'score': np.nan,
-                }
-                regions.append(region)
+                for vott_tag in vott_region['tags']:
+                    region = {
+                        'id' : vott_region['id'] + '_' + vott_tag,
+                        'class': vott_tag,
+                        'bbox': [bbox_xy[0][0], bbox_xy[0][1], bbox_xy[1][0], bbox_xy[1][1]],
+                        'contour' : np.array(polygon_xy),
+                        'score': np.nan,
+                    }
+                    regions.append(region)
         
         return regions
     

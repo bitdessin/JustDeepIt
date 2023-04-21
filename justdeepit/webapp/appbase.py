@@ -116,9 +116,16 @@ class AppBase:
         if self.__norm_str(annotation_format) == 'coco':
             with open(annotation_path, 'r') as infh:
                 image_records = json.load(infh)
-                for f in image_records['images']:
-                    if os.path.exists(os.path.join(image_dpath, os.path.basename(f['file_name']))):
-                        images.append(f)
+            for f in image_records['images']:
+                if os.path.exists(os.path.join(image_dpath, os.path.basename(f['file_name']))):
+                    images.append(f)
+        
+        elif self.__norm_str(annotation_format) == 'vott':
+            with open(annotation_path, 'r') as infh:
+                image_records = json.load(infh)
+            for fid, f in image_records['assets'].items():
+                if os.path.exists(os.path.join(image_dpath, os.path.basename(f['asset']['name']))):
+                    images.append(f)
         
         elif (self.__norm_str(annotation_format) == 'mask') or ('voc' in self.__norm_str(annotation_format)):
             fdict = {}
