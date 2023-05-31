@@ -611,6 +611,7 @@ class ImageAnnotation:
                          region['bbox'][2] - region['bbox'][0],
                          region['bbox'][3] - region['bbox'][1]],
                 'area': (region['bbox'][2] - region['bbox'][0]) * (region['bbox'][3] - region['bbox'][1]),
+                'score': region['score'],
                 'iscrowd': 0
             }
             if 'contour' in region and region['contour'] is not None:
