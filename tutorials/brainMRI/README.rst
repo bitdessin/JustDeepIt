@@ -37,7 +37,7 @@ or automatically using the following shell scripts:
 
 .. code-block:: sh
 
-    git clone https://github.com/jsun/JustDeepIt
+    git clone https://github.com/biunit/JustDeepIt
     cd JustDeepIt/tutorials/brainMRI
 
     # download dataset from https://www.kaggle.com/mateuszbuda/lgg-mri-segmentation

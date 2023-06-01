@@ -54,8 +54,8 @@ using the following shell scripts:
 
 .. code-block:: sh
 
-    # download tutorials/SugarBeets2016 or clone JustDeepIt repository from https://github.com/jsun/JustDeepIt
-    git clone https://github.com/jsun/JustDeepIt
+    # download tutorials/SugarBeets2016 or clone JustDeepIt repository from https://github.com/biunit/JustDeepIt
+    git clone https://github.com/biunit/JustDeepIt
     cd JustDeepIt/tutorials/SugarBeets2016
 
     # download image data

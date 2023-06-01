@@ -50,8 +50,8 @@ The above dataset preparation can be performed manually or automatically using t
 
 .. code-block:: sh
 
-    # download tutorials/GWHD or clone JustDeepIt repository from https://github.com/jsun/JustDeepIt
-    git clone https://github.com/jsun/JustDeepIt
+    # download tutorials/GWHD or clone JustDeepIt repository from https://github.com/biunit/JustDeepIt
+    git clone https://github.com/biunit/JustDeepIt
     cd JustDeepIt/tutorials/GWHD
 
     # download image data (train.zip and test.zip) from http://www.global-wheat.com/ manually

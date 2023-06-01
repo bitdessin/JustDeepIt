@@ -31,7 +31,7 @@ Note that, :file:`data/images` has already contained some images that were downl
 
 .. code-block:: sh
     
-    git clone https://github.com/jsun/JustDeepIt
+    git clone https://github.com/biunit/JustDeepIt
     cd JustDeepIt/tutorials/AIPI
     
     ls data/images

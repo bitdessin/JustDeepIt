@@ -45,8 +45,8 @@ The above dataset preparation can be performed manually or automatically using t
 
 .. code-block:: sh
 
-    # download tutorials/PPD2013 or clone JustDeepIt repository from https://github.com/jsun/JustDeepIt
-    git clone https://github.com/jsun/JustDeepIt
+    # download tutorials/PPD2013 or clone JustDeepIt repository from https://github.com/biunit/JustDeepIt
+    git clone https://github.com/biunit/JustDeepIt
     cd JustDeepIt/tutorials/PPD2013
 
     # download dataset (Plant_Phenotyping_Datasets.zip) from http://www.plant-phenotyping.org/datasets
