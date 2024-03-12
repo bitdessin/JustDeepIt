@@ -2,6 +2,7 @@ import os
 import glob
 import pkg_resources
 from justdeepit.utils import ImageAnnotation, ImageAnnotations
+from justdeepit.models.utils.mmdetbase import MMDetBase
 
 
 class OD:
@@ -9,7 +10,7 @@ class OD:
     
     The :class:`OD <justdeepit.models.OD>` class is used for generating
     deep neural network (DNN) architectures (i.e., models) for object detection
-    by internally calling the MMDetection or Detectron2 library.
+    by internally calling the MMDetection library.
     
     User can specify DNN architectures using the ``model_arch`` or ``model_config``
     argument. If the ``model_arch`` is specified and ``model_config`` is ``None``,
@@ -21,11 +22,6 @@ class OD:
     the :class:`OD <justdeepit.models.OD>` class generates a DNN architecture
     following the configuration specified with the ``model_config``,
     regardless of whether the ``model_arch`` is specified.
-    
-    The backend for generating DNN architectures can be specified to the MMDetection
-    or Detectron2. Currently, the MMDetection supports more architectures than Detectron2
-    and model training under GPU environments. Detectron2 can train architectures
-    fast and supports CPU and GPU environments.
 
 
     Args:
@@ -42,131 +38,81 @@ class OD:
         workspace (str): A path to workspace directory. Log information and checkpoints of model
                      training will be stored in this directory.
                      If ``None``, then create temporary directory in the current directory.
-        backend (str): Specify the backend to build object detection mode.
-                   ``detectron2`` or ``mmdetection`` can be speficied.
     
     Examples:
         >>> from justdeepit.models import OD
         >>> 
-        >>> # initialize Faster RCNN with random weights using MMDetection backend
-        >>> model = OD('./class_label.txt', model_arch='fasterrcnn', backend='mmdetection')
+        >>> # initialize Faster RCNN with random weights
+        >>> model = OD('./class_label.txt', model_arch='fasterrcnn')
         >>> 
-        >>> # initialize Faster RCNN with randomm weights using Detectron2 backend
-        >>> model = OD('./class_label.txt', model_arch='fasterrcnn', backend='detectron2')
-        >>> 
-        >>> # initialize RetinaNet with trained weights using MMDetection backend
-        >>> model = OD('./class_label.txt', model_arch='retinanet', mdoel_weight='trained_weight.pth',
-        >>>            backend='mmdetection')
-        >>> 
-        >>> # initialize RetinaNet with trained weights using Detectron2 backend
-        >>> model = OD('./class_label.txt', model_arch='retinanet', model_weight='trained_weight.pth',
-        >>>            backend='detectron2')
+        >>> # initialize RetinaNet with trained weights
+        >>> model = OD('./class_label.txt', model_arch='retinanet', mdoel_weight='trained_weight.pth')
         >>> 
     """  
     
     
     
-    def __init__(self, class_label=None,
-                 model_arch=None, model_config=None, model_weight=None,
-                 workspace=None, backend='mmdetection'):
+    def __init__(self,
+                 class_label=None,
+                 model_arch=None,
+                 model_config=None,
+                 model_weight=None,
+                 workspace=None):
         
         self.module = None
-        self.__architectures = self.__available_architectures()
+        self.__architectures = [['Faster R-CNN', 'faster-rcnn_r101_fpn_ms-3x_coco'],
+                ['RetinaNet', 'retinanet_r101_fpn_ms-640-800-3x_coco'],
+                ['YOLOv3', 'yolov3_d53_mstrain-608_273e_coco'],
+                ['YOLO-F', 'yolof_r50_c5_8x8_1x_coco'],
+                ['SSD', 'ssd512_coco'],
+                ['FCOS', 'fcos_r101-caffe_fpn_gn-head_ms-640-800-2x_coco'],
+                ['custom', None]]
         self.__supported_formats = ('COCO', 'Pascal VOC', 'VoTT')
         self.__image_ext = ['.jpg', '.jpeg', '.png', '.tif', '.tiff']
-        
-        self.backend = backend
+
         self.model_arch = model_arch
         if workspace is None:
             workspace = os.path.abspath(os.getcwd())
         self.workspace = workspace
-        self.module = self.__init_module(class_label, model_arch, model_config, model_weight, workspace, backend)
+        self.module = self.__init_module(class_label, model_arch, model_config, model_weight, workspace)
     
 
-    def __available_architectures(self):
-        return {
-            'mmdetection': [
-                ['Faster R-CNN',  'faster_rcnn_r101_fpn_mstrain_3x_coco'],
-                ['Cascade R-CNN', 'cascade_rcnn_x101_64x4d_fpn_20e_coco'],
-                ['Dynamic R-CNN', 'dynamic_rcnn_r50_fpn_1x_coco'],
-                ['RetinaNet',     'retinanet_r101_fpn_mstrain_640-800_3x_coco'],
-                ['YOLOv3',        'yolov3_d53_mstrain-608_273e_coco'],
-                ['YOLO-F',        'yolof_r50_c5_8x8_1x_coco'],
-                ['SSD',           'ssd512_coco'],
-                ['FCOS',          'fcos_r101_caffe_fpn_gn-head_mstrain_640-800_2x_coco'],
-                ['custom',       None],
-            ],
-            'detectron2': [
-                ['Faster R-CNN', 'COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml'],
-                ['RetinaNet',    'COCO-Detection/retinanet_R_101_FPN_3x.yaml'],
-                ['custom',      None]
-            ]
-        }
         
         
-    def __init_module(self, class_label, model_arch, model_config, model_weight, workspace, backend):
+    def __init_module(self, class_label, model_arch, model_config, model_weight, workspace):
         if model_arch is None:
             return None
         
-        backend_ = self.__norm_backend(backend)
         model_arch_ = self.__norm_arch(model_arch)
         
         if model_config is None:
             # check model arch
-            if model_arch_ not in [self.__norm_arch(_[0]) for _ in self.__architectures[backend_]]:
-                NotImplementedError('JustDeepIt does not support {} archtecture when {} is specified as a backend.'.format(model_arch, backend))
-            
+            if model_arch_ not in [self.__norm_arch(_[0]) for _ in self.__architectures]:
+                NotImplementedError('JustDeepIt does not support {} archtecture.'.format(model_arch))
             # set model_config according to model_arch
-            for available_arch, available_config in self.__architectures[backend_]:
+            for available_arch, available_config in self.__architectures:
                 if model_arch_ == self.__norm_arch(available_arch):
                     if model_arch_ == 'custom':
-                        if model_config is None or  model_config == '':
+                        if model_config is None or model_config == '':
                             ValueError('The argument `model_config` cannot be `None` or empty when the user customized architecture is set.')
                     else:
                         model_config = available_config
                     break
         
         # init module
-        module = None
-        if backend_ == 'mmdetection':
-            from justdeepit.models.utils.mmdetbase import MMDetBase
-            module = MMDetBase(class_label, model_arch, model_config, model_weight, workspace)
-        elif backend_ == 'detectron2':
-            from justdeepit.models.utils.detectron2base import DetectronBase
-            module = DetectronBase(class_label, model_arch, model_config, model_weight, workspace)
-        
-        return module
+        return MMDetBase(class_label, model_arch, model_config, model_weight, 'od', workspace)
     
     
     
     def __norm_arch(self, arch):
-        return arch.replace('-', '').replace(' ', '').lower()
+        return arch.replace('-', '').replace(' ', '').lower()    
     
     
-    def __norm_backend(self, backend):
-        backend_ = backend.lower()
-        if backend in ['mm', 'mmdet', 'mmdetection']:
-            backend_ = 'mmdetection'
-        elif backend_ in ['d2', 'detectron', 'detectron2']:
-            backend_ = 'detectron2'
-        else:
-            NotImplementedError('JustDeepIt does not support `{}` as a backend.'.format(backend))
-        return backend_
-    
-    
-    
-    def available_architectures(self, backend):
+    def available_architectures(self):
         """Display the pre-trained architectures for object detection
         
         This method is used to display the DNN architectures pre-trained
         in JustDeepIt for object detection.
-        As the different backend supports the
-        different architectures, this method requires user to specify
-        the backend.
-        
-        Args:
-            backend (str): Specify the backend.
-                           ``detectron2`` or ``mmdetection`` can be speficied.
         
         Returns:
             A tuple of the supported architecture.
@@ -175,10 +121,10 @@ class OD:
             >>> from justdeepit.models import OD
             >>> 
             >>> model = OD()
-            >>> model.available_architectures('mmdetection')
+            >>> model.available_architectures()
         
         """
-        return tuple([_[0] for _ in self.__architectures[self.__norm_backend(backend)]])
+        return tuple([_[0] for _ in self.__architectures])
         
     
     
@@ -207,72 +153,100 @@ class OD:
         return x
     
     
-    def train(self, image_dpath, annotation, annotation_format='COCO',
-              optimizer=None, scheduler=None,
-              batchsize=8, epoch=100, score_cutoff=0.5, cpu=4, gpu=1):
+    def train(self,
+              train_datast,
+              valid_dataset=None,
+              test_dataset=None,
+              optimizer=None,
+              scheduler=None,
+              score_cutoff=0.5,
+              batchsize=8,
+              epoch=100,
+              cpu=4,
+              gpu=1):
         """Train model
         
         The :func:`train <justdeepit.models.OD.train>` is used for training a model.
-        The training images (``image_dpath``), annotation files (``annotation``),
-        and annotation format (``annotation_format``) must be specified.
         
         Args:
-            image_dpath (str): A path to directory which contains all training images.
-            annotation (str): A path to a file (COCO, VoTT format) or folder
-                    (Pascal VOC format, each file should have an extension :file:`.xml`).
-            annotation_format (str): Annotation format. COCO, VoTT, and Pascal VOC are supported.
+            train_dataset (dict): A dictionary contains information of training dataset.
+                                  This dictioanry contains three keys, `images` represents
+                                  a path to directory which contains all training images,
+                                  `annotations` represents a path to a file
+                                  (COCO, VoTT format) or folder (Pascal VOC format,
+                                  each file should have an extension :file:`.xml`), and
+                                  `format` represents an annotation format.
+            valid_dataset (dict): A dictionary contains information of validation dataset.
+            test_dataset (dict): A dictionary contains information of test dataset.
             optimizer (str): String to specify optimizer supported by MMDetection.
             scheduler (str): String to specify optimization scheduler.
+            score_cutoff (float): Cutoff of score for object detection.
             batchsize (int): Batch size for each GPU.
             epoch (int): Epoch.
-            score_cutoff (float): Cutoff of score for object detection.
             cpu (int): Number of workers for pre-prociessing images for each GPU.
             gpu (int): Number of GPUs for model training.
         
         Examples:
             >>> from justdeepit.models import OD
             >>> 
-            >>> model = OD('./class_label.txt', model_arch='fasterrcnn', backend='mmdetection')
-            >>> model.train('./train_images', './annotations.coco.json', 'COCO')
+            >>> model = OD('./class_label.txt', model_arch='fasterrcnn')
+            >>>
+            >>> train_dataset = {'images': './train_images',
+            >>>                  'annotations': './train_annotations.json',
+            >>>                  'format': 'coco'}
+            >>>
+            >>> model.train(train_dataset)
             >>> 
             >>> # set optimizer and scheduler
-            >>> model.train('./train_images', './annotations.coco.json', 'COCO',
+            >>> model.train(train_dataset,
             >>>             optimizer='dict(type="Adam", lr=0.0003, weight_decay=0.0001)',
             >>>             scheduler='dict(policy="CosineAnnealing", warmup="linear", warmup_iters=1000, warmup_ratio=1.0 / 10, min_lr_ratio=1e-5)')
             >>> 
         """
-        annotation_format = self.__norm_format(annotation_format)
-        if annotation_format == 'coco':
-            pass
-        elif annotation_format == 'voc':
-            anns = ImageAnnotations()
-            for fpath in glob.glob(os.path.join(image_dpath, '*')):
-                fname, fext = os.path.splitext(os.path.basename(fpath))
-                if fext.lower() in self.__image_ext:
-                    ann_fpath = os.path.join(annotation, fname + '.xml')
-                    if os.path.exists(ann_fpath):
-                        anns.append(ImageAnnotation(fpath, ann_fpath))
-            if len(anns) > 0:
-                annotation = os.path.join(self.workspace, 'train_image_annotation.coco.json')
-                anns.format('coco', annotation)
-        elif annotation_format == 'vott':
-            anns = ImageAnnotations()
-            for fpath in glob.glob(os.path.join(image_dpath, '*')):
-                fname, fext = os.path.splitext(os.path.basename(fpath))
-                if fext.lower() in self.__image_ext:
-                    anns.append(ImageAnnotation(fpath, annotation))
-            if len(anns) > 0:
-                annotation = os.path.join(self.workspace, 'train_image_annotation.coco.json')
-                anns.format('coco', annotation)
-        else:
-            raise NotImplementedError('JustDeepIt does not support {} format for training object detection model.'.format(annotation_format))
-        
-        self.module.train(image_dpath, annotation,
-                          optimizer, scheduler,
-                          batchsize, epoch, score_cutoff,
+        train_dataset = self.__convert_dataset(train_datast)
+        valid_dataset = self.__convert_dataset(valid_dataset)
+        test_dataset = self.__convert_dataset(test_dataset)
+
+        self.module.train(train_datast, valid_dataset, test_dataset,
+                          optimizer, scheduler, score_cutoff,
+                          batchsize, epoch,
                           cpu=cpu, gpu=gpu)
     
     
+    def __convert_dataset(self, data_dict):
+        if data_dict is None:
+            return None
+        
+        data_fmt = self.__norm_format(data_dict['format'])
+
+        if data_fmt == 'coco':
+            pass
+        elif data_fmt == 'voc':
+            anns = ImageAnnotations()
+            for fpath in glob.glob(os.path.join(data_dict['images'], '*')):
+                fname, fext = os.path.splitext(os.path.basename(fpath))
+                if fext.lower() in self.__image_ext:
+                    ann_fpath = os.path.join(data_dict['annotations'], fname + '.xml')
+                    if os.path.exists(ann_fpath):
+                        anns.append(ImageAnnotation(fpath, ann_fpath))
+            if len(anns) > 0:
+                data_dict['annotations'] = os.path.join(self.workspace, 'train_image_annotation.coco.json')
+                anns.format('coco', data_dict['annotations'])
+        elif data_fmt == 'vott':
+            anns = ImageAnnotations()
+            for fpath in glob.glob(os.path.join(data_dict['images'], '*')):
+                fname, fext = os.path.splitext(os.path.basename(fpath))
+                if fext.lower() in self.__image_ext:
+                    anns.append(ImageAnnotation(fpath, data_dict['annotations']))
+            if len(anns) > 0:
+                data_dict['annotations'] = os.path.join(self.workspace, 'train_image_annotation.coco.json')
+                anns.format('coco', data_dict['annotations'])
+        else:
+            raise NotImplementedError('JustDeepIt does not support {} format for training object detection model.'.format(data_fmt))
+
+        return data_dict
+
+
     
     def save(self, weight_fpath, config_fpath=None):
         '''Save the trained model
@@ -335,10 +309,3 @@ class OD:
         '''
         
         return self.module.inference(images, score_cutoff, batchsize, cpu, gpu)
-    
-    
-
-
-
-
-

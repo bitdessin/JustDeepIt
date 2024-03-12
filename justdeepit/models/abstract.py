@@ -17,3 +17,8 @@ class ModuleTemplate(metaclass = ABCMeta):
         pass
 
 
+
+class JDIError(Exception):
+    pass
+
+

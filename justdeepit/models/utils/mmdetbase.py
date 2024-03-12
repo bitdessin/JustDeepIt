@@ -1,5 +1,4 @@
 import os
-import datetime
 import shutil
 import json
 import glob
@@ -7,50 +6,65 @@ import math
 import tqdm
 import tempfile
 import logging
-import time
+import datetime
 import numpy as np
 import skimage
 import skimage.measure
 import PIL
 import torch
 import torch.multiprocessing
-from justdeepit.models.abstract import ModuleTemplate
-from justdeepit.utils import ImageAnnotation, ImageAnnotations
-
+from justdeepit.models.abstract import ModuleTemplate, JDIError
+from justdeepit.utils import ImageAnnotation, ImageAnnotations, load_images
+from justdeepit.models.utils.data import DataClass, DataPipeline, DataLoader
 
 logger = logging.getLogger(__name__)
 
 try:
     import mim
     import mmcv
-    #import mmcv.parallel
     import mmdet
     import mmcv.ops
     import mmdet.utils
-    import mmcv.runner
     import mmdet.apis
     import mmdet.models
     import mmdet.datasets
-    import mmdet.datasets.pipelines
+    import mmengine.config
+    import mmengine.registry
+    import mmengine.runner
 except ImportError:
-    msg = 'JustDeepIt requires mmdetection library to build models. Make sure MMDetection and the related packages (mmcv-full, mmdetection, openmim, mmengine) have been installed already.'
+    msg = ('JustDeepIt requires the installation of '
+           'the following Python packages:\n'
+           '     - mmcv>=2.0.0\n'
+           '     - mmdet>=3.0.0\n'
+           '     - mmengine>=0.7.3\n'
+           'to build detection/segmentation models. '
+           'Please ensure that these packages are '
+           'already installed with the correct versions.\n')
     logger.error(msg)
-    raise ImportError(msg)
+    raise JDIError(msg)
+
 
 
 
 
 class MMDetBase(ModuleTemplate):
-
-    def __init__(self, class_labels=None, model_arch=None, model_config=None, model_weight=None, workspace=None, seed=None):
+    
+    
+    def __init__(self,
+                 class_labels=None,
+                 model_arch=None,
+                 model_config=None,
+                 model_weight=None,
+                 model_class=None,
+                 workspace=None,
+                 seed=None):
         
-        # model
+        # model settings
         self.model_arch = model_arch
-        self.trainer  = None
-        self.detector = None
-        
-        # config
-        self.cfg = self.__get_config(model_config, model_weight)
+        self.class_labels = DataClass(class_labels)
+        self.model_class = model_class
+        self.cfg_fpath = model_config
+        self.cfg = self.__set_config(model_config, model_weight, self.class_labels.class_labels)
         
         # workspace
         self.tempd = None
@@ -60,68 +74,62 @@ class MMDetBase(ModuleTemplate):
         else:
             self.workspace = workspace
         self.cfg.work_dir = os.path.abspath(self.workspace)
-        logger.info('Workspace for MMDetection-based model is set at `{}`.'.format(self.workspace))
+        logger.info(f'The workspace is set to `{self.workspace}`. '
+                    f'Please locate the intermediate and final results '
+                    f'within this workspace.')
         
-        # class labels
-        self.class_labels = self.__parse_class_labels(class_labels)
-        self.cfg = self.__set_class_labels(self.cfg, self.class_labels)
-
-        # setup time stmp
-        self.timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-        self.log_file = os.path.join(self.cfg.work_dir, '{}.log'.format(self.timestamp))
-        self.logger = mmdet.utils.get_root_logger(log_file=self.log_file, log_level=self.cfg.log_level)
-
         # random seed
         if seed is None:
             seed = int(datetime.datetime.utcnow().timestamp())
         self.cfg.seed = seed
-        
-        # create metadata
-        meta = dict()
-        meta['env_info'] = '\n'.join([(f'{k}: {v}') for k, v in mmdet.utils.collect_env().items()])
-        meta['config'] = self.cfg.pretty_text
-        meta['exp_name'] = os.path.basename(model_config)
-        meta['seed'] = seed
-        self.meta = meta
-
-
+    
+    
 
     def __del__(self):
         try:
             if self.tempd is not None:
                 self.tempd.cleanup()
         except:
-            pass
-
+            logger.info(f'The temporary directory (`{self.workspace}`) created by JustDeepIt '
+                        f'cannot be removed automatically. Please remove it manually.')
     
-    def __get_config(self, model_config, model_weight):
-        if model_config is None or model_config == '':
-            raise ValueError('Configuration file for MMDetection cannot be empty.')
-        
+    
+
+    def __set_config(self, model_config, model_weight, class_labels):
         cfg = None
+        if model_config is None or model_config == '':
+            raise JDIError(f'JustDeepIt requires a configuration file to build models. '
+                           f'Set up a path to a configuration file or '
+                           f'run `mim search mmcls --valid-config` to set the pre-defined configuration.')
         try:
+            # if config does not exist, download the config from MMLab.
             if not os.path.exists(model_config):
-                # if the given path does not exist, set the chkpoint from mmdet Lab as a initial params
+                cache_dpath = os.path.join(os.path.expanduser('~'), '.cache', 'mim')
                 if os.path.splitext(model_config)[1] in ['.py', '.yaml']:
                     model_config = os.path.splitext(model_config)[0]
-                model_chkpoint = mim.commands.download(package='mmdet', configs=[model_config])[0]
-                model_config = os.path.join(os.path.expanduser('~'), '.cache', 'mim', model_config + '.py')
-                model_chkpoint =  os.path.join(os.path.expanduser('~'), '.cache', 'mim', model_chkpoint)
-            cfg = mmcv.utils.Config.fromfile(model_config)
-        
+                model_chkpoint = mim.commands.download(package='mmdet',
+                                                       configs=[model_config])[0]
+                model_config = os.path.join(cache_dpath, model_config + '.py')
+                model_chkpoint =  os.path.join(cache_dpath, model_chkpoint)
+            cfg = mmengine.config.Config.fromfile(model_config)
+            
+            # if weights not given, download the weights from MMLab
             if (model_weight is None) or (not os.path.exists(model_weight)):
                 model_weight = model_chkpoint
             cfg.load_from = model_weight
-            
+            cfg.launcher = 'none'
+            cfg.resume = False
+
+            # update class labels
+            cfg = self.__set_class_labels(cfg, class_labels)
         except:
-            raise FileNotFoundError('The path or name of the configuration file `{}` is incorrect. JustDeepIt cannot find or download.'.format(model_config))
-            
+            raise JDIError('JustDeepIt cannot find or download the configuration file.'
+                           'Please check the file path or the internet connection and try agian.')
+        
         return  cfg
         
     
-    
-    
-    
+
     def __set_class_labels(self, cfg, class_labels):
         def __set_cl(cfg, class_labels):
             for cfg_key in cfg:
@@ -137,10 +145,9 @@ class MMDetBase(ModuleTemplate):
                     elif cfg_key == 'num_classes' or cfg_key == 'num_things_classes':
                         cfg[cfg_key] = len(class_labels)
             return cfg
-        cfg.merge_from_dict(dict(classes=class_labels,
-                                 num_classes=len(class_labels),
-                                 num_things_classes=len(class_labels)))
-        cfg.data = __set_cl(cfg.data, class_labels)
+        
+        cfg.data_root = ''
+        cfg.merge_from_dict(dict(metainfo = dict(classes=class_labels)))
         cfg.model = __set_cl(cfg.model, class_labels)
         # for RetinaNet: ResNet: init_cfg and pretrained cannot be specified at the same time
         if 'pretrained' in cfg.model:
@@ -148,59 +155,57 @@ class MMDetBase(ModuleTemplate):
         return cfg
     
 
-    def __parse_class_labels(self, class_labels):
-        cl = None
-        if class_labels is None:
-            raise ValueError('`class_labels` is required to build model.')
+
+    def train(self,
+              train_dataset,
+              valid_dataset=None,
+              test_dataset=None,
+              optimizer=None,
+              scheduler=None,
+              score_cutoff=0.5,
+              batchsize=8,
+              epoch=100,
+              cpu=8,
+              gpu=1):
+        
+        # CPU/GPUs
+        self.__set_device(gpu)
+
+        # training params
+        self.__set_optimizer(optimizer)
+        self.__set_scheduler(scheduler)
+       
+        # datasets
+        if self.model_class == 'od':
+            dataloader = DataLoader(self.cfg,
+                                    train_dataset, valid_dataset, test_dataset,
+                                    batchsize, epoch, cpu,
+                                    with_bbox=True, with_mask=False)
+        elif self.model_class == 'is':
+            dataloader = DataLoader(self.cfg,
+                                    train_dataset, valid_dataset, test_dataset,
+                                    batchsize, epoch, cpu,
+                                    with_bbox=True, with_mask=True)
         else:
-            if isinstance(class_labels, list):
-                cl = class_labels
-            elif isinstance(class_labels, str):
-                cl = []
-                with open(class_labels, 'r') as infh:
-                    for cl_ in infh:
-                        cl.append(cl_.replace('\n', ''))
-            else:
-                raise ValueError('Unsupported data type of `class_labels`. Set a path to a file which contains class labels or set a list of class labels.')
-        return cl
+            raise ValueError('The model class is not supported.')
+        self.cfg.merge_from_dict(dataloader.cfg)
+        self.cfg.default_hooks.checkpoint.interval = 20
 
-
-
-    def __get_device(self, gpu=1):
-        device = 'cpu'
-        if gpu > 0:
-            if torch.cuda.is_available():
-                device = 'cuda'
-        return device 
+        # training
+        runner = mmengine.runner.Runner.from_cfg(self.cfg)
+        runner.train()
     
     
     
-    def __find_free_port(self):
-        import socket
-        from contextlib import closing
-        with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
-            s.bind(('', 0))
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            return str(s.getsockname()[1])
-
-
-
-    def __setup_process_group(self, local_rank,  world_size, backend='nccl', master_addr='127.0.0.1', master_port='29500'):
-        os.environ['MASTER_ADDR'] = master_addr
-        os.environ['MASTER_PORT'] = master_port
-        torch.cuda.set_device(local_rank)
-        torch.distributed.init_process_group(backend, init_method='env://',
-                                             world_size=world_size, rank=local_rank)
-
-
+    def __set_device(self, gpu=0):
+        if gpu != 0 and gpu != 1:
+            raise JDIError('The current JustDeepIt does not support multiple GPUs for trianing. '
+                           'Set `gpu` to 0 or 1.')
+        gpu = gpu if torch.cuda.is_available() else 0
+        gpu = torch.cuda.device_count() if torch.cuda.device_count() < gpu else gpu
+        self.cfg.device = 'cuda:0' if gpu > 0 else 'cpu'
     
-    def __generate_config(self, input_fpath, output_fpath=None):
-        cfg = mmcv.Config.fromfile(input_fpath)
-        if output_fpath is None:
-            return cfg
-        else:
-            cfg.dump(output_fpath)
-    
+
     
     def __set_optimizer(self, optimizer):
         if optimizer is not None and optimizer.replace(' ', '') != '':
@@ -209,268 +214,112 @@ class MMDetBase(ModuleTemplate):
             self.cfg.optimizer = eval(optimizer)
     
     
+
     def __set_scheduler(self, scheduler):
         if scheduler is not None and scheduler.replace(' ', '') != '':
             if scheduler[0] != '{' or scheduler[0:4] != 'dict':
                 scheduler = 'dict(' + scheduler + ')'
             self.cfg.scheduler = eval(scheduler)
-       
-    
-    def train(self, image_dpath, annotation,
-              optimizer=None, scheduler=None,
-              batchsize=8, epoch=100, score_cutoff=0.5, cpu=4, gpu=1):
-        
-        if not torch.cuda.is_available():
-            gpu = 0
-        if torch.cuda.device_count() < gpu:
-            gpu = torch.cuda.device_count()
-        
-        if gpu == 0:
-            self.cfg.device = 'cpu'
-        else:
-            self.cfg.device = 'cuda'
-        
-        if gpu == 0:
-            raise EnvironmentError('CPU training is not supported by MMDetection. Make sure the system can recognize GPU and set gpu more than zero.')
-        elif gpu == 1:
-            self.__train(None, image_dpath, annotation,
-                         optimizer, scheduler,
-                         batchsize, epoch, score_cutoff, cpu, gpu)
-        elif gpu > 1:
-            raise EnvironmentError('The current JustDeepIt does not support multiple GPUs for trianing.')
-            
-            dist_avail = torch.distributed.is_available()
-            nccl_avail = torch.distributed.is_nccl_available()
-            if not dist_avail:
-                raise ValueError('Torch version does not support distributed computing.')
-            if not nccl_avail:
-                raise ValueError('Backend NCCL for multiGPUs computing is not available.')
-        
-            if torch.distributed.is_initialized():
-                torch.distributed.destroy_process_group()
-            s_per_gpu = 2
-            w_per_gpu = 1
-            if int(batchsize / gpu) > s_per_gpu:
-                s_per_gpu = int(batchsize / gpu)
-            if int(cpu / gpu) > w_per_gpu:
-                w_per_gpu = int(cpu / gpu)
-
-            master_addr = '127.0.0.1'
-            master_port = self.__find_free_port()
-            verbose = False
-            _stop_event = torch.multiprocessing.Event()
-
-            try:
-                torch.multiprocessing.spawn(self.__train,
-                         args=(image_dpath, annotation,
-                               s_per_gpu, epoch, lr, score_cutoff, w_per_gpu, gpu,
-                               True, master_addr, master_port),
-                         nprocs=gpu)
-            except KeyboardInterrupt:
-                try:
-                    torch.distributed.destroy_process_group()
-                except KeyboardInterrupt:
-                    _stop_event.set()
-                    os.system("kill $(ps aux | grep multiprocessing.spawn | grep -v grep | awk '{print $2}')")
-
-        else:
-            raise EnvironmentError('Set the number of GPU correctly.')
     
 
 
-    def __train(self, rank, image_dpath, annotation,
-                optimizer, scheduler,
-                batchsize, epoch, score_cutoff, cpu, gpu,
-                distributed=False, master_addr='127.0.0.1', master_port='29555'):
-        self.cfg.gpu_ids = range(gpu)
-        if gpu > 1:
-            self.__setup_process_group(rank, gpu, backend='nccl', master_addr=master_addr, master_port=master_port)
-        
-        train_cfg = dict(
-            dataset_type = 'CocoDataset',
-            classes = self.class_labels,
-            data = dict(
-                samples_per_gpu = batchsize,
-                workers_per_gpu = cpu,
-                train = dict(
-                    type = 'RepeatDataset',
-                    times = 1,
-                    dataset = dict(
-                        type = 'CocoDataset',
-                        classes = self.class_labels,
-                        img_prefix = image_dpath,
-                        ann_file = annotation,
-                        pipeline = self.cfg.train_pipeline))),
-            checkpoint_config = dict(interval = 100))
-        
-        
-        self.cfg.merge_from_dict(train_cfg)
-        self.cfg.runner = dict(type='EpochBasedRunner', max_epochs=epoch)
-        self.cfg.total_epochs = epoch
-        self.__set_optimizer(optimizer)
-        self.__set_scheduler(scheduler)
-        
-        datasets = [mmdet.datasets.build_dataset(self.cfg.data.train)]
-        model = mmdet.models.build_detector(self.cfg.model)
-        
-        if self.cfg.load_from is not None:
-            checkpoint = mmcv.runner.load_checkpoint(model, self.cfg.load_from, map_location='cpu')
-        else:
-            model.init_weights()
-        model.CLASSES = self.class_labels
-        model.train()
-        mmdet.apis.train_detector(model, datasets, self.cfg, distributed=distributed, validate=False,
-                                  timestamp=self.timestamp, meta=self.meta)
+    def save(self, weight_fpath, config_fpath=None):
+        # weight
+        if not weight_fpath.endswith('.pth'):
+            weight_fpath + '.pth'
+        with open(os.path.join(self.cfg.work_dir, 'last_checkpoint')) as chkf:
+            last_chk = chkf.readline().strip()
+            shutil.copy2(last_chk, weight_fpath)
+        # config
+        if config_fpath is None:
+            config_fpath = os.path.splitext(weight_fpath)[0] + '.py'
+        self.cfg.dump(config_fpath)
 
 
-    
-    
-    def inference(self, image_path, score_cutoff=0.5, batchsize=8, cpu=4, gpu=1):
+
+    def inference(self,
+                  images,
+                  score_cutoff=0.5,
+                  batchsize=8,
+                  cpu=4,
+                  gpu=1):
         
-        if not torch.cuda.is_available():
-            gpu = 0
-        if torch.cuda.device_count() < gpu:
-            gpu = torch.cuda.device_count()
+        self.__set_device(gpu)
         
-        if gpu == 0:
-            self.cfg.device = 'cpu'
-        else:
-            self.cfg.device = 'cuda'
-          
-        images_fpath = []
-        if isinstance(image_path, list):
-            images_fpath = image_path
-        elif os.path.isfile(image_path):
-            images_fpath = [image_path]
-        else:
-            for f in glob.glob(os.path.join(image_path, '*')):
-                if os.path.splitext(f)[1].lower() in ['.jpg', '.png', '.tiff']:
-                    images_fpath.append(f)
+        # load images for inference
+        target_images = load_images(images)
+        assert len(target_images) > 0, 'No images found in {}'.format(images)
         
-        #test_cfg = dict(
-        #    classes = self.class_labels,
-        #    data = dict(
-        #        samples_per_gpu = batchsize,
-        #        workers_per_gpu = cpu,
-        #))
-        #self.cfg.merge_from_dict(test_cfg)
+        # set params
+        pipeline = DataPipeline()
+        self.cfg.merge_from_dict(
+            dict(test_dataloader=dict(
+                _delete_=True,
+                batch_size=1,
+                num_workers=cpu,
+                persistent_workers=True,
+                drop_last=False,
+                sampler=dict(type='DefaultSampler', shuffle=False),
+                dataset=dict(
+                    type='CocoDataset',
+                    pipeline = pipeline.inference,
+                    metainfo=self.cfg.metainfo))))
+
+
+        # load model
+        model = mmdet.apis.init_detector(self.cfg,
+                                         self.cfg.load_from,
+                                         device=self.cfg.device)
         
-        # build model for inference
-        model = None
-        if self.detector is not None:
-            model = self.detector
-        else:
-            self.cfg.model.pretrained = None
-            self.cfg.model.train_cfg = None
-            model = mmdet.models.build_detector(self.cfg.model)
-            checkpoint = mmcv.runner.load_checkpoint(model, self.cfg.load_from, map_location='cpu')
-            model.CLASSES = self.class_labels
-            model.cfg = self.cfg
-            model.to(self.__get_device(gpu))
-            model.eval()
-            self.detector = model
+        # inference
+        outputs = mmdet.apis.inference_detector(model, target_images)
+
+        # format
+        outputs_fmt = []
+        for target_image, output in zip(target_images, outputs):
+            outputs_fmt.append(
+                ImageAnnotation(target_image,
+                                self.__format_annotation(output,
+                                                         score_cutoff)))
         
-        self.cfg.data.test.pipeline[0].type = 'LoadImageFromFile'
-        self.cfg.data.test.pipeline = mmdet.datasets.replace_ImageToTensor(self.cfg.data.test.pipeline)
-        test_pipeline = mmdet.datasets.pipelines.Compose(self.cfg.data.test.pipeline)
-        
-        # mini-batch inferences
-        outputs = []
-        for batch_id in tqdm.tqdm(range(math.ceil(len(images_fpath) / batchsize)), desc='Processed batches: ', leave=True):
-            batch_id_from = batch_id * batchsize
-            batch_id_to = min((batch_id + 1) * batchsize, len(images_fpath))
-            batch_images_fpath = images_fpath[batch_id_from:batch_id_to]
-            
-            inputs = []
-            for image_fpath in batch_images_fpath:
-                #original_image = PIL.Image.open(image_fpath)
-                #if original_image.mode == 'RGBA':
-                #    original_image = original_image.convert('RGB')
-                #original_image = np.array(PIL.ImageOps.exif_transpose(original_image))
-                #inputs.append(test_pipeline(dict(img=original_image)))
-                inputs.append(test_pipeline(dict(img_prefix=None, img_info=dict(filename=image_fpath))))
-            
-            inputs = mmcv.parallel.collate(inputs, samples_per_gpu=len(inputs))
-            inputs['img_metas'] = [img_metas.data[0] for img_metas in inputs['img_metas']]
-            inputs['img'] = [img.data[0] for img in inputs['img']]
-        
-            if next(model.parameters()).is_cuda:
-                inputs = mmcv.parallel.scatter(inputs, [self.__get_device(gpu)])[0]
-            else:
-                for m in model.modules():
-                    assert not isinstance(m, mmcv.ops.RoIPool), 'CPU inference with RoIPool is not supported currently.'
-            
-            # inference
-            with torch.no_grad():
-                batch_outputs = model(return_loss=False, rescale=True, **inputs)
-        
-            # format outputs
-            for image_fpath, output in zip(batch_images_fpath, batch_outputs):
-                output_fmt = self.__format_annotation(output, score_cutoff)
-                outputs.append(ImageAnnotation(image_fpath, output_fmt))
-        
-        return ImageAnnotations(outputs)
+        return ImageAnnotations(outputs_fmt)
     
     
     
     def __format_annotation(self, output, score_cutoff):
-        
-        bbox_result = None
-        segm_result = None
-        if isinstance(output, tuple):
-            bbox_result, segm_result = output 
+        if 'bboxes' in output.pred_instances:
+            pred_bboxes = output.pred_instances.bboxes.detach().cpu().numpy().tolist()
+            pred_labels = output.pred_instances.labels.detach().cpu().numpy().tolist()
+            pred_scores = output.pred_instances.scores.detach().cpu().numpy().tolist()
         else:
-            bbox_result = output
+            pred_bboxes = []
+            pred_labels = []
+            pred_scores = []
         
-        if segm_result is None:
-            segm_result = [None] * len(bbox_result)
+        if 'masks' in output.pred_instances:
+            pred_masks = output.pred_instances.masks.detach().cpu().numpy()
+        else:
+            pred_masks = [None] * len(pred_bboxes)
         
         regions = []
-        for i, (bboxes, segms) in enumerate(zip(bbox_result, segm_result)):
-            if segms is None:
-                segms = [None] * len(bboxes)
-            
-            cl = self.class_labels[i]
-            for bbox, segm in zip(bboxes, segms):
-                if bbox[4] > score_cutoff:
-                    bb = bbox[0:4].astype(np.int32)
-
-                    sg = None
-                    if (segm is not None) and (np.sum(segm) > 0):
-                        sg = skimage.measure.find_contours(segm.astype(np.uint8), 0.5)
-                    
-                    region = {
-                        'id': len(regions) + 1,
-                        'class': cl,
-                        'score': bbox[4],
-                        'bbox': bb,
-                    }
-                    if sg is not None:
-                        region['contour'] = sg[0][:, [1, 0]]
-                    regions.append(region)
+        for pred_bbox, pred_label, pred_score, pred_mask in zip(
+                pred_bboxes, pred_labels, pred_scores, pred_masks):
+            if pred_score > score_cutoff:
+                region = {
+                    'id': len(regions) + 1,
+                    'class': self.class_labels[pred_label],
+                    'score': pred_score,
+                    'bbox': pred_bbox #.astype(np.int32)
+                }
+                if pred_mask is not None:
+                    sg = skimage.measure.find_contours(pred_mask, 0.5)
+                    region['contour'] = sg[0][:, [1, 0]]
+                regions.append(region)
         
         return regions
         
+    
 
-
-            
-        
-    def save(self, weight_fpath, config_fpath=None):
-        if not weight_fpath.endswith('.pth'):
-            weight_fpath + '.pth'
-
-        # pth file
-        if os.path.exists(os.path.join(self.cfg.work_dir, 'latest.pth')):
-            checkpoint = torch.load(os.path.join(self.cfg.work_dir, 'latest.pth'),
-                                    map_location='cpu')
-            if 'optimizer' in checkpoint:
-                del checkpoint['optimizer']
-            torch.save(checkpoint, weight_fpath)
-        
-        # config file
-        if config_fpath is None:
-            config_fpath = os.path.splitext(weight_fpath)[0] + '.py'
-        self.cfg.dump(config_fpath)
 
 
 

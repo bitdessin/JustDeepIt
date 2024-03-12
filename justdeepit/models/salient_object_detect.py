@@ -109,9 +109,9 @@ class SOD():
         
         Method :func:`train <justdeepit.models.SOD.train>` is used for
         training a model using *resizing* or *random cropping* approach.
-        The *resizing* approach scales the original image to 288 × 288 pixels for training,
+        The *resizing* approach scales the original image to 288 x 288 pixels for training,
         whereas *random cropping* randomly crops small square areas from the original image,
-        and resizes the areas to 288 × 288 pixels for training.
+        and resizes the areas to 288 x 288 pixels for training.
         The size of the square areas can be specified by the user
         according to the characteristics of the target task.
         The default size of the cropped square area is 320 x 320 pixels.
@@ -237,7 +237,7 @@ class SOD():
         
         Method :func:`inference <justdeepit.models.SOD.inference>` performs
         salient object detection through *resizing* or *sliding* approach.
-        The *resizing* approach resizes the original image to 288 × 288 pixels for model training.
+        The *resizing* approach resizes the original image to 288 x 288 pixels for model training.
         On the other hand, *sliding* crops adjacent square areas from the original image
         for input to the model,
         and the outputs are merged into a single image.
@@ -288,7 +288,3 @@ class SOD():
         return self.module.inference(image_path, strategy, batchsize, cpu, gpu,
                               window_size, score_cutoff,
                               image_opening_kernel, image_closing_kernel)
-
-
-
-

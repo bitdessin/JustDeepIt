@@ -5,7 +5,7 @@ for solving various scientific problems in diverse fields including plant scienc
 Practical applications in plant science include species classification,
 fruit detection, plant disease and pest detection, weed detection,
 leaf segmentation, and plant segmentation.
-Python programming language and its libraries including PyTorch, MMDetection, and Detectron2
+Python programming language and its libraries including PyTorch and MMDetection
 have made deep learning much easier and more accessible to researchers.
 However, deep learning technologies remain challenging for programming beginners
 because they require computer programming skills and a basic familiarity

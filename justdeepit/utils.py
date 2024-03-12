@@ -7,6 +7,7 @@ import base64
 import hashlib
 import random
 import string
+import glob
 import pkg_resources
 import xml.etree.ElementTree as ET
 import numpy as np
@@ -18,9 +19,6 @@ import skimage.measure
 import skimage.draw
 import PIL.Image
 import PIL.ImageOps
-import tempfile
-import pycocotools.coco
-import pycocotools.cocoeval
 
 
 
@@ -614,7 +612,6 @@ class ImageAnnotation:
                          region['bbox'][2] - region['bbox'][0],
                          region['bbox'][3] - region['bbox'][1]],
                 'area': (region['bbox'][2] - region['bbox'][0]) * (region['bbox'][3] - region['bbox'][1]),
-                'score': region['score'],
                 'iscrowd': 0
             }
             if 'contour' in region and region['contour'] is not None:
@@ -1390,120 +1387,16 @@ class ImageAnnotations:
             
 
 
-def __load_json(fpath):
-    with open(fpath) as fh:
-        d = json.load(fh)
-    return d
+def load_images(images):
+    image_list = []
+    if isinstance(images, list):
+        image_list = images
+    elif os.path.isfile(images):
+        image_list = [images]
+    else:
+        for f in glob.glob(os.path.join(images, '*')):
+            if os.path.splitext(f)[1].lower() in ['.jpg', '.png', '.tiff']:
+                image_list.append(f)
 
-def __index_common_images(gt_fpath, pred_fpath):
-    # ground truth
-    gt2id = {}
-    d = __load_json(gt_fpath)
-    for im in d['images']:
-        gt2id[os.path.basename(im['file_name'])] = str(im['id'])
-
-    # prediction result
-    pred2id = {}
-    d = __load_json(pred_fpath)
-    for im in d['images']:
-        pred2id[os.path.basename(im['file_name'])] = str(im['id'])
-
-    # common images betweeen groundtruth and prediction reuslt
-    common_images = set(gt2id.keys()) & set(pred2id.keys())
-    im2id = {}
-    for i, common_image in enumerate(sorted(list(common_images))):
-        im2id[common_image] = i + 1
-
-    id2id = {'gt': {}, 'pred': {}}
-    for im_fname, im_id in im2id.items():
-        id2id['gt'][gt2id[im_fname]] = im_id
-        id2id['pred'][pred2id[im_fname]] = im_id
-
-    return id2id
-
-
-def __modify_coco(coco_fpath, id2id):
-    d = __load_json(coco_fpath)
-    d_new = {}
-
-    for coco_key in d.keys():
-        if coco_key == 'images':
-            d_new['images'] = []
-            for x in d['images']:
-                if str(x['id']) in id2id:
-                    x['id'] = id2id[str(x['id'])]
-                    d_new['images'].append(x)
-        elif coco_key == 'annotations':
-            d_new['annotations'] = []
-            for x in d['annotations']:
-                if str(x['image_id']) in id2id:
-                    x['image_id'] = id2id[str(x['image_id'])]
-                    d_new['annotations'].append(x)
-        else:
-            d_new[coco_key] = d[coco_key]
-
-    return d_new
-
-
-
-def __save_json(d, k=None):
-    fd, temp_fpath = tempfile.mkstemp()
-    with open(temp_fpath, 'w') as fh:
-        if k is None:
-            json.dump(d, fh, indent=4)
-        else:
-            json.dump(d[k], fh, indent=4)
-    return temp_fpath
-
-
-
-def coco_eval(gt_fpath, pred_fpath):
-    """Calculate validation scores from inference results
-    
-    This function calculate the validation scores (mAP, mPR) from inference results.
-    This function requires two COCO format files as inputs, one is ground truth and
-    the other is inference result. The image IDs are allowed to be different between
-    two COCO format files, as this function will reindex image IDs according image
-    name between two COCO format files.
-    
-    Args:
-        gt_fpath (str): A path to COCO format file storing the ground truth annotations.
-        pred_fpath (str): A path to COCO format file storing the inference result.
-    
-    Returns:
-        A list contains validation scores.
-    
-    Examples:
-        >>> from justdeepit.utils import coco_eval
-        >>> 
-        >>> scores = coco_eval('gt.coco.json', 'predicted.coco.json')
-        >>> print(scores)
-        
-    """
-
-    id2id = __index_common_images(gt_fpath, pred_fpath)
-    gt_coco_dict = __modify_coco(gt_fpath, id2id['gt'])
-    pred_coco_dict = __modify_coco(pred_fpath, id2id['pred'])
-    gt_coco_fpath = __save_json(gt_coco_dict)
-    pred_coco_fpath = __save_json(pred_coco_dict, 'annotations')
-
-    gt_coco = pycocotools.coco.COCO(gt_coco_fpath)
-    pred_coco = gt_coco.loadRes(pred_coco_fpath)
-    coco_eval = pycocotools.cocoeval.COCOeval(gt_coco, pred_coco, 'bbox')
-    coco_eval.evaluate()
-    coco_eval.accumulate()
-    coco_eval.summarize()
-    
-    os.remove(gt_coco_fpath)
-    os.remove(pred_coco_fpath)
-    
-    return coco_eval.stats
-
-
-
-
-
-
-
-
+    return image_list
 
