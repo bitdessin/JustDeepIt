@@ -4,7 +4,7 @@ Instance Segmentation
 
 
 Instance segmentation determines the pixelwise mask for each object in an image.
-JustDeepIt internally calls the MMDetection or Detectron2 library
+JustDeepIt internally calls the MMDetection library
 to build instance segmentation models and perform model training and image segmentation.
 The following image is an example of sugar beet and weed segmentation results with
 Mask R-CNN using SugarBeets2016 dataset\ [#sugarbeet]_.
@@ -51,10 +51,10 @@ Detailed descriptions of the arguments are provided in the following table.
     :header: "Argument", "Description"
     
     "**backend**", "The backend to build an instance segmentation model.
-    The current version of JustDeepIt supports MMDetection and Detectron2 as a backend."
+    The current version of JustDeepIt supports MMDetection as a backend."
     "**architecture**", "Architecture of instance segmentation model. If ``custom`` is specified,
     user can use the customized configuration to generate a model."
-    "**config**", "A path to a configuration file of MMDetection or Detectron2.
+    "**config**", "A path to a configuration file of MMDetection.
     This field will be activated when ``custom`` is specified in **architecture**."
     "**class label**", "A path to a text file which contains class labels.
     The file should be multiple rows with one column,
@@ -89,12 +89,10 @@ Detailed descriptions of the arguments are provided in the following table.
     "**image folder**", "A path to a folder which contains training images."
     "**annotation format**", "Annotation format."
     "**annotation**", "A path to a file (COCO format)."
-    "**optimizer**", "A optimizer for MMDetection backend. The supported optimizers can be checked from the
-    `MMDetection website <https://mmdetection.readthedocs.io/en/latest/tutorials/customize_runtime.html>`_.
-    This option is only available when backend is MMDetection."
-    "**scheduler**", "A scheduler for MMDetection backend.  The supported schedulers can be checked from the
-    `MMDetection website <https://mmdetection.readthedocs.io/en/latest/tutorials/customize_runtime.html>`_.
-    This option is only available when backend is MMDetection."
+    "**optimizer**", "A optimizer for model training. The supported optimizers can be checked from the
+    `MMDetection website <https://mmdetection.readthedocs.io/en/latest/tutorials/customize_runtime.html>`_."
+    "**scheduler**", "A scheduler for model training.  The supported schedulers can be checked from the
+    `MMDetection website <https://mmdetection.readthedocs.io/en/latest/tutorials/customize_runtime.html>`_."
     "**batch size**", "Batch size."
     "**epochs**", "Number of epochs."
     "**cutoff**", "Cutoff of confidence score for training."
@@ -159,8 +157,7 @@ To initialize Mask R-CNN with the pre-trained weight
 the argument ``model_weight`` can be used.
 Note that, the weight file (:file:`.pth`) pre-trained with COCO dataset
 can be downloaded from the GitHub repositories of
-`MMDetection <https://github.com/open-mmlab/mmdetection/tree/master/configs>`_
-or `Detectron2 <https://github.com/facebookresearch/detectron2/tree/main/configs>`_.
+`MMDetection <https://github.com/open-mmlab/mmdetection/tree/master/configs>`_.
 
 
 
@@ -172,34 +169,6 @@ or `Detectron2 <https://github.com/facebookresearch/detectron2/tree/main/configs
     model = IS('./class_label.txt', model_arch='maskrcnn', model_weight=weight_fpath)
 
 
-To specify a backend for initializing an architecture,
-the argument ``backend`` can be used.
-MMDetection (``mmdetection``) or Detectron2 (``detectron2``)
-can be used as the backend.
-
-
-.. code-block:: py
-
-    from justdeepit.models import IS
-
-    model = IS('./class_label.txt', model_arch='maskrcnn', backend='detectron2')
-
-
-Currently, MMDetection requires GPU computational environment for model training
-and supports more architectures than Detectron2,
-but the latter supports both CPUs and GPUs for model training.
-The available architectures for object detection
-can be checked by executing the following code.
-
-
-.. code-block:: py
-
-    from justdeepit.models import IS
-    
-    model = IS()
-    
-    model.available_architectures('mmdetection')
-    model.available_architectures('detectron2')
 
 
 
@@ -211,8 +180,6 @@ Method :meth:`train <justdeepit.models.IS.train>` is used for the model training
 and requires at least two arguments
 to specify a folder containing the training images and annotations.
 Annotations can be specified in a single file in the COCO format.
-Training process requires a GPU environment if MMDetection is chosen as the backend
-because it only supports GPU training.
 Refer to the API documentation of :meth:`train <justdeepit.models.IS.train>`
 for detailed usage.
 
@@ -231,8 +198,8 @@ for detailed usage.
 
 
 The trained weight can be saved using method :meth:`save <justdeepit.models.IS.save>`,
-which simultaneously stores the trained weight (extension :file:`.pth`)
-and model configuration file (extensions :file:`.py` for MMDetection backend and :file:`.yaml` for Detectron2 backend).
+which simultaneously stores the trained weight (:file:`.pth`)
+and model configuration file (:file:`.py`).
 Refer to the API documentation of :meth:`save <justdeepit.models.IS.save>`
 for detailed usage.
 

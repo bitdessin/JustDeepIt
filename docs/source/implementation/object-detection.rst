@@ -58,7 +58,7 @@ Detailed descriptions of the arguments are provided in the following table.
     :header: "Argument", "Description"
     
     "**backend**", "The backend to build an object detection model.
-    The current version of JustDeepIt supports MMDetection and Detectron2 as a backend."
+    The current version of JustDeepIt only supports MMDetection as a backend."
     "**architecture**", "Architecture of object detection model. If ``custom`` is specified,
     user can use the customized configuration to generate a model."
     "**config**", "A path to a configuration file of MMDetection or Detectron2.
@@ -97,12 +97,10 @@ Detailed descriptions of the arguments are provided in the following table.
     "**image folder**", "A path to a folder which contains training images."
     "**annotation format**", "Annotation format. COCO or Pascal VOC are supported."
     "**annotation**", "A path to a file (COCO format) or folder (Pascal VOC format)."
-    "**optimizer**", "A optimizer for MMDetection backend. The supported optimizers can be checked from the
-    `MMDetection website <https://mmdetection.readthedocs.io/en/latest/tutorials/customize_runtime.html>`_.
-    This option is only available when backend is MMDetection."
-    "**scheduler**", "A scheduler for MMDetection backend.  The supported schedulers can be checked from the
-    `MMDetection website <https://mmdetection.readthedocs.io/en/latest/tutorials/customize_runtime.html>`_.
-    This option is only available when backend is MMDetection."
+    "**optimizer**", "A optimizer for model training. The supported optimizers can be checked from the
+    `MMDetection website <https://mmdetection.readthedocs.io/en/latest/tutorials/customize_runtime.html>`_."
+    "**scheduler**", "A scheduler for model training.  The supported schedulers can be checked from the
+    `MMDetection website <https://mmdetection.readthedocs.io/en/latest/tutorials/customize_runtime.html>`_."
     "**batch size**", "Batch size."
     "**epochs**", "Number of epochs."
     "**cutoff**", "Cutoff of confidence score for training."
@@ -179,36 +177,6 @@ or `Detectron2 <https://github.com/facebookresearch/detectron2/tree/main/configs
 
 
 
-To specify a backend for initializing an architecture,
-the argument ``backend`` can be used.
-MMDetection (``mmdetection``) or Detectron2 (``detectron2``)
-can be used as the backend.
-
-
-.. code-block:: py
-
-    from justdeepit.models import OD
-
-    model = OD('./class_label.txt', model_arch='fasterrcnn', backend='detectron2')
-
-
-
-Currently, MMDetection requires GPU computational environment for model training
-and supports more architectures than Detectron2,
-but the latter supports both CPUs and GPUs for model training.
-The available architectures for object detection
-can be checked by executing the following code.
-
-
-.. code-block:: py
-
-    from justdeepit.models import OD
-    
-    model = OD()
-    
-    model.available_architectures('mmdetection')
-    model.available_architectures('detectron2')
-
 
 
 
@@ -220,8 +188,6 @@ and requires at least two arguments
 to specify a folder containing the training images and annotations.
 Annotations can be specified in a single file in the COCO format
 or a folder containing multiple files in the Pascal VOC format.
-Training process requires a GPU environment if MMDetection is chosen as the backend
-because it only supports GPU training.
 Refer to the API documentation of :meth:`train <justdeepit.models.OD.train>`
 for detailed usage.
 
@@ -256,8 +222,8 @@ Training a model with annotation in Pascal VOC (xml) format.
 
 
 The trained weight can be saved using method :meth:`save <justdeepit.models.OD.save>`,
-which simultaneously stores the trained weight (extension :file:`.pth`)
-and model configuration file (extensions :file:`.py` for MMDetection backend and :file:`.yaml` for Detectron2 backend).
+which simultaneously stores the trained weight (:file:`.pth`)
+and model configuration file (:file:`.py`).
 Refer to the API documentation of :meth:`save <justdeepit.models.OD.save>`
 for detailed usage.
 
