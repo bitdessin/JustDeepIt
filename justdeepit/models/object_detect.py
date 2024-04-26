@@ -193,7 +193,7 @@ class OD:
             >>>
             >>> train_dataset = {'images': './train_images',
             >>>                  'annotations': './train_annotations.json',
-            >>>                  'format': 'coco'}
+            >>>                  'annotation_format': 'coco'}
             >>>
             >>> model.train(train_dataset)
             >>> 
@@ -217,7 +217,7 @@ class OD:
         if data_dict is None:
             return None
         
-        data_fmt = self.__norm_format(data_dict['format'])
+        data_fmt = self.__norm_format(data_dict['annotation_format'])
 
         if data_fmt == 'coco':
             pass

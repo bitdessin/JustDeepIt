@@ -1,0 +1,351 @@
+<html>
+<head>
+    <title>JustDeepIt</title>
+    <link href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', path='/jquery-3.6.0.min.js') }}"></script>
+    <script src="{{ url_for('static', path='/tree.jquery.js') }}"></script>
+    <script src="{{ url_for('static', path='/utils.js') }}"></script>
+</head>
+<body>
+    <div id="app-module-panel">
+    
+    <!-- JustDeepIt -->
+    <table id="app-menu">
+    <tr>
+        <td><h1>JustDeepIt</h1></td>
+        <td><form id="shutdown-panel" method='POST' action="/app/shutdown"><button type="submit" id="shutdown"><span style="font-size:1.3em;">&#8864;</span> SHUTDOWN APP</button></form></td>
+    </tr>
+    </table>
+    <input type="hidden" id="module" name="module" value="{{ module }}"></input>
+    
+    <!-- module -->
+    <h2 id="module-name"><span>{{ module_desc }}</span></h2>
+    
+    <!-- module action tabs -->
+    <div class="module-tabs">
+        <div id="module-tab-config" class="module-tab">Preferences</div>
+        <div id="module-tab-train" class="module-tab">Training</div>
+        <div id="module-tab-inference" class="module-tab">Inference</div>
+    </div>
+    
+    <!-- module action tab contents -->
+    <div class="module-tab-contents">
+        
+        
+        <!-- Preferences -->
+        <div class="module-tab-content module-tab-content-active">
+            <form id="module--BASE" action="" autocomplete="off" method="POST">
+            <input type="hidden" id="module--BASE--status" value="WAITING"></input>
+            <table class="module-panels">
+            <tr>
+                <td><label for="module--BASE--architecture">architecture</label></td>
+                <td colspan="2">
+                    <select id="module--BASE--architecture" name="architecture">
+                    {% for arch in architectures %}
+                    <option value="{{ arch }}">{{ arch }}</option>
+                    {% endfor %}
+                    </select>
+                </td>
+                <td></td>
+                <td></td>
+            </tr>
+            {% if module == 'OD' or module == 'IS' %}
+            <tr>
+                <td><label for="module--BASE--config">config</label></td>
+                <td colspan="3"><input type="text" id="module--BASE--config" class="file-path" name="config" /></td>
+                <td><button id="config-select-open" class="select-file" type="button" value="module--BASE--config+file">Select</button></td>
+            </tr>
+            {% endif %}
+            {% if module == 'OD' or module == 'IS' %}
+            <tr>
+                <td><label for="module--BASE--class_label">class label</label></td>
+                <td colspan="3"><input type="text" id="module--BASE--class_label" class="file-path" name="class_label"  /></td>
+                <td><button class="select-file" type="button" value="module--BASE--class_label+file">Select</button></td>
+            </tr>
+            {% endif %}
+            <tr>
+                <td>processors</td>
+                <td><label for="module--BASE--cpu">CPU</label><input type="text" id="module--BASE--cpu" class="digits" name="cpu" value="1" size="2"></td>
+                <td><label for="module--BASE--gpu">GPU</label> 
+                    <select id="module--BASE--gpu" class="digits" name="gpu">
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                    </select>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><label for="module--BASE--workspace">workspace</label></td>
+                <td colspan="3"><input type="text" id="module--BASE--workspace" class="file-path" name="workspace" /></td>
+                <td><button class="select-file" type="button" value="module--BASE--workspace+folder">Select</button></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td colspan="2"><button id="module--BASE--run" class="run-module button-disable" type="button" disabled>Load Workspace</button></td>
+            </tr>
+            </table>
+            </form>
+        </div>
+        
+        
+        
+        
+        
+        <!--  Training -->
+        <div class="module-tab-content">
+            <form id="module--TRAIN" action="" method="POST">
+            <input type="hidden" id="module--TRAIN--status" value="WAITING"></input>
+            <table class="module-panels">
+            <tr>
+                <td><label for="module--TRAIN--model_weight">model weight</label></td>
+                <td colspan="3"><input type="text" id="module--TRAIN--model_weight" class="file-path" name="model_weight" /></td>
+                <td><button class="select-file" type="button" value="module--TRAIN--model_weight+file">Select</button></td>
+            </tr>
+           
+            <!-- training images -->
+            <tr>
+                <td>training dataset</td>
+                <td colspan="3"><input type="text" id="module--TRAIN--trainimages" class="file-path" name="trainimages" placeholder="&nbsp;image folder" /></td>
+                <td><button class="select-file" type="button" value="module--TRAIN--trainimages+folder">Select</button></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <select id="module--TRAIN--trainannfmt" name="trainannfmt" style="min-width:90%">
+                    {% for annotation_format in annotation_formats %}
+                        <option value="{{ annotation_format }}" >{{ annotation_format }}</option>
+                    {% endfor %}
+                    <select>
+                </td>
+                <td colspan="2"><input type="text" id="module--TRAIN--trainann" class="file-path" name="trainann" placeholder="&nbsp;annotation file" /></td>
+                <td><button id="module--TRAIN--trainann--button" class="select-file" type="button" value="module--TRAIN--trainann+any">Select</button></td>
+            </tr>
+
+            <!-- validation images -->
+            <tr>
+                <td>validation dataset<br /><span class="info-optional">optional</span></td>
+                <td colspan="3"><input type="text" id="module--TRAIN--validimages" class="file-path-option" name="validimages" /></td>
+                <td><button class="select-file" type="button" value="module--TRAIN--validimages+folder">Select</button></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <select id="module--TRAIN--validannfmt" name="validannfmt" style="min-width:90%">
+                        <option value="NULL">-</option>
+                    {% for annotation_format in annotation_formats %}
+                        <option value="{{ annotation_format }}">{{ annotation_format }}</option>
+                    {% endfor %}
+                    <select>
+                </td>
+                <td colspan="2"><input type="text" id="module--TRAIN--validann" class="file-path-option" name="validann" /></td>
+                <td><button id="module--TRAIN--validann--button" class="select-file" type="button" value="module--TRAIN--validann+any">Select</button></td>
+            </tr>
+
+            <!-- test images -->
+            <tr>
+                <td>test dataset<br /><span class="info-optional">optional</span></td>
+                <td colspan="3"><input type="text" id="module--TRAIN--testimages" class="file-path-option" name="testimages" /></td>
+                <td><button class="select-file" type="button" value="module--TRAIN--testimages+folder">Select</button></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <select id="module--TRAIN--testannfmt" name="testannfmt" style="min-width:90%">
+                        <option value="NULL">-</option>
+                    {% for annotation_format in annotation_formats %}
+                        <option value="{{ annotation_format }}">{{ annotation_format }}</option>
+                    {% endfor %}
+                    <select>
+                </td>
+                <td colspan="2"><input type="text" id="module--TRAIN--testann" class="file-path-option" name="testann" /></td>
+                <td><button id="module--TRAIN--testann--button" class="select-file" type="button" value="module--TRAIN--testann+any">Select</button></td>
+            </tr>
+
+
+            {% if module == 'SOD' %}
+            <tr>
+                <td><label for="module--TRAIN--strategy">strategy</label></td>
+                <td colspan="2">
+                    <select id="module--TRAIN--strategy" name="strategy">
+                        <option value="resizing">resizing</option>
+                        <option value="randomcrop">randomcrop</option>
+                    <select>
+                </td>
+                <td colspan="2"><div id="module--TRAIN--resizing-option" style="visibility:hidden;"><label for="module--TRAIN--windowsize">window size</label> <input type="text" id="module--TRAIN--windowsize" class="digits" name="windowsize" value="320" size="4" /></div></td>
+            </tr>
+            {% endif %}
+            <tr>
+                <td><label for="module--TRAIN--optimizer">optimizer</label></td>
+                <td colspan="4">
+                    <input type="text" id="module--TRAIN--optimizer" class="text-full" name="optimizer" placeholder='dict(type="Adam", lr=0.0003, weight_decay=0.0001)' />
+                </td>
+            </tr>
+            <tr>
+                <td><label for="module--TRAIN--scheduler">scheduler</label></td>
+                <td colspan="4">
+                    <input type="text" id="module--TRAIN--scheduler" class="text-full" name="scheduler" placeholder='dict(policy="CosineAnnealing", warmup="linear", warmup_iters=1000, warmup_ratio=1.0 / 10, min_lr_ratio=1e-5)' />
+                </td>
+            </tr>
+            <tr>
+                <td>parameters</td>
+                <td colspan="4">
+                    <label for="module--TRAIN--batchsize">batch size</label> <input type="text" id="module--TRAIN--batchsize" class="digits" name="batchsize" />
+                    <label for="module--TRAIN--epoch" style="margin-left: 3em;">epoch</label> <input type="text" id="module--TRAIN--epoch" class="digits" name="epoch" />
+                    <label for="module--TRAIN--cutoff" style="margin-left: 3em;">cutoff</label> <input type="text" id="module--TRAIN--cutoff" class="digits" name="cutoff" />
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td colspan="2"><button id="module--TRAIN--run" class="run-module button-disable" type="button" disabled>Start Training</button></td>
+            </tr>
+            </table>
+            </form>
+        </div>
+        
+    
+
+
+
+        <!-- Inference -->
+        <div class="module-tab-content">
+            <form id="module--INFERENCE" action="" method="POST">
+            <input type="hidden" id="module--INFERENCE--status" value="WAITING"></input>
+            <table class="module-panels">
+            <tr>
+                <td><label for="module--INFERENCE--model_weight">model weight</label></td>
+                <td colspan="3"><input type="text" id="module--INFERENCE--model_weight" class="file-path" name="model_weight" /></td>
+                <td><button class="select-file" type="button" value="module--INFERENCE--model_weight+file">Select</button></td>
+            </tr>
+            <tr>
+                <td><label for="module--INFERENCE--image_folder">image folder</label></td>
+                <td colspan="3"><input type="text" id="module--INFERENCE--image_folder" class="file-path" name="image_folder" /></td>
+                <td><button class="select-file" type="button" value="module--INFERENCE--image_folder+folder">Select</button></td>
+            </tr>
+            <tr>
+                <td>parameters</td>
+                <td colspan="4">
+                    <label for="module--INFERENCE--batchsize">batch size</label> <input type="text" id="module--INFERENCE--batchsize" class="digits" name="batchsize" />
+                    <label for="module--INFERENCE--cutoff" style="margin-left: 3em;">cutoff</label> <input type="text" id="module--INFERENCE--cutoff" class="digits" name="cutoff" />
+                </td>
+            </tr>
+ 
+            {% if module == 'SOD' %}
+            <tr>
+                <td><label for="module--INFERENCE--strategy">strategy</label></td>
+                <td colspan="2">
+                    <select id="module--INFERENCE--strategy" name="strategy">
+                        <option value="resizing">resizing</option>
+                        <option value="sliding">sliding</option>
+                    <select>
+                </td>
+                <td colspan="2"><div id="module--INFERENCE--resizing-option" style="visibility:hidden;"><label for="module--INFERENCE--windowsize">window size</label> <input type="text" id="module--INFERENCE--windowsize" class="digits" name="windowsize" size="4" /></div></td>
+            </tr>
+            <tr>
+                <td>post-processing</td>
+                <td colspan="2">
+                    <label for="module--INFERENCE--openingks">opening kernel size</label> <input type="text" id="module--INFERENCE--openingks" class="digits" name="openingks" />
+                </td>
+                <td colspan="2">
+                    <label for="module--INFERENCE--closingks">closing kernel size</label> <input type="text" id="module--INFERENCE--closingks" class="digits" name="closingks" />
+            </tr>
+            <tr>
+                <td></td>
+                <td colspan="2">
+                    <label for="module--INFERENCE--align_images" class="switch-label">
+                    <div class="switch">
+                        <input type="checkbox" id="module--INFERENCE--align_images" name="align_images" />
+                        <div class="switch-circle"></div>
+                        <div class="switch-base"></div>
+                    </div>
+                    <span class="switch-title">align images</span>
+                    </label>
+                </td>
+                <td colspan="2">
+                    <label for="module--INFERENCE--timeseries" class="switch-label">
+                    <div class="switch">
+                        <input type="checkbox" id="module--INFERENCE--timeseries" name="timeseries" />
+                        <div class="switch-circle"></div>
+                        <div class="switch-base"></div>
+                    </div>
+                    <span class="switch-title">time-series</span>
+                    </label>
+                </td>
+            </tr>
+            {% endif %}
+
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td colspan="2"><button id="module--INFERENCE--run" class="run-module button-disable" type="button" disabled>Start Inference</button></td>
+            </tr>
+           
+            </table>
+            </form>
+        </div>
+    </div>
+    
+    
+    
+    <div id="app-log-panel">
+        <h3>Status</h3>
+        
+        <div id="app-log-panel-inner">
+        <div id="app-log-field">
+            <div id="app-log-msg"></div>
+        </div>
+        <div id="app-status-control">
+            <table>
+            <tr>
+                <td>
+                    <div id="app-status-panel">
+                        <div class="icon-status-running"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+                    </div>
+                </td>
+                <td>
+                    <button id="force-stop" type="button">FORCE STOP</button>
+                </td>
+            </tr>
+            </table>
+        </div>
+        </div>
+    </div>
+    
+    <div id="select-file-popup">
+        <div id="select-file-manager">
+            <div id="filetree-select-msgbox">&nbsp;</div>
+            <div id="filetree"></div>
+            <div>
+                <input id="filetree-selected" value=""></input>
+                <input id="filetree-selected-filetype" value="" type="hidden"></input>
+                <input id="filetree-required-filetype" value="" type="hidden"></input>
+            </div>
+            <div class="popup-ctrl-buttons">
+                <button id="selectFile" type="button" class="button-disable" disabled>OK</button>
+                <button id="closeSelectFilePanel" type="button">CANCEL</button>
+            </div>
+        </div>
+    </div>
+    
+    
+    <div id="config-edition-popup">
+        <div id='config-edition-manager'>
+            <div>
+                <textarea name="config-edition-content" id="config-edition-content"></textarea>
+            </div>
+            <div id="config-edition-msgbox">&nbsp;</div>
+            <div class="popup-ctrl-buttons">
+                <button id="config-edition-save" type="button">SAVE</button>
+                <button id="config-edition-close" type="button">CLOSSE</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="version">JustDeepIt v{{version}}</div>
+    </div>
+</body> 
+</html>

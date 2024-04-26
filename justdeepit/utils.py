@@ -195,6 +195,8 @@ class ImageAnnotation:
             return annotation
         if annotation_format == 'base':
             return annotation
+        elif annotation_format == 'json':
+            return self.__set_regions_from_json(annotation)
         elif annotation_format == 'array':
             return self.__set_regions_from_array(annotation)
         elif annotation_format == 'rgbmask':
@@ -209,6 +211,12 @@ class ImageAnnotation:
             raise ValueError('Undefined format.')
     
     
+    def __set_regions_from_json(self, json_fpath):
+        with open(json_fpath, 'r') as infh:
+            regions = json.load(infh)
+        return regions
+
+
     def __set_regions_from_coco(self, coco):
         regions = []
         coco_data = None
@@ -466,7 +474,7 @@ class ImageAnnotation:
         
         Args:
             annotation_format (str): A string to specify the format to be formatted.
-                                     ``coco``, ``voc``, or ``mask`` can be
+                                     ``json``, ``coco``, ``voc``, or ``mask`` can be
                                      specified.
             file_path (str): A path to save the converted annotation.
                              If ``None`` is given, return the converted annotation
@@ -491,7 +499,10 @@ class ImageAnnotation:
         fmt_obj = None
         if annotation_format == 'base':
             return self.regions
-        
+
+        if annotation_format == 'json':
+            return self.__format2base(file_path)
+
         elif annotation_format.lower() == 'array' or annotation_format.lower() == 'numpy' or annotation_format.lower() == 'mask':
             return self.__format2mask(file_path)[1]
         
@@ -521,9 +532,10 @@ class ImageAnnotation:
             return self.regions
         else:
             with open(output_fpath, 'w', encoding='utf-8') as fh:
-                json.dump(self.regions, fh, cls=JsonEncoder, ensure_ascii=False)
+                json.dump(self.regions, fh, cls=JsonEncoder, ensure_ascii=False, indent=4)
 
-    
+
+
     def __format2voc(self, output_fpath=None):
         tmpl_voc = '''<annotation>
   <folder></folder>
@@ -625,8 +637,7 @@ class ImageAnnotation:
             return tmpl
         else:
             with open(output_fpath, 'w', encoding='utf-8') as fh:
-                json.dump(tmpl, fh, cls=JsonEncoder, ensure_ascii=False)
-                #json.dump(tmpl, fh, cls=JsonEncoder, ensure_ascii=False, indent=4)
+                json.dump(tmpl, fh, cls=JsonEncoder, ensure_ascii=False, indent=4)
 
 
 
@@ -670,15 +681,13 @@ class ImageAnnotation:
         else:
             if os.path.basename(output_fpath) == 'md5':
                 with open(os.path.join(os.path.dirname(output_fpath), tmpl['asset']['id'] + '-asset.json'), 'w', encoding='utf-8') as fh:
-                    json.dump(tmpl, fh, cls=JsonEncoder, ensure_ascii=False)
-                    #json.dump(tmpl, fh, cls=JsonEncoder, ensure_ascii=False, indent=4)
+                    json.dump(tmpl, fh, cls=JsonEncoder, ensure_ascii=False, indent=4)
             elif os.path.splitext(output_fpath)[1] in ['.gzip', '.gz']:
                 with gzip.open(output_fpath, 'wt', encoding='utf-8') as fh:
-                    json.dump(tmpl, fh, cls=JsonEncoder, ensure_ascii=False)
+                    json.dump(tmpl, fh, cls=JsonEncoder, ensure_ascii=False, indent=4)
             else:
                 with open(output_fpath, 'w', encoding='utf-8') as fh:
-                    json.dump(tmpl, fh, cls=JsonEncoder, ensure_ascii=False)
-                    #json.dump(tmpl, fh, cls=JsonEncoder, ensure_ascii=False, indent=4)
+                    json.dump(tmpl, fh, cls=JsonEncoder, ensure_ascii=False, indent=4)
    
     
     

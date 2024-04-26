@@ -23,7 +23,7 @@ import skimage.color
 import skimage.exposure
 import torch
 import justdeepit
-from justdeepit.webapp import AppBase
+from justdeepit.app import AppBase
 
 
 logger = logging.getLogger(__name__)       

@@ -54,7 +54,7 @@ setup(
     license      = 'MIT',
     packages     = find_packages(),
     entry_points={'console_scripts': [
-                        'justdeepit=justdeepit.webapp.app:run_app',
+                        'justdeepit=justdeepit.app.app:run_app',
                     ]},
     include_package_data = True,
     zip_safe = True,

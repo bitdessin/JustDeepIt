@@ -36,6 +36,11 @@ h3 {
     border-bottom: dashed 1px #999;
 }
 
+.info-optional {
+    font-size: 0.95em;
+    color: #999;
+}
+
 #module-name {
     margin: 1.2em 0;
     font-size: 1.6em;
@@ -109,7 +114,11 @@ table.module-panels td {
     overflow: hidden;
     box-sizing: border-box;
 }
-input.file-path, input.digits, input.text, input.text-full {
+input::placeholder {
+    color: #9f9f9f;
+    padding-left: 5px;
+}
+input.file-path, input.file-path-option, input.digits, input.text, input.text-full {
     font-size: 0.9em;
     line-height: 20px;
     border: 1px solid #ccc;
@@ -119,7 +128,7 @@ input.file-path, input.digits, input.text, input.text-full {
 input.digits {
     text-align: right;
 }
-input.file-path {
+input.file-path, input.file-path-option {
     margin-right: 3%;
     width: 97%;
 }

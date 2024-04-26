@@ -35,7 +35,7 @@ class TestMMDet(unittest.TestCase):
         train_images = {
             'images': self.train_images,
             'annotations': self.train_ann_coco,
-            'format': 'coco'
+            'annotation_format': 'coco'
         }
 
         # training

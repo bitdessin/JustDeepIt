@@ -2,6 +2,7 @@ var moduleRunningStatus = {'mode': null, 'status': null, 'timestamp': null};
 var focusedInputField = null;
 var msgSelectFile = 'Please select a FILE or add a file name after the selected folder.';
 var msgSelectFolder = 'Please select a FOLDER';
+var msgLeftBank = 'Left bank if no ____ dataset';
 var module = location.pathname.split('/')[1] === 'module' ?  location.pathname.split('/')[2] : null;
 
 
@@ -30,25 +31,23 @@ function refreshParams() {
     let deferred = new $.Deferred;
     $.ajax({
         type: 'GET',
-        url: '/api/params',
+        url: '/api/config',
         data: {module: module},
         dataType: 'json',
         cache: false,
     }).done(function(formFields, textStatus, jqXHR) {
         for (let formId in formFields) {
-            if (formId !== 'module') {
-                for (let fieldId in formFields[formId]) {
-                    let fieldId_ = '#module-' + formId + '-' + fieldId;
-                    if ($(fieldId_)) {
-                        if ($(fieldId_).is(':checkbox')) {
-                            if (formFields[formId][fieldId]) {
-                                $(fieldId_).attr('checked', true).prop('checked', true).change();
-                            } else {
-                                $(fieldId_).attr('checked', false).prop('checked', false).change();
-                            }
+            for (let fieldId in formFields[formId]) {
+                let fieldId_ = '#module--' + formId + '--' + fieldId;
+                if ($(fieldId_)) {
+                    if ($(fieldId_).is(':checkbox')) {
+                        if (formFields[formId][fieldId]) {
+                            $(fieldId_).attr('checked', true).prop('checked', true).change();
                         } else {
-                            $(fieldId_).val(formFields[formId][fieldId]);
+                            $(fieldId_).attr('checked', false).prop('checked', false).change();
                         }
+                    } else {
+                        $(fieldId_).val(formFields[formId][fieldId]);
                     }
                 }
             }
@@ -68,30 +67,30 @@ function refreshParams() {
 function refreshModuleTabs() {
     let tabClasses = [null, null, null];
     if (moduleRunningStatus.status === null) {
-        if ($('#module-config-status').val() !== 'COMPLETED') {
+        if ($('#module--BASE--status').val() !== 'COMPLETED') {
             tabClasses = ['module-tab-active', 'module-tab-disabled', 'module-tab-disabled'];
         } else {
             tabClasses = ['module-tab-active', null, null];
         }
     } else {
         if (moduleRunningStatus.status === 'RUNNING') {
-            if (moduleRunningStatus.mode === 'config') {
+            if (moduleRunningStatus.mode === 'BASE') {
                 tabClasses = ['module-tab-active-disabled', 'module-tab-disabled', 'module-tab-disabled'];
             }
-            else if (moduleRunningStatus.mode === 'training') {
+            else if (moduleRunningStatus.mode === 'TRAIN') {
                 tabClasses = ['module-tab-disabled', 'module-tab-active-disabled', 'module-tab-disabled'];
             }
-            else if (moduleRunningStatus.mode === 'inference') {
+            else if (moduleRunningStatus.mode === 'INFERENCE') {
                 tabClasses = ['module-tab-disabled', 'module-tab-disabled', 'module-tab-active-disabled'];
             }
         } else {
-            if (moduleRunningStatus.mode === 'config') {
+            if (moduleRunningStatus.mode === 'BASE') {
                 tabClasses = ['module-tab-active', null, null];
             }
-            else if (moduleRunningStatus.mode === 'training') {
+            else if (moduleRunningStatus.mode === 'TRAIN') {
                 tabClasses = [null, 'module-tab-active', null];
             }
-            else if (moduleRunningStatus.mode === 'inference') {
+            else if (moduleRunningStatus.mode === 'INFERENCE') {
                 tabClasses = [null, null, 'module-tab-active'];
             }
         }
@@ -123,7 +122,7 @@ function refreshShutdownButton() {
 
 function setSelectedFile(selectFieldId = 'filetree-selected') {
     selectedFilePath = $('#' + selectFieldId).val();
-    if (focusedInputField == 'module-training-model_weight') {
+    if (focusedInputField == 'module--TRAIN--model_weight') {
         if (selectedFilePath.slice((selectedFilePath.lastIndexOf(".") - 1 >>> 0) + 2) !== 'pth') {
             selectedFilePath = selectedFilePath + '.pth';
         }
@@ -203,15 +202,14 @@ function refreshRunningLog() {
  
 
 function refreshExecuteButtons() {
-    let forms = ['#module-config', '#module-training', '#module-inference'];
+    let forms = ['#module--BASE', '#module--TRAIN', '#module--INFERENCE'];
 
     for (let formId of forms) {
-
-        let buttonId = formId + '-run';
+        let buttonId = formId + '--run';
         let isValid = true;
         $(formId + ' .file-path').each(function() {
             required_field = true;
-            if ($(this).attr('id') === 'module-config-config') required_field = false;
+            if ($(this).attr('id') === 'module--BASE--config') required_field = false;
 
             if (required_field) { 
                 if ($(this).val() === '') {
@@ -246,7 +244,7 @@ function refreshExecuteButtons() {
             $(buttonId).addClass('button-disable');
             $(buttonId).attr('disabled', true);
         }
-        if (formId == '#module-config') {
+        if (formId == '#module--BASE') {
             refreshConfigField();
         }
     }
@@ -278,13 +276,13 @@ function refreshModule(force_run=false) {
 
 
 function refreshConfigField() {
-    if ($('#module-config-architecture').val() != 'custom') {
-        $('#module-config-config').val(null);
-        $('#module-config-config').attr('readonly', true);
+    if ($('#module--BASE--architecture').val() != 'custom') {
+        $('#module--BASE--config').val(null);
+        $('#module--BASE--config').attr('readonly', true);
         $('#config-select-open').attr('disabled', true);
         $('#config-select-open').addClass('button-disable');
     } else {
-        $('#module-config-config').attr('readonly', false);
+        $('#module--BASE--config').attr('readonly', false);
         $('#config-select-open').attr('disabled', false);
         $('#config-select-open').removeClass('button-disable');
     }
@@ -298,22 +296,14 @@ function refreshTrainOptimizer() {
         default_optmizer = 'Adam(params, lr=0.001, betas=(0.9, 0.999)';
         default_scheduler = 'ExponentialLR(optimizer, gamma=0.9)';
     } else {
-        if ($('#module-config-backend').val().toLowerCase() == 'mmdetection') {
-            default_optmizer = 'dict(type="Adam", lr=0.001)';
-            default_scheduler = 'dict(policy="CosineAnnealing", warmup="linear", warmup_iters=1000, warmup_ratio=0.1)';
-        }
+        default_optmizer = 'dict(type="Adam", lr=0.001)';
+        default_scheduler = 'dict(policy="CosineAnnealing", warmup="linear", warmup_iters=1000, warmup_ratio=0.1)';
     }
-    $('#module-training-optimizer').attr('placeholder', default_optmizer);
-    $('#module-training-scheduler').attr('placeholder', default_scheduler);
-    
+    $('#module--TRAIN--optimizer').attr('placeholder', default_optmizer);
+    $('#module--TRAIN--scheduler').attr('placeholder', default_scheduler);
     if ($('#module').val() !== 'SOD') {
-        if ($('#module-config-backend').val().toLowerCase() === 'detectron2') {
-            $('#module-training-optimizer').attr('disabled', true);
-            $('#module-training-scheduler').attr('disabled', true);
-        } else {
-            $('#module-training-optimizer').attr('disabled', false);
-            $('#module-training-scheduler').attr('disabled', false);
-        }
+        $('#module--TRAIN--optimizer').attr('disabled', false);
+        $('#module--TRAIN--scheduler').attr('disabled', false);
     }
 }
 
@@ -322,7 +312,6 @@ function refreshTrainOptimizer() {
 
 
 $(function(){
-  
     // module action tabs
     $('.module-tab').on('click', function() {
         if (!$(this).hasClass('module-tab-disabled')) {
@@ -344,11 +333,11 @@ $(function(){
 
 
     // load workspace and enable module action tabs
-    $('#module-config-run').click(function() {
+    $('#module--BASE--run').click(function() {
         $.ajax({
             type: 'POST',
-            url: '/module/' + module + '/config',
-            data: $('#module-config').serialize(),
+            url: '/module/' + module + '/BASE',
+            data: $('#module--BASE').serialize(),
             dataType: 'json',
             cache: false,
         }).done(function(x, textStatus, jqXHR) {
@@ -362,11 +351,11 @@ $(function(){
 
 
     // start model training
-    $('#module-training-run').click(function() {
+    $('#module--TRAIN--run').click(function() {
         $.ajax({
             type: 'POST',
-            url: '/module/' + module + '/training',
-            data: $('#module-training').serialize(),
+            url: '/module/' + module + '/TRAIN',
+            data: $('#module--TRAIN').serialize(),
             dataType: 'json',
             cache: false,
         }).done(function(x, textStatus, jqXHR) {
@@ -380,11 +369,11 @@ $(function(){
  
    
     // start inference
-    $('#module-inference-run').click(function() {
+    $('#module--INFERENCE--run').click(function() {
         $.ajax({
             type: 'POST',
-            url: '/module/' + module + '/inference',
-            data: $('#module-inference').serialize(),
+            url: '/module/' + module + '/INFERENCE',
+            data: $('#module--INFERENCE').serialize(),
             dataType: 'json',
             cache: false,
         }).done(function(x, textStatus, jqXHR) {
@@ -414,37 +403,10 @@ $(function(){
         });
     });
 
-
-
-    // reload NN available architectures according to the backend
-    $('#module-config-backend').on('change', function() {
-        $.ajax({
-            type: 'GET',
-            url: '/api/architecture',
-            data: {
-                module: module,
-                backend: $('#module-config-backend').val(),
-            },
-            dataType: 'json',
-            cache: false,
-        }).done(function(arch, textStatus, jqXHR) {
-            let archListHTML = '';
-            for (let i = 0; i < arch.length; i++) {
-                archListHTML = archListHTML + '<option value="' + arch[i] + '">' + arch[i] + '</option>';
-            }
-            $('#module-config-architecture').html(archListHTML);
-            refreshConfigField();
-            refreshTrainOptimizer();
-        }).fail(function(XMLHttpRequest, textStatus, errorThrown) {
-            console.log("XMLHttpRequest : " + XMLHttpRequest.status);
-            console.log("textStatus     : " + textStatus);
-            console.log("errorThrown    : " + errorThrown.message);
-        });
-    });
     
     
     // disable config field if customized-architecture is selected
-    $('#module-config-architecture').on('change', function() {
+    $('#module--BASE--architecture').on('change', function() {
         refreshConfigField();
     });
     
@@ -454,6 +416,8 @@ $(function(){
         let _ = $(this).val().split('+');
         focusedInputField = _[0];
         let selectType = _[1];
+        let btn_id = $(this).attr('id');
+
         $.ajax({
             type: 'GET',
             url: '/api/dirtree',
@@ -470,12 +434,18 @@ $(function(){
                     data: dirtree,
             });
             if (selectType === 'any') {
-                if ($('#module-training-annotation_format').val() === 'COCO' || $('#module-training-annotation_format').val() === 'VoTT') {
+                selectType = 'folder';
+                if ($('#module--TRAIN--trainannfmt').val() === 'COCO' && btn_id === 'module--TRAIN--trainann--button') {
                     selectType = 'file';
-                } else {
-                    selectType = 'folder';
+                }
+                if ($('#module--TRAIN--validannfmt').val() === 'COCO' && btn_id === 'module--TRAIN--validann--button') {
+                    selectType = 'file';
+                }
+                if ($('#module--TRAIN--testannfmt').val() === 'COCO' && btn_id === 'module--TRAIN--testann--button') {
+                    selectType = 'file';
                 }
             }
+            console.log(selectType);
             $('#filetree-required-filetype').val(selectType);
             if (selectType === 'file') {
                 $('#filetree-select-msgbox').text(msgSelectFile);
@@ -549,7 +519,7 @@ $(function(){
         $.ajax({
             type: 'GET',
             url: '/api/modelconfig',
-            data: {config_fpath: $('#module-config-config').val()},
+            data: {config_fpath: $('#module--BASE--config').val()},
             dataType: 'json',
             cache: false,
         }).done(function(config_content, textStatus, jqXHR) {
@@ -577,7 +547,7 @@ $(function(){
             type: 'POST',
             url: '/api/modelconfig',
             data: {
-                file_path: $('#module-config-config').val(), 
+                file_path: $('#module--BASE--config').val(), 
                 data: $('#config-edition-content').val()
             },
             dataType: 'json',
@@ -598,25 +568,41 @@ $(function(){
     });
 
 
-    $('#module-training-strategy').on('change', function() {
+    $('#module--TRAIN--strategy').on('change', function() {
         if ($(this).val() === 'resizing') {
-            $('#module-training-resizing-option').css('visibility', '').css('visibility', 'hidden');
+            $('#module--TRAIN--resizing-option').css('visibility', '').css('visibility', 'hidden');
         } else {
-            $('#module-training-resizing-option').css('visibility', '').css('visibility', 'visibile');
+            $('#module--TRAIN--resizing-option').css('visibility', '').css('visibility', 'visibile');
         }
     });
 
 
-    $('#module-inference-strategy').on('change', function() {
+    $('#module--INFERENCE--strategy').on('change', function() {
         if ($(this).val() === 'resizing') {
-            $('#module-inference-resizing-option').css('visibility', '').css('visibility', 'hidden');
+            $('#module--INFERENCE--resizing-option').css('visibility', '').css('visibility', 'hidden');
         } else {
-            $('#module-inference-resizing-option').css('visibility', '').css('visibility', 'visibile');
+            $('#module--INFERENCE--resizing-option').css('visibility', '').css('visibility', 'visibile');
         }
     });
-    
+
+    $('#module--TRAIN--validimages,#module--TRAIN--validann').on({
+        'mouseenter': function() {
+            $(this).attr('placeholder', msgLeftBank.replace('____', 'validation'));
+        },
+        'mouseleave': function() {
+            $(this).removeAttr('placeholder');
+        }
+    });
+    $('#module--TRAIN--testimages,#module--TRAIN--testann').on({
+        'mouseenter': function() {
+            $(this).attr('placeholder', msgLeftBank.replace('____', 'test'));
+        },
+        'mouseleave': function() {
+            $(this).removeAttr('placeholder');
+        }
+    });
 });
- 
+
    
 // check the running status and update logs
 refreshModule(true);
