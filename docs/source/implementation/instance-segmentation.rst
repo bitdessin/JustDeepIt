@@ -86,9 +86,10 @@ Detailed descriptions of the arguments are provided in the following table.
     
     "**model weight**", "A path to store the model weight.
     If the file is exists, then resume training from the given weight."
-    "**image folder**", "A path to a folder which contains training images."
-    "**annotation format**", "Annotation format."
-    "**annotation**", "A path to a file (COCO format)."
+    "**training dataset**", "Information for training dataset. A path to a folder which contains training images;
+    annotation format (COCO); and a path to an annotation file."
+    "**validation dataset**", "Information for validation dataset. Left blank if no validation dataset."
+    "**test dataset**", "Information for test dataset. Left blank if no test dataset."
     "**optimizer**", "A optimizer for model training. The supported optimizers can be checked from the
     `MMDetection website <https://mmdetection.readthedocs.io/en/latest/tutorials/customize_runtime.html>`_."
     "**scheduler**", "A scheduler for model training.  The supported schedulers can be checked from the
@@ -188,11 +189,14 @@ for detailed usage.
 
     from justdeepit.models import IS
 
-    train_images_dpath = '/path/to/folder/images'
-    annotation_coco = '/path/to/coco/annotation.json'
+    train_dataset = {
+        'images': '/path/to/folder/images',
+        'annotation' = '/path/to/coco/annotation.json',
+        'annotation_format': 'coco'
+    }
 
     model = IS('./class_label.txt', model_arch='maskrcnn')
-    model.train(train_images_dpath, annotation_coco)
+    model.train(train_dataset)
 
 
 

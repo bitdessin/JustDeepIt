@@ -286,9 +286,6 @@ class SOD(AppBase):
 
         try:
             model = justdeepit.models.SOD(model_arch, model_weight)
-            print('--------->>>>><<<<<<<<<<')
-            print(self.images)
-            print('--------->>>>><<<<<<<<<<')
             outputs = model.inference(self.images,
                                       strategy, batchsize, cpu, gpu,
                                       window_size, score_cutoff, image_opening, image_closing)

@@ -17,8 +17,8 @@ def run_u2net(dataset_dpath, ws_dpath, weight_fpath, train_strategy, detect_stra
     
     # detection
     model = SOD(model_weight=weight_fpath, workspace=ws_dpath)
-    outputs = model.inference(query_images,
-                              strategy=detect_strategy, u_cutoff=0.5, batchsize=8, cpu=8, gpu=1)
+    outputs = model.inference(query_images, strategy=detect_strategy)
+    
     for output in outputs:
         output.draw('bbox+contour', os.path.join(ws_dpath,
                     os.path.splitext(os.path.basename(output.image_path))[0] + '.contour.png'), label=True)

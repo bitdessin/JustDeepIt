@@ -107,7 +107,7 @@ Then, we press button **Start Training** for model training.
     :align: center
 
 
-Training takes 1-2 hours, and it depends on the computer hardware.
+Training takes 5-20 minutes, and it depends on the computer hardware.
 
 
 Inference

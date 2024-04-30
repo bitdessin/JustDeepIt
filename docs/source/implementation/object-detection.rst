@@ -94,9 +94,10 @@ Detailed descriptions of the arguments are provided in the following table.
     
     "**model weight**", "A path to store the model weight.
     If the file is exists, then resume training from the given weight."
-    "**image folder**", "A path to a folder which contains training images."
-    "**annotation format**", "Annotation format. COCO or Pascal VOC are supported."
-    "**annotation**", "A path to a file (COCO format) or folder (Pascal VOC format)."
+    "**training dataset**", "Information for training dataset. A path to a folder which contains training images;
+    annotation format (COCO, Pascal VOC); and a path to an annotation file (COCO format) or a folder (Pascal VOC format)."
+    "**validation dataset**", "Information for validation dataset. Left blank if no validation dataset."
+    "**test dataset**", "Information for test dataset. Left blank if no test dataset."
     "**optimizer**", "A optimizer for model training. The supported optimizers can be checked from the
     `MMDetection website <https://mmdetection.readthedocs.io/en/latest/tutorials/customize_runtime.html>`_."
     "**scheduler**", "A scheduler for model training.  The supported schedulers can be checked from the
@@ -199,11 +200,14 @@ Training a model with annotation in COCO format.
 
     from justdeepit.models import OD
     
-    train_images_dpath = '/path/to/folder/images'
-    annotation_coco = '/path/to/coco/annotation.json'
+    train_dataset = {
+        'images': '/path/to/folder/images',
+        'annotations': '/path/to/coco/annotation.json',
+        'annotation_format': 'coco'
+    }
 
     model = OD('./class_label.txt', model_arch='fasterrcnn')
-    model.train(train_images_dpath, annotation_coco)
+    model.train(train_dataset)
     
 
 Training a model with annotation in Pascal VOC (xml) format.
@@ -213,11 +217,14 @@ Training a model with annotation in Pascal VOC (xml) format.
     
     from justdeepit.models import OD
     
-    train_images_dpath = '/path/to/folder/images'
-    annotation_voc = '/path/to/folder/voc'
+    train_dataset = {
+        'images': '/path/to/folder/images',
+        'annotation' = '/path/to/folder/voc',
+        'annotation_format': 'voc'
+    }
 
     model = OD('./class_label.txt', model_arch='fasterrcnn')
-    model.train(train_images_dpath, annotation_voc, 'pascalvoc')
+    model.train(train_dataset)
     
 
 

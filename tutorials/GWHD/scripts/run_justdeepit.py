@@ -7,28 +7,20 @@ from justdeepit.utils import ImageAnnotation, ImageAnnotations
 def train(dataset_dpath, model_backend):
     
     # traininng images
-    train_images = os.path.join(dataset_dpath, 'train')
-    train_images_annotation = os.path.join(dataset_dpath, 'train.json')
+    train_dataset = {
+        'images': os.path.join(dataset_dpath, 'train'),
+        'annotations': os.path.join(dataset_dpath, 'train.json'),
+        'annotation_format': 'coco'
+    }
     class_label = os.path.join(dataset_dpath, 'class_label.txt')
     # temporary folder
-    ws_dpath = os.path.join('outputs', model_backend)
+    ws_dpath = 'outputs'
     os.makedirs(ws_dpath, exist_ok=True)
 
-    if model_backend == 'mmdetection':
-        # download faster_rcnn_r101_fpn_mstrain_3x_coco_20210524_110822-4d4d2ca8.pth from
-        # https://github.com/open-mmlab/mmdetection/tree/master/configs/faster_rcnn
-        init_weight = os.path.join(os.path.dirname(__file__),
-                    'faster_rcnn_r101_fpn_mstrain_3x_coco_20210524_110822-4d4d2ca8.pth')
-    else:
-        # the pre-trained weights will be automatically downloaded in detectron2 function
-        init_weight = None
     
-    net = OD(class_label, model_arch='fasterrcnn', model_weight=init_weight,
-             workspace=ws_dpath, backend=model_backend)
-    net.train(train_images, train_images_annotation,
-              batchsize=8, epoch=100, lr=0.001,
-              gpu=1, cpu=16)
-    net.save(os.path.join(ws_dpath, 'gwhd2021.fasterrcnn.' + model_backend + '.pth'))
+    net = OD(class_label, model_arch='fasterrcnn', workspace=ws_dpath)
+    net.train(train_dataset, batchsize=8, epoch=100, gpu=1, cpu=16)
+    net.save(os.path.join(ws_dpath, 'gwhd2021.fasterrcnn.pth'))
 
 
 def test(dataset_dpath, model_backend):
@@ -37,8 +29,8 @@ def test(dataset_dpath, model_backend):
     test_images = os.path.join(dataset_dpath, 'test')
     class_label = os.path.join(dataset_dpath, 'class_label.txt')
     # temporary folder
-    ws_dpath = os.path.join('outputs', model_backend)
-    trained_weight = os.path.join(ws_dpath, 'gwhd2021.fasterrcnn.' + model_backend + '.pth')
+    ws_dpath = 'outputs'
+    trained_weight = os.path.join(ws_dpath, 'gwhd2021.fasterrcnn..pth')
     
     net = OD(class_label, model_arch='fasterrcnn',
              model_weight=trained_weight, workspace=ws_dpath, backend=model_backend)

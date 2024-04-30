@@ -12,11 +12,6 @@ on the following OS under Python 3.11 environment:
 The source code and built package of JustDeepIt
 are available through GitHub (`biunit/JustDeepIt <https://github.com/biunit/JustDeepIt>`_)
 and Python Package Index (`PyPI: JustDeepIt <https://pypi.org/project/JustDeepIt/>`_), respectively.
-Users can install JustDeepIt into a platform directly by using source code or PyPI package.
-
-
-Installation via PyPI 
----------------------
 
 JustDeepIt requires
 `PyTorch <https://pytorch.org/>`_ and
@@ -52,20 +47,5 @@ Then, install the latest stable version of JustDeepIt from PyPI with :code:`pip`
 
 
 
-Installation via source code
-----------------------------
-
-To install JustDeepIt from source, first install PyTroch
-and MMDetection following the above description,
-and then run the following commands to download
-and install JustDeepIt with its dependencies.
-
-.. code-block:: bash
-    
-    git clone https://github.com/biunit/JustDeepIt.git JustDeepIt
-    cd JustDeepIt
-    
-    pip install -r requirements.txt
-    pip install .
 
 

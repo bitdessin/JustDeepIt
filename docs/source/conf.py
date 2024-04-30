@@ -29,7 +29,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
-    'sphinxcontrib.napoleon',
+    'sphinx.ext.napoleon',
 ]
 
 

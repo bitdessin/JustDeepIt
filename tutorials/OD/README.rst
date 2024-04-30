@@ -113,7 +113,7 @@ We then press the button **Start Training** for model training.
     :align: center
 
 
-Training takes 3-4 hours, depending on the computer hardware.
+Training takes 10-30 minutes, depending on the computer hardware.
 
 
 
