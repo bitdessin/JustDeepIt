@@ -412,9 +412,9 @@ def __reshape_train_args(module_id):
                 appcore.config[module_id]['BASE']['cpu'],
                 appcore.config[module_id]['BASE']['gpu'])
     elif module_id == 'SOD':
-        return (appcore.config[module_id]['TRAIN']['image_folder'],
-                appcore.config[module_id]['TRAIN']['annotation_path'],
-                appcore.config[module_id]['TRAIN']['annotation_format'],
+        return (appcore.config[module_id]['TRAIN']['trainimages'],
+                appcore.config[module_id]['TRAIN']['trainann'],
+                appcore.config[module_id]['TRAIN']['trainannfmt'],
                 appcore.config[module_id]['BASE']['architecture'],
                 appcore.config[module_id]['TRAIN']['model_weight'],
                 appcore.config[module_id]['TRAIN']['optimizer'],

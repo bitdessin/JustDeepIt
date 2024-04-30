@@ -56,7 +56,7 @@ class SOD():
         
 
 
-    def available_architectures(self, backend):
+    def available_architectures(self):
         """Show the available architectures
 
         Show the available architectures for salient object detection.

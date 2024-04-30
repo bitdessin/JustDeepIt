@@ -123,6 +123,7 @@
                 <td><button id="module--TRAIN--trainann--button" class="select-file" type="button" value="module--TRAIN--trainann+any">Select</button></td>
             </tr>
 
+            {% if module == 'OD' or module == 'IS' %}
             <!-- validation images -->
             <tr>
                 <td>validation dataset<br /><span class="info-optional">optional</span></td>
@@ -162,7 +163,7 @@
                 <td colspan="2"><input type="text" id="module--TRAIN--testann" class="file-path-option" name="testann" /></td>
                 <td><button id="module--TRAIN--testann--button" class="select-file" type="button" value="module--TRAIN--testann+any">Select</button></td>
             </tr>
-
+            {% endif %}
 
             {% if module == 'SOD' %}
             <tr>

@@ -52,12 +52,12 @@ class SOD(AppBase):
                     batchsize, epoch,
                     cpu, gpu, strategy, window_size):
         
-        job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.STARTED, '')
+        job_status = self.set_jobstatus(self.app_code.TRAINING, self.app_code.JOB__TRAIN_MODEL, self.app_code.STARTED, '')
 
         try:
-            self.check_training_images(image_dpath, annotation_path, annotation_format)
+            self.check_images(image_dpath, annotation_path, annotation_format)
 
-            tmp_dpath = os.path.join(self.workspace_, 'tmp')
+            tmp_dpath = os.path.join(self.workspace, 'justdeepit.tmp')
             logger.info('The check points will be saved as {} every 100 epochs.'.format(tmp_dpath))
             
             model = self.__build_model(model_arch, model_weight, tmp_dpath)
@@ -68,13 +68,13 @@ class SOD(AppBase):
             model.save(model_weight)
                 
         except KeyboardInterrupt:
-            job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.INTERRUPT, '')
+            job_status = self.set_jobstatus(self.app_code.TRAINING, self.app_code.JOB__TRAIN_MODEL, self.app_code.INTERRUPT, '')
             
         except BaseException as e:
             traceback.print_exc()
-            job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.ERROR, str(e))
+            job_status = self.set_jobstatus(self.app_code.TRAINING, self.app_code.JOB__TRAIN_MODEL, self.app_code.ERROR, str(e))
         else:
-            job_status = self.set_jobstatus(self.code.TRAINING, self.code.JOB__TRAIN_MODEL, self.code.COMPLETED,
+            job_status = self.set_jobstatus(self.app_code.TRAINING, self.app_code.JOB__TRAIN_MODEL, self.app_code.COMPLETED,
                                             'Params: batchsize {}; epoch {}; optimizer: {}; scheduler: {}.'.format(batchsize, epoch, optimizer, scheduler))
 
         return job_status    
@@ -190,7 +190,7 @@ class SOD(AppBase):
         aligned_image_files = []
         aligned_image_files_status = []
         
-        output_dpath = os.path.join(self.workspace_, 'tmp', 'aligned_images')
+        output_dpath = os.path.join(self.workspace, 'justdeepit.tmp', 'aligned_images')
         if not os.path.exists(output_dpath):
             os.makedirs(output_dpath)
             
@@ -219,7 +219,7 @@ class SOD(AppBase):
 
     def sort_query_images(self, image_dpath, align_images=False):
         
-        job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SORT_IMAGES, self.code.STARTED, '')
+        job_status = self.set_jobstatus(self.app_code.INFERENCE, self.app_code.JOB__SORT_IMAGES, self.app_code.STARTED, '')
         
         def __get_exif_datetime(fpath):
             im = PIL.Image.open(fpath)
@@ -251,19 +251,20 @@ class SOD(AppBase):
                         aligned_image_files[-1][0] = _[i]
                 image_files = aligned_image_files
             
-            with open(os.path.join(self.workspace_, 'data', 'query', 'query_images.txt'), 'w') as outfh:
+            with open(os.path.join(self.workspace, 'justdeepit.tmp', 'query_images.txt'), 'w') as outfh:
                 for image_file in image_files:
                     outfh.write('{}\n'.format('\t'.join(image_file)))
+            self.images = [_[0] for _ in image_files]
         
-            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SORT_IMAGES, self.code.FINISHED, '')
+            job_status = self.set_jobstatus(self.app_code.INFERENCE, self.app_code.JOB__SORT_IMAGES, self.app_code.FINISHED, '')
         except KeyboardInterrupt:
-            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SORT_IMAGES, self.code.INTERRUPT, '')
+            job_status = self.set_jobstatus(self.app_code.INFERENCE, self.app_code.JOB__SORT_IMAGES, self.app_code.INTERRUPT, '')
             
         except BaseException as e:
             traceback.print_exc()
-            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SORT_IMAGES, self.code.ERROR, str(e))
+            job_status = self.set_jobstatus(self.app_code.INFERENCE, self.app_code.JOB__SORT_IMAGES, self.app_code.ERROR, str(e))
         else:
-            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SORT_IMAGES, self.code.COMPLETED, '')
+            job_status = self.set_jobstatus(self.app_code.INFERENCE, self.app_code.JOB__SORT_IMAGES, self.app_code.COMPLETED, '')
 
         return job_status
 
@@ -281,27 +282,29 @@ class SOD(AppBase):
             output.draw('contour', os.path.join(ws, 'outputs', image_name + '.outline.png'))
             
         
-        job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__INFER, self.code.STARTED, '')
+        job_status = self.set_jobstatus(self.app_code.INFERENCE, self.app_code.JOB__INFER, self.app_code.STARTED, '')
 
         try:
-            self.seek_query_images()
             model = justdeepit.models.SOD(model_arch, model_weight)
+            print('--------->>>>><<<<<<<<<<')
+            print(self.images)
+            print('--------->>>>><<<<<<<<<<')
             outputs = model.inference(self.images,
                                       strategy, batchsize, cpu, gpu,
                                       window_size, score_cutoff, image_opening, image_closing)
             
             joblib.Parallel(n_jobs=cpu)(
-                joblib.delayed(__save_outputs)(self.workspace_, self.images[i], outputs[i]) for i in range(len(self.images)))
+                joblib.delayed(__save_outputs)(self.workspace, self.images[i], outputs[i]) for i in range(len(self.images)))
 
                 
         except KeyboardInterrupt:
-            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__INFER, self.code.INTERRUPT, '')
+            job_status = self.set_jobstatus(self.app_code.INFERENCE, self.app_code.JOB__INFER, self.app_code.INTERRUPT, '')
             
         except BaseException as e:
             traceback.print_exc()
-            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__INFER, self.code.ERROR, str(e))
+            job_status = self.set_jobstatus(self.app_code.INFERENCE, self.app_code.JOB__INFER, self.app_code.ERROR, str(e))
         else:
-            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__INFER, self.code.COMPLETED, '')
+            job_status = self.set_jobstatus(self.app_code.INFERENCE, self.app_code.JOB__INFER, self.app_code.COMPLETED, '')
 
         return job_status
 
@@ -390,20 +393,19 @@ class SOD(AppBase):
         
         
 
-        job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SUMMARIZE, self.code.STARTED, '')
+        job_status = self.set_jobstatus(self.app_code.INFERENCE, self.app_code.JOB__SUMMARIZE, self.app_code.STARTED, '')
 
-        self.seek_query_images()
         try:
             logger.info('Finding objects and calculate the summary data using {} CPUs.'.format(cpu))
             
             valid_images = []
             for _img in self.images:
                     valid_images.append([
-                        os.path.join(self.workspace_, 'outputs',
+                        os.path.join(self.workspace, 'outputs',
                                      os.path.splitext(os.path.basename(_img))[0] + '.crop.png'),
-                        os.path.join(self.workspace_, 'outputs',
+                        os.path.join(self.workspace, 'outputs',
                                      os.path.splitext(os.path.basename(_img))[0] + '.mask.png'),
-                        os.path.join(self.workspace_, 'outputs',
+                        os.path.join(self.workspace, 'outputs',
                                      os.path.splitext(os.path.basename(_img))[0] + '.objects')
                     ])
             
@@ -423,10 +425,10 @@ class SOD(AppBase):
                 mask = mask / np.max(mask) * 255
                 
                 # save the time-series master
-                ts_master_mask_fpath = os.path.join(self.workspace_, 'outputs', 'timeseries_master.mask.png')
+                ts_master_mask_fpath = os.path.join(self.workspace, 'outputs', 'timeseries_master.mask.png')
                 skimage.io.imsave(ts_master_mask_fpath, mask.astype(np.uint8), check_contrast=False)
             
-                ts_master_labeledmask_fpath = os.path.join(self.workspace_, 'outputs', 'timeseries_master.objects')
+                ts_master_labeledmask_fpath = os.path.join(self.workspace, 'outputs', 'timeseries_master.objects')
                 __summarize_objects(ts_master_mask_fpath,
                                     ts_master_mask_fpath,
                                     ts_master_labeledmask_fpath, 
@@ -443,14 +445,14 @@ class SOD(AppBase):
 
 
 
-            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SUMMARIZE, self.code.FINISHED, '')
+            job_status = self.set_jobstatus(self.app_code.INFERENCE, self.app_code.JOB__SUMMARIZE, self.app_code.FINISHED, '')
         except KeyboardInterrupt:
-            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SUMMARIZE, self.code.INTERRUPT, '')
+            job_status = self.set_jobstatus(self.app_code.INFERENCE, self.app_code.JOB__SUMMARIZE, self.app_code.INTERRUPT, '')
         except BaseException as e:
             traceback.print_exc()
-            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SUMMARIZE, self.code.ERROR, str(e))
+            job_status = self.set_jobstatus(self.app_code.INFERENCE, self.app_code.JOB__SUMMARIZE, self.app_code.ERROR, str(e))
         else:
-            job_status = self.set_jobstatus(self.code.INFERENCE, self.code.JOB__SUMMARIZE, self.code.COMPLETED, '')
+            job_status = self.set_jobstatus(self.app_code.INFERENCE, self.app_code.JOB__SUMMARIZE, self.app_code.COMPLETED, '')
 
         return job_status
 
@@ -459,9 +461,6 @@ class SOD(AppBase):
     
     def generate_movie(self, fps=10.0, scale=1.0, fourcc='mp4v', ext='.mp4'):
 
-        
-        self.seek_query_images()
-        
         _ = cv2.imread(self.images[0][0])
         _ = cv2.resize(_, dsize=None, fx=scale, fy=scale)
         size_w = _.shape[1]
@@ -470,12 +469,12 @@ class SOD(AppBase):
            
             for output_type in [['outputs', '.mask'], ['outputs', '.crop'], ['outputs', '.outline']]:
                 fourcc_ = cv2.VideoWriter_fourcc(*fourcc)
-                video = cv2.VideoWriter(os.path.join(self.workspace_, 'outputs' + 'video' + output_type[1] + ext),
+                video = cv2.VideoWriter(os.path.join(self.workspace, 'outputs' + 'video' + output_type[1] + ext),
                                         fourcc_, fps, (size_w, size_h))
           
                 for image in tqdm.tqdm(self.images, desc='writing movie'):
                     image_name = os.path.splitext(os.path.basename(image[0]))[0]
-                    image_path = os.path.join(self.workspace_, output_type[0], image_name + output_type[1] + '.png')
+                    image_path = os.path.join(self.workspace, output_type[0], image_name + output_type[1] + '.png')
                 
                     # some images in self.images might be failure in image alignmnet steps
                     # it need to check the successfully aligned images in self.images.
@@ -496,8 +495,5 @@ class SOD(AppBase):
             pass
     
         return job_status
-
-
-
 
 
