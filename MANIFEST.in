@@ -1,4 +1,4 @@
 include justdeepit/src/font/*
-include justdeepit/webapp/static/*
-include justdeepit/webapp/templates/*
+include justdeepit/app/static/*
+include justdeepit/app/templates/*
 include requirements.txt
