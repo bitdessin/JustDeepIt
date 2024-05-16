@@ -8,6 +8,7 @@ import tempfile
 import logging
 import datetime
 import numpy as np
+import pandas as pd
 import skimage
 import skimage.measure
 import PIL
@@ -59,13 +60,6 @@ class MMDetBase(ModuleTemplate):
                  workspace=None,
                  seed=None):
         
-        # model settings
-        self.model_arch = model_arch
-        self.class_labels = DataClass(class_labels)
-        self.model_class = model_class
-        self.cfg_fpath = model_config
-        self.cfg = self.__set_config(model_config, model_weight, self.class_labels.class_labels)
-        
         # workspace
         self.tempd = None
         if workspace is None:
@@ -73,6 +67,13 @@ class MMDetBase(ModuleTemplate):
             self.workspace = self.tempd.name
         else:
             self.workspace = workspace
+
+        # model settings
+        self.model_arch = model_arch
+        self.class_labels = DataClass(class_labels)
+        self.model_class = model_class
+        self.cfg_fpath = model_config
+        self.cfg = self.__set_config(model_config, model_weight, self.class_labels.class_labels)
         self.cfg.work_dir = os.path.abspath(self.workspace)
         logger.info(f'The workspace is set to `{self.workspace}`. '
                     f'Please locate the intermediate and final results '
@@ -174,7 +175,7 @@ class MMDetBase(ModuleTemplate):
         # training params
         self.__set_optimizer(optimizer)
         self.__set_scheduler(scheduler)
-       
+        
         # datasets
         if self.model_class == 'od':
             dataloader = DataLoader(self.cfg,
@@ -189,7 +190,7 @@ class MMDetBase(ModuleTemplate):
         else:
             raise ValueError('The model class is not supported.')
         self.cfg.merge_from_dict(dataloader.cfg)
-        self.cfg.default_hooks.checkpoint.interval = 20
+        self.cfg.default_hooks.checkpoint.interval = 10
 
         # training
         runner = mmengine.runner.Runner.from_cfg(self.cfg)
@@ -208,18 +209,31 @@ class MMDetBase(ModuleTemplate):
 
     
     def __set_optimizer(self, optimizer):
-        if optimizer is not None and optimizer.replace(' ', '') != '':
-            if optimizer[0] != '{' or optimizer[0:4] != 'dict':
-                optimizer = 'dict(' + optimizer + ')'
-            self.cfg.optimizer = eval(optimizer)
+        if optimizer is not None:
+            if isinstance(optimizer, dict):
+                opt_dict = optimizer
+            elif isinstance(optimizer, str) and optimizer.replace(' ', '') != '':
+                if optimizer[0] != '{' and optimizer[0:4] != 'dict':
+                    optimizer = 'dict(' + optimizer + ')'
+                opt_dict = eval(optimizer)
+            self.cfg.optim_wrapper = dict(optimizer=opt_dict, type='OptimWrapper')
     
     
 
     def __set_scheduler(self, scheduler):
-        if scheduler is not None and scheduler.replace(' ', '') != '':
-            if scheduler[0] != '{' or scheduler[0:4] != 'dict':
-                scheduler = 'dict(' + scheduler + ')'
-            self.cfg.scheduler = eval(scheduler)
+        if scheduler is not None:
+            if isinstance(scheduler, list) or isinstance(scheduler, tuple):
+                scheduler_dict = scheduler
+            elif isinstance(scheduler, str) and scheduler.replace(' ', '') != '':
+                if scheduler[0] == '[':
+                    pass
+                else:
+                    if scheduler[0] == '{' or scheduler[0:4] == 'dict':
+                        scheduler = '[' + scheduler + ']'
+                    else:
+                        scheduler = '[dict(' + scheduler + ')]'
+                scheduler_dict = eval(scheduler)
+            self.cfg.param_scheduler = scheduler_dict
     
 
 
@@ -228,12 +242,56 @@ class MMDetBase(ModuleTemplate):
         if not weight_fpath.endswith('.pth'):
             weight_fpath + '.pth'
         with open(os.path.join(self.cfg.work_dir, 'last_checkpoint')) as chkf:
-            last_chk = chkf.readline().strip()
-            shutil.copy2(last_chk, weight_fpath)
+            shutil.copy2(chkf.readline().strip(), weight_fpath)
         # config
         if config_fpath is None:
             config_fpath = os.path.splitext(weight_fpath)[0] + '.py'
         self.cfg.dump(config_fpath)
+        # train log
+        self.parse_trainlog(os.path.splitext(weight_fpath)[0] + '.log')
+
+
+
+    def parse_trainlog(self, output_prefix=None):
+        # get the latest log files
+        latest_log_dpath = self.__get_latest_trainlog(self.cfg.work_dir)
+        
+        train_log = []
+        valid_log = []
+        test_log = []
+
+        with open(latest_log_dpath) as fh:
+            for log_line in fh:
+                if 'coco/bbox_mAP' in log_line:
+                    valid_log.append(log_line)
+                else:
+                    train_log.append(log_line)
+
+        train_log = pd.DataFrame(json.loads('[' + ','.join(train_log) + ']')).groupby('epoch').sum().drop(columns=['iter', 'step'])
+
+        if output_prefix is not None:
+            train_log.to_csv(output_prefix + '.train.txt',
+                header=True, index=True, sep='\t')
+
+        if output_prefix is not None and len(valid_log) > 0:
+            pd.DataFrame(json.loads('[' + ','.join(valid_log) + ']')).to_csv(output_prefix + '.valid.txt',
+                header=True, index=False, sep='\t')
+
+
+
+    def __get_latest_trainlog(self, log_dpath):
+        latest_log_dpath = None
+        max_timestamp_ = 0
+        for fpath in glob.glob(os.path.join(log_dpath, '*')):
+            if os.path.isdir(fpath):
+                log_dpath = os.path.basename(fpath)
+                if len(os.path.basename(log_dpath)) == 15 and log_dpath[8] == '_':
+                    timesamp_ = int(log_dpath[0:8] + log_dpath[9:])
+                    if timesamp_ > max_timestamp_:
+                        max_timestamp_ = timesamp_
+                        latest_log_dpath = os.path.join(self.cfg.work_dir, log_dpath,
+                            'vis_data', 'scalars.json')
+        return latest_log_dpath
 
 
 
@@ -255,7 +313,7 @@ class MMDetBase(ModuleTemplate):
         self.cfg.merge_from_dict(
             dict(test_dataloader=dict(
                 _delete_=True,
-                batch_size=1,
+                batch_size=batchsize,
                 num_workers=cpu,
                 persistent_workers=True,
                 drop_last=False,
@@ -265,7 +323,6 @@ class MMDetBase(ModuleTemplate):
                     pipeline = pipeline.inference,
                     metainfo=self.cfg.metainfo))))
 
-
         # load model
         model = mmdet.apis.init_detector(self.cfg,
                                          self.cfg.load_from,
@@ -273,7 +330,7 @@ class MMDetBase(ModuleTemplate):
         
         # inference
         outputs = mmdet.apis.inference_detector(model, target_images)
-
+        
         # format
         outputs_fmt = []
         for target_image, output in zip(target_images, outputs):
