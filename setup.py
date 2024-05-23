@@ -10,7 +10,7 @@ package_desc = 'Deep learning has been applied to solve various problems, especi
     'Many studies have reported the use of deep learning to identify plant and insect species, '\
     'detect flowers and fruits, segment plant individuals from fixed-point observation cameras or drone images, '\
     'and other applications. '\
-    'Programming languages such as Python and its libraries including PyTorch, MMDetection, and Detectron2 ' \
+    'Programming languages such as Python and its libraries including PyTorch and MMDetection ' \
     'have made deep learning easier and more accessible to researchers. '\
     'However, it remains difficult for many researchers without advanced programming skills '\
     'to use deep learning and environments such as the character user interface (CUI) through keyboard input. '\

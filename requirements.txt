@@ -1,14 +1,17 @@
 tqdm
 joblib
-numpy
-pandas
-pillow
-opencv-python >= 4.5.1
-scikit-image >= 0.18.1
-fastapi
-uvicorn
-jinja2
-python-multipart
-torch >= 1.8
-torchvision
+numpy >= 1.24.0
+pandas >= 2.0.0
+Pillow >= 10.0.0
+opencv-python >= 4.6.0
+scikit-image >= 0.20.0
+fastapi >= 0.100.0
+uvicorn >= 0.28.0
+Jinja2 >= 3.0.0
+python-multipart >= 0.0.8
+torch >= 2.0.0
+torchvision >= 0.15.0
 openmim
+mmcv
+mmdet
+mmengine

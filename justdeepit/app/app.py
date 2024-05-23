@@ -560,87 +560,32 @@ def get_log(request: Request):
     return log_records
 
 
-
-@app.get('/api/dirtree')
-def get_dirtree(request: Request, dirpath=None, include_file=1):
-    if dirpath is None:
+@app.post('/api/dirtree')
+async def get_dirtree(request: Request):
+    form = await request.form()    
+    dirpath = form.get('dir')
+    if dirpath is None or dirpath == 'null':
         dirpath = APP_ROOT_PATH
     else:
         dirpath = os.path.join(APP_ROOT_PATH, dirpath)
     
-    def __get_filetree(dirpath, idx_start, include_file, n_files_cutoff=20):
-        filetree_dict = []
-        n_files = [0, 0] # (directories, files)
-        
-        # check #files
-        for fpath in sorted(os.listdir(dirpath)):
-            if fpath.startswith('.'):
-                continue
-            fpath = os.path.join(dirpath, fpath)
-            if  os.path.isdir(os.path.join(dirpath, fpath)):
-                n_files[0] += 1
-            if os.path.isfile(fpath):
-                n_files[1] += 1
-            
-        # walk directories
-        for fpath in sorted(os.listdir(dirpath)):
-            if fpath.startswith('.'):
-                continue
-            fpath = os.path.join(dirpath, fpath)
+    ftree = ['<ul class="jqueryFileTree" style="display: none;">']
+    try:
+        ftree = ['<ul class="jqueryFileTree" style="display: none;">']
+        for fname in os.listdir(dirpath):
+            fpath =os.path.join(dirpath, fname)
             if os.path.isdir(fpath):
-                idx_start[0] += 1
-                filetree_dict.append({
-                    'id': idx_start[0],
-                    'name': os.path.basename(fpath),
-                    'children': __get_filetree(fpath, idx_start, include_file),
-                })
-            elif os.path.isfile(fpath):
-                if include_file == 1 and n_files[1] <= n_files_cutoff:
-                    idx_start[0] += 1
-                    filetree_dict.append({
-                        'id': idx_start[0],
-                        'name': os.path.basename(fpath),
-                    })
-                
-        # if #files is larger than the cutoff, set '...' to represent files.
-        if include_file == 1 and n_files[1] > n_files_cutoff:
-            idx_start[0] += 1
-            filetree_dict.append({
-                'id': idx_start[0],
-                'name': '...',
-            })
-
-        return filetree_dict
-    
-    if os.path.exists(dirpath):
-        idx_start = [0]
-        filetree_dict = [{
-            'id': 0,
-            'name': dirpath,
-            'children': __get_filetree(dirpath, idx_start, include_file)
-        }]
-    else:
-        filetree_dict = []
-    
-    return JSONResponse(content=filetree_dict)
+                ftree.append(f'<li class="directory collapsed"><a rel="{fpath}/">{fname}</a></li>')
+            else:
+                e = os.path.splitext(fname)[1][1:]
+                ftree.append(f'<li class="file ext_{e}"><a rel="{fpath}">{fname}</a></li>')
+        ftree.append('</ul>')
+    except Exception(e):
+        ftree.append(f'Could not load directory: {str(e)}')
+    ftree.append('</ul>')
+    return HTMLResponse(''.join(ftree))
 
 
-
-
-#@app.get('/api/modelconfig')
-#def get_modelconfig(config_fpath):
-#    response_data = {'data': '', 'status': ''}
-#    if os.path.exists(config_fpath):
-#        with open(config_fpath, 'r') as configfh:
-#            for line in configfh:
-#                response_data['data'] += line
-#        response_data['status'] = '[{}]     SUCCESS: The config file has been loaded.'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-#    else:
-#        response_data['status'] = '[{}]     ERROR: FileNotFound, check the file path to the config file.'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-#    return JSONResponse(content=response_data)
-
-
- 
 @app.post('/api/modelconfig')
 async def update_modelconfig(request: Request):
     form = await request.form()
@@ -688,8 +633,10 @@ def __shutdown_server():
 @app.post("/app/shutdown")
 async def shutdown_server(request: Request, background_tasks: BackgroundTasks):
     background_tasks.add_task(__shutdown_server)
-    return templates.TemplateResponse('shutdown.html', {'request': request,
-        'justdeepit_version': justdeepit.__version__})
+    return templates.TemplateResponse('shutdown.html', {
+        'request': request,
+        'version': justdeepit.__version__
+    })
 
 
 def run_app():

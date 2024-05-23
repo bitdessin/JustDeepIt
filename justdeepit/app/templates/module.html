@@ -2,8 +2,9 @@
 <head>
     <title>JustDeepIt</title>
     <link href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', path='/jqueryfiletree/jQueryFileTree.css') }}" rel="stylesheet">
     <script src="{{ url_for('static', path='/jquery-3.6.0.min.js') }}"></script>
-    <script src="{{ url_for('static', path='/tree.jquery.js') }}"></script>
+    <script src="{{ url_for('static', path='/jqueryfiletree/jQueryFileTree.js') }}"></script>
     <script src="{{ url_for('static', path='/utils.js') }}"></script>
 </head>
 <body>
@@ -319,6 +320,7 @@
     <div id="select-file-popup">
         <div id="select-file-manager">
             <div id="filetree-select-msgbox">&nbsp;</div>
+            <!-- div id="filetree"></div -->
             <div id="filetree"></div>
             <div>
                 <input id="filetree-selected" value=""></input>
@@ -345,7 +347,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="version">JustDeepIt v{{version}}</div>
     </div>
 </body> 

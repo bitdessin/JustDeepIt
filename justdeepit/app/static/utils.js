@@ -127,7 +127,6 @@ function setSelectedFile(selectFieldId = 'filetree-selected') {
             selectedFilePath = selectedFilePath + '.pth';
         }
     }
-    console.log(selectedFilePath);
     $('#' + focusedInputField).val(selectedFilePath);
     focusedInputField = null;
     refreshExecuteButtons();
@@ -418,47 +417,30 @@ $(function(){
         let selectType = _[1];
         let btn_id = $(this).attr('id');
 
-        $.ajax({
-            type: 'GET',
-            url: '/api/dirtree',
-            dataType: 'json',
-            cache: false,
-        }).done(function(dirtree, textStatus, jqXHR) {
-            $('#filetree').tree('destroy');
-            $('#filetree').tree({
-                    openedIcon: '&#x0229F;',
-                    closedIcon: '&#x0229E;',
-                    showEmptyFolder: true,
-                    autoOpen: 0,
-                    selectable: true,
-                    data: dirtree,
-            });
-            if (selectType === 'any') {
-                selectType = 'folder';
-                if ($('#module--TRAIN--trainannfmt').val() === 'COCO' && btn_id === 'module--TRAIN--trainann--button') {
-                    selectType = 'file';
-                }
-                if ($('#module--TRAIN--validannfmt').val() === 'COCO' && btn_id === 'module--TRAIN--validann--button') {
-                    selectType = 'file';
-                }
-                if ($('#module--TRAIN--testannfmt').val() === 'COCO' && btn_id === 'module--TRAIN--testann--button') {
-                    selectType = 'file';
-                }
+        $('#filetree').fileTree();
+
+        if (selectType === 'any') {
+            selectType = 'folder';
+            if ($('#module--TRAIN--trainannfmt').val() === 'COCO' && btn_id === 'module--TRAIN--trainann--button') {
+                selectType = 'file';
             }
-            console.log(selectType);
-            $('#filetree-required-filetype').val(selectType);
-            if (selectType === 'file') {
-                $('#filetree-select-msgbox').text(msgSelectFile);
-            } else {
-                $('#filetree-select-msgbox').text(msgSelectFolder);
+            if ($('#module--TRAIN--validannfmt').val() === 'COCO' && btn_id === 'module--TRAIN--validann--button') {
+                selectType = 'file';
             }
-            $('#filetree-selected').val($('#' + focusedInputField).val());
-            $('#select-file-popup').fadeIn();
-        }).fail(function(XMLHttpRequest, textStatus, errorThrown) {
-                console.log("XMLHttpRequest : " + XMLHttpRequest.status);
-                console.log("textStatus     : " + textStatus);
-                console.log("errorThrown    : " + errorThrown.message);
-        });
+        if ($('#module--TRAIN--testannfmt').val() === 'COCO' && btn_id === 'module--TRAIN--testann--button') {
+                selectType = 'file';
+            }
+        }
+        
+        $('#filetree-required-filetype').val(selectType);
+        if (selectType === 'file') {
+            $('#filetree-select-msgbox').text(msgSelectFile);
+        } else {
+            $('#filetree-select-msgbox').text(msgSelectFolder);
+        }
+        $('#filetree-selected').val($('#' + focusedInputField).val());
+        $('#select-file-popup').fadeIn();
+        
     });
     // close select-file-popup window
     $('body').on('click', '#select-file-popup', function(e) {
@@ -474,28 +456,21 @@ $(function(){
         setSelectedFile();
     });
 
-
     $('body').on('click', '#filetree', function() {
-        // wait for JqTree to set up the selected file
-        setTimeout(function() {
-            $('#filetree-selected').val(node2path($('#filetree').tree('getSelectedNode')).slice(1));
-            $('#filetree-selected').data('val', node2path($('#filetree').tree('getSelectedNode')).slice(1));
-            $('#filetree-selected-filetype').val(node2filetype($('#filetree').tree('getSelectedNode')));
-
-            if ($('#filetree-required-filetype').val() === $('#filetree-selected-filetype').val()) {
-                $('#selectFile').removeClass('button-disable');
-                $('#selectFile').attr('disabled', false);
-            } else {
-                $('#selectFile').addClass('button-disable');
-                $('#selectFile').attr('disabled', true);
-                if (($('#filetree-required-filetype').val() === 'file') && ($('#filetree-selected-filetype').val() === 'folder')) {
-                    $('#filetree-select-msgbox').text(msgSelectFile);
-                }
-                else if (($('#filetree-required-filetype').val() === 'folder') && ($('#filetree-selected-filetype').val() === 'file')) {
-                    $('#filetree-select-msgbox').text(msgSelectFolder);
-                }
+        if ($('#filetree-required-filetype').val() === $('#filetree-selected-filetype').val()) {
+            $('#selectFile').removeClass('button-disable');
+            $('#selectFile').attr('disabled', false);
+        } else {
+            $('#selectFile').addClass('button-disable');
+            $('#selectFile').attr('disabled', true);
+            if (($('#filetree-required-filetype').val() === 'file') && ($('#filetree-selected-filetype').val() === 'folder')) {
+                $('#filetree-select-msgbox').text(msgSelectFile);
             }
-        }, 300);
+            else if (($('#filetree-required-filetype').val() === 'folder') && ($('#filetree-selected-filetype').val() === 'file')) {
+                $('#filetree-select-msgbox').text(msgSelectFolder);
+            }
+        }
+        
     });
     // check users whether write file name or not
     $('body').on('keyup keypress blur change', '#filetree-selected', function(e) {
@@ -513,26 +488,6 @@ $(function(){
         }
     });
 
-    
-    /*
-    $('button#config-edition-open').on('click', function() {
-        $.ajax({
-            type: 'GET',
-            url: '/api/modelconfig',
-            data: {config_fpath: $('#module--BASE--config').val()},
-            dataType: 'json',
-            cache: false,
-        }).done(function(config_content, textStatus, jqXHR) {
-            $('#config-edition-msgbox').text(config_content['status']);
-            $('#config-edition-content').val(config_content['data']);
-            $('#config-edition-popup').fadeIn();
-        }).fail(function(XMLHttpRequest, textStatus, errorThrown) {
-                console.log("XMLHttpRequest : " + XMLHttpRequest.status);
-                console.log("textStatus     : " + textStatus);
-                console.log("errorThrown    : " + errorThrown.message);
-        });
-    });
-    */
 
     $('body').on('click', '#config-edition-popup', function(e) {
         if (!$(e.target).closest('#config-edition-manager').length) {
@@ -601,6 +556,9 @@ $(function(){
             $(this).removeAttr('placeholder');
         }
     });
+
+    $('#filetree-2').fileTree();
+     
 });
 
    
