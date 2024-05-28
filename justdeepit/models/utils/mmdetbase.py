@@ -14,6 +14,7 @@ import skimage.measure
 import PIL
 import torch
 import torch.multiprocessing
+import justdeepit
 from justdeepit.models.abstract import ModuleTemplate, JDIError
 from justdeepit.utils import ImageAnnotation, ImageAnnotations, load_images
 from justdeepit.models.utils.data import DataClass, DataPipeline, DataLoader
@@ -78,6 +79,7 @@ class MMDetBase(ModuleTemplate):
         logger.info(f'The workspace is set to `{self.workspace}`. '
                     f'Please locate the intermediate and final results '
                     f'within this workspace.')
+        self.mmdet_log_fpath = None
         
         # random seed
         if seed is None:
@@ -194,6 +196,7 @@ class MMDetBase(ModuleTemplate):
 
         # training
         runner = mmengine.runner.Runner.from_cfg(self.cfg)
+        self.mmdet_log_dpath = os.path.join(self.cfg.work_dir, runner.timestamp)
         runner.train()
     
     
@@ -248,50 +251,49 @@ class MMDetBase(ModuleTemplate):
             config_fpath = os.path.splitext(weight_fpath)[0] + '.py'
         self.cfg.dump(config_fpath)
         # train log
-        self.parse_trainlog(os.path.splitext(weight_fpath)[0] + '.log')
+        self.save_trainlog(os.path.splitext(weight_fpath)[0] + '.log')
 
 
 
-    def parse_trainlog(self, output_prefix=None):
-        # get the latest log files
-        latest_log_dpath = self.__get_latest_trainlog(self.cfg.work_dir)
-        
+    def save_trainlog(self, output_prefix=None):
+        log_fpath = os.path.join(self.mmdet_log_dpath, 'vis_data', 'scalars.json')
+        #if not os.path.exists(log_fpath):
+        #    log_fpath = os.path.join(self.cfg.work_dir, self.cfg.experiment_name,
+        #                             f'{self.cfg.experiment_name}.log')
         train_log = []
         valid_log = []
-        test_log = []
 
-        with open(latest_log_dpath) as fh:
-            for log_line in fh:
-                if 'coco/bbox_mAP' in log_line:
-                    valid_log.append(log_line)
-                else:
-                    train_log.append(log_line)
-
-        train_log = pd.DataFrame(json.loads('[' + ','.join(train_log) + ']')).groupby('epoch').sum().drop(columns=['iter', 'step'])
-
+        if log_fpath.endswith('.json'):
+            train_log, valid_log = self.__parse_trainlog_json(log_fpath)
+        
         if output_prefix is not None:
-            train_log.to_csv(output_prefix + '.train.txt',
-                header=True, index=True, sep='\t')
+            if len(train_log) > 0:
+                train_log.to_csv(output_prefix + '.train.txt',
+                                 header=True, index=True, sep='\t')
+            if len(valid_log) > 0:
+                pd.DataFrame(
+                    json.loads('[' + ','.join(valid_log) + ']')
+                ).to_csv(output_prefix + '.valid.txt', header=True, index=False, sep='\t')
 
-        if output_prefix is not None and len(valid_log) > 0:
-            pd.DataFrame(json.loads('[' + ','.join(valid_log) + ']')).to_csv(output_prefix + '.valid.txt',
-                header=True, index=False, sep='\t')
 
 
+    def __parse_trainlog_json(self, log_fpath):
+        train_log = []
+        valid_log = []
+        with open(log_fpath) as fh:
+            for log_data in fh:
+                if 'coco/bbox_mAP' in log_data:
+                    valid_log.append(log_data)
+                else:
+                    train_log.append(log_data)
+            train_log = (
+                    pd.DataFrame(json.loads('[' + ','.join(train_log) + ']'))
+                        .groupby('epoch')
+                        .sum()
+                        .drop(columns=['iter', 'step'])
+                )
+        return train_log, valid_log
 
-    def __get_latest_trainlog(self, log_dpath):
-        latest_log_dpath = None
-        max_timestamp_ = 0
-        for fpath in glob.glob(os.path.join(log_dpath, '*')):
-            if os.path.isdir(fpath):
-                log_dpath = os.path.basename(fpath)
-                if len(os.path.basename(log_dpath)) == 15 and log_dpath[8] == '_':
-                    timesamp_ = int(log_dpath[0:8] + log_dpath[9:])
-                    if timesamp_ > max_timestamp_:
-                        max_timestamp_ = timesamp_
-                        latest_log_dpath = os.path.join(self.cfg.work_dir, log_dpath,
-                            'vis_data', 'scalars.json')
-        return latest_log_dpath
 
 
 
@@ -322,7 +324,7 @@ class MMDetBase(ModuleTemplate):
                     type='CocoDataset',
                     pipeline = pipeline.inference,
                     metainfo=self.cfg.metainfo))))
-
+ 
         # load model
         model = mmdet.apis.init_detector(self.cfg,
                                          self.cfg.load_from,

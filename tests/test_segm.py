@@ -49,7 +49,7 @@ class TestMMDet(unittest.TestCase):
             output.draw('bbox+contour', os.path.join(self.ws,
                         os.path.splitext(os.path.basename(output.image_path))[0] + f'.{model_arch}.png'),
                         label=True, score=True, alpha=0.3)
-        outputs.format('coco', os.path.join(self.ws, f'result_coco.{model_arch}.son'))
+        outputs.format('coco', os.path.join(self.ws, f'result_coco.{model_arch}.json'))
         
 
     def test_maskrcnn(self):

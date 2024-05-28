@@ -51,7 +51,7 @@ class TestMMDet(unittest.TestCase):
             output.draw('bbox', os.path.join(self.ws,
                         os.path.splitext(os.path.basename(output.image_path))[0] + f'.{model_arch}.png'),
                         label=True, score=True, alpha=0.3)
-        outputs.format('coco', os.path.join(self.ws, f'result_coco.{model_arch}.son'))
+        outputs.format('coco', os.path.join(self.ws, f'result_coco.{model_arch}.json'))
     
     
     
@@ -70,9 +70,8 @@ class TestMMDet(unittest.TestCase):
 
 
 
-#    # failed on mmdet-v3
- #   def test_ssd(self):
-  #      self.__test_model('ssd')
+   # def test_ssd(self):
+   #     self.__test_model('ssd')
     
     
     
@@ -86,7 +85,7 @@ class TestMMDet(unittest.TestCase):
         train_images = {
             'images': self.train_images,
             'annotations': self.train_ann_voc,
-            'format': 'voc'
+            'annotation_format': 'voc'
         }
 
         # training
