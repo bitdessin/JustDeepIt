@@ -289,7 +289,7 @@ class MMDetBase(ModuleTemplate):
             train_log = (
                     pd.DataFrame(json.loads('[' + ','.join(train_log) + ']'))
                         .groupby('epoch')
-                        .sum()
+                        .mean()
                         .drop(columns=['iter', 'step'])
                 )
         return train_log, valid_log
