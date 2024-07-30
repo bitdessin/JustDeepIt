@@ -1,6 +1,5 @@
-include justdeepit/src/font/*
-include justdeepit/app/static/*
-include justdeepit/app/static/jqueryfiletree/*
-include justdeepit/app/static/jqueryfiletree/images/*
-include justdeepit/app/templates/*
-include requirements.txt
+include src/justdeepit/src/font/*
+include src/justdeepit/app/static/*
+include src/justdeepit/app/static/jqueryfiletree/*
+include src/justdeepit/app/static/jqueryfiletree/images/*
+include src/justdeepit/app/templates/*

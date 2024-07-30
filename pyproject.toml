@@ -1,0 +1,66 @@
+[project]
+name = 'JustDeepIt'
+description = 'A GUI tool for object detection and segmentation based on deep learning'
+authors = [
+    { name = 'Jianqiang Sun', email = 'sun@bitdessin.dev' }
+]
+readme = 'README.md'
+license = { 'file' = 'LICENSE' }
+keywords = [
+    'computer vision',
+    'deep learning',
+    'object detection',
+    'instance segmentation'
+]
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Environment :: Console',
+    'Environment :: X11 Applications',
+    'Intended Audience :: Science/Research',
+    'Natural Language :: English',
+    'Operating System :: Unix',
+    'Programming Language :: Python :: 3',
+    'Topic :: Scientific/Engineering :: Image Recognition'
+]
+requires-python = '>=3.10'
+dependencies = [
+    'tqdm',
+    'joblib',
+    'Pillow >= 10.0',
+    'numpy >= 1.21',
+    'pandas >= 2.0',
+    'opencv-python >= 4.6',
+    'scikit-image >= 0.20',
+    'fastapi >= 0.100',
+    'uvicorn >= 0.28',
+    'Jinja2 >= 3.0',
+    'python-multipart >= 0.0.8',
+    'torch >= 2.0.0',
+    'torchvision >= 0.15.0',
+    'openmim',
+    'mmengine',
+    'mmcv >= 2.0',
+    'mmdet >= 3.0',
+]
+dynamic = ['version']
+
+
+[project.urls]
+Homepage = 'https://github.com/biunit/JustDeepIt'
+Issues = 'https://github.com/biunit/JustDeepIt/issues'
+
+
+[project.scripts]
+justdeepit = 'justdeepit.app.app:run_app'
+
+
+[project.optional-dependencies]
+docs = [
+    'sphinx-rtd-theme',
+    'sphinxcontrib-napoleon',
+]
+
+
+[build-system]
+requires = ['setuptools>=61.0']
+build-backend = 'setuptools.build_meta'
